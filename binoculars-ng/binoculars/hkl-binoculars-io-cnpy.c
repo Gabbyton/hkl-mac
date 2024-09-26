@@ -27,9 +27,9 @@ datatype(
 
 static const char magic[] = {(char)0x93, 'N', 'U', 'M', 'P', 'Y'};
 
-const uint8_t VERSION_1 = 0x01;
-const uint8_t VERSION_2 = 0x02;
-const uint8_t VERSION_3 = 0x03;
+#define VERSION_1 0x01
+#define VERSION_2 0x02
+#define VERSION_3 0x03
 
 struct pre_header_t {
         char magic[6];
