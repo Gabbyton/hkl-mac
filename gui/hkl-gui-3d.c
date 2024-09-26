@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -1021,7 +1021,7 @@ static void hkl_gui_3d_init (HklGui3D * self)
 
 	priv->builder = builder = gtk_builder_new ();
 
-	get_ui(builder, "3d.ui");
+	get_ui(builder, "3d-4.ui");
 
 	// widgets
 	get_object(builder, GTK_FRAME, priv, frame1);

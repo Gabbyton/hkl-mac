@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022, 2024 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2024, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -259,17 +259,17 @@ struct _HklGuiWindowPrivate {
 	GtkTreeView* treeview_axes;
 	GtkTreeView* treeview_pseudo_axes;
 	GtkTreeView* treeview_solutions;
-	GtkToolButton* toolbutton_add_reflection;
-	GtkToolButton* toolbutton_goto_reflection;
-	GtkToolButton* toolbutton_del_reflection;
-	GtkToolButton* toolbutton_setUB;
-	GtkToolButton* toolbutton_computeUB;
-	GtkToolButton* toolbutton_add_crystal;
-	GtkToolButton* toolbutton_copy_crystal;
-	GtkToolButton* toolbutton_del_crystal;
-	GtkToolButton* toolbutton_affiner;
+	GtkButton* toolbutton_add_reflection;
+	GtkButton* toolbutton_goto_reflection;
+	GtkButton* toolbutton_del_reflection;
+	GtkButton* toolbutton_setUB;
+	GtkButton* toolbutton_computeUB;
+	GtkButton* toolbutton_add_crystal;
+	GtkButton* toolbutton_copy_crystal;
+	GtkButton* toolbutton_del_crystal;
+	GtkButton* toolbutton_affiner;
 	GtkStatusbar* statusbar;
-	GtkMenuItem* menuitem5;
+	/* GtkMenuItem* menuitem5; */
 	GtkBox* vbox7;
 	GtkBox* vbox2;
 	GtkDialog* dialog1;
@@ -295,14 +295,12 @@ struct _HklGuiWindowPrivate {
 	HklLattice *reciprocal;
 };
 
-
 struct _HklGuiWindow {
-	GObject parent_instance;
+	GtkApplication parent_instance;
 	HklGuiWindowPrivate * priv;
 };
 
-
-G_DEFINE_TYPE_WITH_PRIVATE (HklGuiWindow, hkl_gui_window, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (HklGuiWindow, hkl_gui_window, GTK_TYPE_APPLICATION);
 
 static gboolean
 finalize_liststore_diffractometer(GtkTreeModel *model,
@@ -354,11 +352,6 @@ finalize (GObject* object)
 	G_OBJECT_CLASS (hkl_gui_window_parent_class)->finalize (object);
 }
 
-HklGuiWindow* hkl_gui_window_new (void)
-{
-	return g_object_new (HKL_GUI_TYPE_WINDOW, NULL);
-}
-
 static void
 hkl_gui_window_get_widgets_and_objects_from_ui (HklGuiWindow* self)
 {
@@ -368,7 +361,7 @@ hkl_gui_window_get_widgets_and_objects_from_ui (HklGuiWindow* self)
 	g_return_if_fail (self != NULL);
 
 	priv->builder = builder = gtk_builder_new ();
-	get_ui(builder, "ghkl.ui");
+	get_ui(builder, "ghkl-4.ui");
 
 	get_object(builder, GTK_LIST_STORE, priv, liststore_diffractometer);
 	get_object(builder, GTK_LIST_STORE, priv, liststore_axis);
@@ -452,19 +445,19 @@ hkl_gui_window_get_widgets_and_objects_from_ui (HklGuiWindow* self)
 	get_object(builder, GTK_TREE_VIEW, priv, treeview_pseudo_axes);
 	get_object(builder, GTK_TREE_VIEW, priv, treeview_solutions);
 
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton_add_reflection);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton_goto_reflection);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton_del_reflection);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton_setUB);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton_computeUB);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton_add_crystal);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton_copy_crystal);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton_del_crystal);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton_affiner);
+	get_object(builder, GTK_BUTTON, priv, toolbutton_add_reflection);
+	get_object(builder, GTK_BUTTON, priv, toolbutton_goto_reflection);
+	get_object(builder, GTK_BUTTON, priv, toolbutton_del_reflection);
+	get_object(builder, GTK_BUTTON, priv, toolbutton_setUB);
+	get_object(builder, GTK_BUTTON, priv, toolbutton_computeUB);
+	get_object(builder, GTK_BUTTON, priv, toolbutton_add_crystal);
+	get_object(builder, GTK_BUTTON, priv, toolbutton_copy_crystal);
+	get_object(builder, GTK_BUTTON, priv, toolbutton_del_crystal);
+	get_object(builder, GTK_BUTTON, priv, toolbutton_affiner);
 
 	get_object(builder, GTK_STATUSBAR, priv, statusbar);
 
-	get_object(builder, GTK_MENU_ITEM, priv, menuitem5);
+	/* get_object(builder, GTK_MENU_ITEM, priv, menuitem5); */
 
 	get_object(builder, GTK_BOX, priv, vbox7);
 	get_object(builder, GTK_BOX, priv, vbox2);
@@ -475,8 +468,6 @@ hkl_gui_window_get_widgets_and_objects_from_ui (HklGuiWindow* self)
 	get_object(builder, GTK_DIALOG, priv, dialog1);
 
 	get_object(builder, GTK_COMBO_BOX, priv, combobox1);
-
-	gtk_builder_connect_signals (builder, self);
 }
 
 static void
@@ -753,8 +744,8 @@ set_up_pseudo_axes_frames (HklGuiWindow* self)
 	g_return_if_fail (self != NULL);
 
 	darray_foreach (pseudo, priv->pseudo_frames){
-		gtk_container_remove(GTK_CONTAINER(priv->vbox2),
-				     GTK_WIDGET (hkl_gui_engine_get_frame (*pseudo)));
+		gtk_box_remove(GTK_BOX (priv->vbox2),
+			       GTK_WIDGET (hkl_gui_engine_get_frame (*pseudo)));
 		g_object_unref(*pseudo);
 	}
 	darray_size (priv->pseudo_frames) = 0;
@@ -765,8 +756,8 @@ set_up_pseudo_axes_frames (HklGuiWindow* self)
 
 		pseudo = hkl_gui_engine_new (*engine);
 		darray_append(priv->pseudo_frames, pseudo);
-		gtk_container_add (GTK_CONTAINER (priv->vbox2),
-				   GTK_WIDGET (hkl_gui_engine_get_frame(pseudo)));
+		gtk_box_append(GTK_BOX (priv->vbox2),
+			       GTK_WIDGET (hkl_gui_engine_get_frame(pseudo)));
 
 		g_signal_connect_object (pseudo,
 					 "changed",
@@ -774,7 +765,7 @@ set_up_pseudo_axes_frames (HklGuiWindow* self)
 					 self, 0);
 	}
 
-	gtk_widget_show_all (GTK_WIDGET (priv->vbox2));
+	gtk_widget_set_visible (GTK_WIDGET (priv->vbox2), TRUE);
 }
 
 
@@ -1352,14 +1343,14 @@ hkl_gui_window_cellrenderertoggle1_toggled_cb (GtkCellRendererToggle* renderer, 
 }
 
 gboolean
-hkl_gui_window_treeview_reflections_key_press_event_cb (GtkWidget* _sender, GdkEventKey* event,
+hkl_gui_window_treeview_reflections_key_press_event_cb (GtkWidget* _sender, GdkEvent* event,
 							gpointer self)
 {
 	return TRUE;
 }
 
 void
-hkl_gui_window_toolbutton_add_reflection_clicked_cb(GtkToolButton* _sender,
+hkl_gui_window_toolbutton_add_reflection_clicked_cb(GtkButton* _sender,
 						    gpointer self)
 {
 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self);
@@ -1402,7 +1393,7 @@ hkl_gui_window_toolbutton_add_reflection_clicked_cb(GtkToolButton* _sender,
 }
 
 void
-hkl_gui_window_toolbutton_goto_reflection_clicked_cb (GtkToolButton* _sender, gpointer user_data)
+hkl_gui_window_toolbutton_goto_reflection_clicked_cb (GtkButton* _sender, gpointer user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data);
@@ -1476,7 +1467,7 @@ _del_reflection(gpointer data, gpointer user_data)
 }
 
 void
-hkl_gui_window_toolbutton_del_reflection_clicked_cb (GtkToolButton* _sender, gpointer user_data)
+hkl_gui_window_toolbutton_del_reflection_clicked_cb (GtkButton* _sender, gpointer user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data);
@@ -1500,22 +1491,26 @@ hkl_gui_window_toolbutton_del_reflection_clicked_cb (GtkToolButton* _sender, gpo
 
 			dialog = GTK_MESSAGE_DIALOG(
 				gtk_message_dialog_new (NULL,
-							GTK_DIALOG_DESTROY_WITH_PARENT,
+							GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL,
 							GTK_MESSAGE_WARNING,
 							GTK_BUTTONS_YES_NO,
 							"Are you sure that you want to delete reflections"));
 
-			switch (gtk_dialog_run (GTK_DIALOG(dialog))) {
-			case GTK_RESPONSE_YES:
-			{
-				g_list_foreach(list, _del_reflection, self);
-				update_reflections (self);
-				break;
-			}
-			default:
-				break;
-			}
-			gtk_widget_destroy (GTK_WIDGET(dialog));
+			g_signal_connect (dialog, "response",
+					  G_CALLBACK (gtk_window_destroy),
+					  NULL);
+
+			/* switch (gtk_dialog_run (GTK_DIALOG(dialog))) { */
+			/* case GTK_RESPONSE_YES: */
+			/* { */
+			/* 	g_list_foreach(list, _del_reflection, self); */
+			/* 	update_reflections (self); */
+			/* 	break; */
+			/* } */
+			/* default: */
+			/* 	break; */
+			/* } */
+			/* gtk_widget_destroy (GTK_WIDGET(dialog)); */
 			g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free);
 		} else {
 			gtk_statusbar_push (priv->statusbar, 0,
@@ -1803,7 +1798,7 @@ _add_sample_and_edit_name(HklGuiWindow *self, HklSample *sample)
 }
 
 void
-hkl_gui_window_toolbutton_add_crystal_clicked_cb (GtkToolButton* _sender, gpointer user_data)
+hkl_gui_window_toolbutton_add_crystal_clicked_cb (GtkButton* _sender, gpointer user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	HklSample *sample;
@@ -1816,7 +1811,7 @@ hkl_gui_window_toolbutton_add_crystal_clicked_cb (GtkToolButton* _sender, gpoint
 }
 
 void
-hkl_gui_window_toolbutton_copy_crystal_clicked_cb (GtkToolButton* _sender, gpointer user_data)
+hkl_gui_window_toolbutton_copy_crystal_clicked_cb (GtkButton* _sender, gpointer user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data);
@@ -1833,7 +1828,7 @@ hkl_gui_window_toolbutton_copy_crystal_clicked_cb (GtkToolButton* _sender, gpoin
 }
 
 void
-hkl_gui_window_toolbutton_del_crystal_clicked_cb (GtkToolButton* _sender, gpointer user_data)
+hkl_gui_window_toolbutton_del_crystal_clicked_cb (GtkButton* _sender, gpointer user_data)
 {
 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data);
 
@@ -2096,7 +2091,7 @@ hkl_gui_window_spinbutton_uz_value_changed_cb (GtkSpinButton *_senser, gpointer 
 }
 
 void
-hkl_gui_window_toolbutton_setUB_clicked_cb(GtkToolButton* _sender, gpointer user_data)
+hkl_gui_window_toolbutton_setUB_clicked_cb(GtkButton* _sender, gpointer user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data);
@@ -2135,7 +2130,7 @@ hkl_gui_window_toolbutton_setUB_clicked_cb(GtkToolButton* _sender, gpointer user
 }
 
 void
-hkl_gui_window_toolbutton_computeUB_clicked_cb (GtkToolButton* _sender, gpointer user_data)
+hkl_gui_window_toolbutton_computeUB_clicked_cb (GtkButton* _sender, gpointer user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data);
@@ -2194,7 +2189,7 @@ hkl_gui_window_toolbutton_computeUB_clicked_cb (GtkToolButton* _sender, gpointer
 }
 
 void
-hkl_gui_window_toolbutton_affiner_clicked_cb (GtkToolButton* _sender, gpointer user_data)
+hkl_gui_window_toolbutton_affiner_clicked_cb (GtkButton* _sender, gpointer user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data);
@@ -2293,18 +2288,123 @@ TOGGLE_UX_UY_UZ(uz);
 */
 
 static void
-hkl_gui_window_class_init (HklGuiWindowClass *class)
+fullscreen_changed (GObject    *object,
+                    GParamSpec *pspec,
+                    gpointer    user_data)
 {
-	GObjectClass *gobject_class = G_OBJECT_CLASS (class);
-
-	/* virtual method */
-	gobject_class->finalize = finalize;
+	if (gtk_window_is_fullscreen (GTK_WINDOW (object)))
+		gtk_button_set_icon_name (GTK_BUTTON (user_data), "view-restore-symbolic");
+	else
+		gtk_button_set_icon_name (GTK_BUTTON (user_data), "view-fullscreen-symbolic");
 }
 
+static GActionEntry win_entries[] = {
+	/* { "copy", window_copy, NULL, NULL, NULL }, */
+	/* { "paste", window_paste, NULL, NULL, NULL }, */
+	/* { "fullscreen", activate_toggle, NULL, "false", change_fullscreen_state }, */
+	/* { "busy", activate_toggle, NULL, "false", change_busy_state }, */
+	/* { "justify", activate_radio, "s", "'left'", change_justify_state }, */
+	/* { "clear", activate_clear, NULL, NULL, NULL } */
+};
 
-static void hkl_gui_window_init (HklGuiWindow * self)
+static GActionEntry app_entries[] = {
+/*  { "new", new_activated, NULL, NULL, NULL }, */
+/*   { "about", about_activated, NULL, NULL, NULL }, */
+/*   { "quit", quit_activated, NULL, NULL, NULL }, */
+/*   { "edit-accels", edit_accels }, */
+/*   { "time-active", NULL, NULL, "false", time_active_changed }, */
+/*   { "clear-all", activate_clear_all } */
+};
+
+static void
+new_window (GApplication *app,
+            GFile        *file)
 {
-	HklGuiWindowPrivate *priv =  hkl_gui_window_get_instance_private(self);
+	GtkWidget *window, *grid, *scrolled, *view;
+	GtkWidget *toolbar;
+	GtkWidget *button;
+	window = gtk_application_window_new (GTK_APPLICATION (app));
+	gtk_window_set_default_size ((GtkWindow*)window, 640, 480);
+	/* g_action_map_add_action_entries (G_ACTION_MAP (window), win_entries, G_N_ELEMENTS (win_entries), window); */
+	gtk_window_set_title (GTK_WINDOW (window), "Bloatpad");
+	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (window), TRUE);
+	/* grid = gtk_grid_new (); */
+	/* gtk_window_set_child (GTK_WINDOW (window), grid); */
+	/* toolbar = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0); */
+	/* gtk_widget_add_css_class (toolbar, "toolbar"); */
+	/* button = gtk_toggle_button_new (); */
+	/* gtk_button_set_icon_name (GTK_BUTTON (button), "format-justify-left"); */
+	/* gtk_actionable_set_detailed_action_name (GTK_ACTIONABLE (button), "win.justify::left"); */
+	/* gtk_box_append (GTK_BOX (toolbar), button); */
+	/* button = gtk_toggle_button_new (); */
+	/* gtk_button_set_icon_name (GTK_BUTTON (button), "format-justify-center"); */
+	/* gtk_actionable_set_detailed_action_name (GTK_ACTIONABLE (button), "win.justify::center"); */
+	/* gtk_box_append (GTK_BOX (toolbar), button); */
+	/* button = gtk_toggle_button_new (); */
+	/* gtk_button_set_icon_name (GTK_BUTTON (button), "format-justify-right"); */
+	/* gtk_actionable_set_detailed_action_name (GTK_ACTIONABLE (button), "win.justify::right"); */
+	/* gtk_box_append (GTK_BOX (toolbar), button); */
+	/* button = gtk_toggle_button_new (); */
+	/* gtk_button_set_icon_name (GTK_BUTTON (button), "view-fullscreen-symbolic"); */
+	/* gtk_actionable_set_action_name (GTK_ACTIONABLE (button), "win.fullscreen"); */
+	/* gtk_box_append (GTK_BOX (toolbar), button); */
+	/* g_signal_connect (window, "notify::fullscreened", G_CALLBACK (fullscreen_changed), button); */
+	/* gtk_grid_attach (GTK_GRID (grid), toolbar, 0, 0, 1, 1); */
+	/* scrolled = gtk_scrolled_window_new (); */
+	/* gtk_widget_set_hexpand (scrolled, TRUE); */
+	/* gtk_widget_set_vexpand (scrolled, TRUE); */
+	/* gtk_scrolled_window_set_has_frame (GTK_SCROLLED_WINDOW (scrolled), TRUE); */
+	/* view = gtk_text_view_new (); */
+	/* g_object_set_data ((GObject*)window, "bloatpad-text", view); */
+	/* gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrolled), view); */
+	/* gtk_grid_attach (GTK_GRID (grid), scrolled, 0, 1, 1, 1); */
+	/* if (file != NULL) */
+	/* { */
+	/* 	char *contents; */
+	/* 	gsize length; */
+	/* 	if (g_file_load_contents (file, NULL, &contents, &length, NULL, NULL)) */
+
+	/* 	{ */
+	/* 		GtkTextBuffer *buffer; */
+	/* 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view)); */
+	/* 		gtk_text_buffer_set_text (buffer, contents, length); */
+	/* 		g_free (contents); */
+	/* 	} */
+	/* } */
+	/* g_signal_connect (gtk_text_view_get_buffer (GTK_TEXT_VIEW (view)), "changed", */
+	/*                   G_CALLBACK (text_buffer_changed_cb), window); */
+	/* text_buffer_changed_cb (gtk_text_view_get_buffer (GTK_TEXT_VIEW (view)), window); */
+	gtk_window_present (GTK_WINDOW (window));
+}
+
+static void hkl_gui_window_startup (GApplication *application)
+{
+  HklGuiWindow *ghkl = (HklGuiWindow*) application;
+  GtkApplication *app = GTK_APPLICATION (application);
+  GMenu *menu;
+  GMenuItem *item;
+  GBytes *bytes;
+  GIcon *icon;
+  GIcon *icon2;
+  GEmblem *emblem;
+  GFile *file;
+  int i;
+  struct {
+    const char *action_and_target;
+    const char *accelerators[2];
+  } accels[] = {
+    { "app.new", { "<Control>n", NULL } },
+    { "app.quit", { "<Control>q", NULL } },
+    { "win.copy", { "<Control>c", NULL } },
+    { "win.paste", { "<Control>p", NULL } },
+    { "win.justify::left", { "<Control>l", NULL } },
+    { "win.justify::center", { "<Control>m", NULL } },
+    { "win.justify::right", { "<Control>r", NULL } }
+  };
+
+  G_APPLICATION_CLASS (hkl_gui_window_parent_class)->startup (application);
+
+	HklGuiWindowPrivate *priv =  hkl_gui_window_get_instance_private(ghkl);
 
 	priv->diffractometer = NULL;
 	priv->sample = NULL;
@@ -2313,22 +2413,147 @@ static void hkl_gui_window_init (HklGuiWindow * self)
 
 	priv->reciprocal = hkl_lattice_new_default ();
 
-	hkl_gui_window_get_widgets_and_objects_from_ui (self);
+	hkl_gui_window_get_widgets_and_objects_from_ui (ghkl);
 
-	set_up_diffractometer_model (self);
+	set_up_diffractometer_model (ghkl);
 
-	set_up_tree_view_crystals (self);
+	set_up_tree_view_crystals (ghkl);
 
-	set_up_tree_view_reflections(self);
+	set_up_tree_view_reflections(ghkl);
+
+
+
+/* g_action_map_add_action_entries (G_ACTION_MAP (application), app_entries, G_N_ELEMENTS (app_entries), application); */
+  /* for (i = 0; i < G_N_ELEMENTS (accels); i++) */
+  /*   gtk_application_set_accels_for_action (app, accels[i].action_and_target, accels[i].accelerators); */
+  /* menu = gtk_application_get_menu_by_id (GTK_APPLICATION (application), "icon-menu"); */
+  /* file = g_file_new_for_uri ("resource:///org/gtk/libgtk/icons/16x16/actions/insert-image.png"); */
+  /* icon = g_file_icon_new (file); */
+  /* item = g_menu_item_new ("File Icon", NULL); */
+  /* g_menu_item_set_icon (item, icon); */
+  /* g_menu_append_item (menu, item); */
+  /* g_object_unref (item); */
+  /* g_object_unref (icon); */
+  /* g_object_unref (file); */
+  /* icon = g_themed_icon_new ("edit-find"); */
+  /* item = g_menu_item_new ("Themed Icon", NULL); */
+  /* g_menu_item_set_icon (item, icon); */
+  /* g_menu_append_item (menu, item); */
+  /* g_object_unref (item); */
+  /* g_object_unref (icon); */
+  /* bytes = g_resources_lookup_data ("/org/gtk/libgtk/icons/16x16/actions/media-eject.png", 0, NULL); */
+  /* icon = g_bytes_icon_new (bytes); */
+  /* item = g_menu_item_new ("Bytes Icon", NULL); */
+  /* g_menu_item_set_icon (item, icon); */
+  /* g_menu_append_item (menu, item); */
+  /* g_object_unref (item); */
+  /* g_object_unref (icon); */
+  /* g_bytes_unref (bytes); */
+  /* icon = G_ICON (gdk_texture_new_from_resource ("/org/gtk/libgtk/icons/16x16/actions/folder-new.png")); */
+  /* item = g_menu_item_new ("Texture", NULL); */
+  /* g_menu_item_set_icon (item, icon); */
+  /* g_menu_append_item (menu, item); */
+  /* g_object_unref (item); */
+  /* g_object_unref (icon); */
+  /* file = g_file_new_for_uri ("resource:///org/gtk/libgtk/icons/16x16/actions/bookmark-new.png"); */
+  /* icon = g_file_icon_new (file); */
+
+  /* emblem = g_emblem_new (icon); */
+  /* g_object_unref (icon); */
+  /* g_object_unref (file); */
+  /* file = g_file_new_for_uri ("resource:///org/gtk/libgtk/icons/16x16/actions/dialog-warning.png"); */
+  /* icon2 = g_file_icon_new (file); */
+  /* icon = g_emblemed_icon_new (icon2, emblem); */
+  /* item = g_menu_item_new ("Emblemed Icon", NULL); */
+  /* g_menu_item_set_icon (item, icon); */
+  /* g_menu_append_item (menu, item); */
+  /* g_object_unref (item); */
+  /* g_object_unref (icon); */
+  /* g_object_unref (icon2); */
+  /* g_object_unref (file); */
+  /* g_object_unref (emblem); */
+  /* icon = g_themed_icon_new ("weather-severe-alert-symbolic"); */
+  /* item = g_menu_item_new ("Symbolic Icon", NULL); */
+  /* g_menu_item_set_icon (item, icon); */
+  /* g_menu_append_item (menu, item); */
+  /* g_object_unref (item); */
+  /* g_object_unref (icon); */
+  /* const char *new_accels[] = { "<Control>n", "<Control>t", NULL }; */
+  /* gtk_application_set_accels_for_action (GTK_APPLICATION (application), "app.new", new_accels); */
+  //dump_accels (GTK_APPLICATION (application));
+  // gtk_application_set_menubar (GTK_APPLICATION (application), G_MENU_MODEL (gtk_builder_get_object (builder, "app-menu")));
+  //ghkl->time = gtk_application_get_menu_by_id (GTK_APPLICATION (application), "time-menu");
 }
+
+static void
+hkl_gui_window_shutdown (GApplication *application)
+{
+	/* HklGuiWindow *ghkl = (HklGuiWindow *) application; */
+	/* if (ghkl->timeout) */
+	/* { */
+	/* 	g_source_remove (ghkl->timeout); */
+	/* 	ghkl->timeout = 0; */
+	/* } */
+	G_APPLICATION_CLASS (hkl_gui_window_parent_class)->shutdown (application);
+}
+
+
+static void hkl_gui_window_activate (GApplication *application)
+{
+	new_window (application, NULL);
+}
+
+static void hkl_gui_window_open (GApplication  *application,
+				 GFile        **files,
+				 int            n_files,
+				 const char    *hint)
+{
+}
+
+static void hkl_gui_window_init (HklGuiWindow * self)
+{
+}
+
+static void hkl_gui_window_class_init (HklGuiWindowClass *class)
+{
+	GApplicationClass *application_class = G_APPLICATION_CLASS (class);
+	GObjectClass *object_class = G_OBJECT_CLASS (class);
+
+	application_class->startup = hkl_gui_window_startup;
+	application_class->shutdown = hkl_gui_window_shutdown;
+	application_class->activate = hkl_gui_window_activate;
+	application_class->open = hkl_gui_window_open;
+
+	/* virtual method */
+	object_class->finalize = finalize;
+}
+
+static HklGuiWindow* hkl_gui_window_new (void)
+{
+	HklGuiWindow *ghkl;
+
+	g_set_application_name ("Ghkl");
+	ghkl = g_object_new (hkl_gui_window_get_type (),
+			     "application-id", "fr.synchrotron-soleil.ghkl",
+			     "flags", G_APPLICATION_HANDLES_OPEN,
+			     "inactivity-timeout", 30000,
+			     "register-session", TRUE,
+			     NULL);
+	return ghkl;
+}
+
 
 int main (int argc, char ** argv)
 {
-	gtk_init (&argc, &argv);
+	HklGuiWindow *ghkl;
+	int status;
+	const char *accels[] = { "F11", NULL };
 
-	hkl_gui_window_new ();
+	ghkl = hkl_gui_window_new ();
+	gtk_application_set_accels_for_action (GTK_APPLICATION (ghkl),
+					       "win.fullscreen", accels);
+	status = g_application_run (G_APPLICATION (ghkl), argc, argv);
+	g_object_unref (ghkl);
 
-	gtk_main ();
-
-	return 0;
+	return status;
 }

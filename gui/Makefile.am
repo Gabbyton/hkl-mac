@@ -32,7 +32,7 @@ ghkl_SOURCES = \
 	hkl-gui.c \
 	hkl-gui.h
 
-dist_pkgdata_DATA = ghkl.ui pseudo.ui
+dist_pkgdata_DATA = ghkl.ui ghkl-4.ui pseudo.ui pseudo-4.ui
 
 appldir = ${datadir}/applications
 dist_appl_DATA = ghkl.desktop
@@ -66,7 +66,7 @@ ghkl_SOURCES += \
 	hkl-gui-3d.c \
 	hkl-gui-3d.h
 
-dist_pkgdata_DATA += 3d.ui
+dist_pkgdata_DATA += 3d.ui 3d-4.ui
 
 endif
 

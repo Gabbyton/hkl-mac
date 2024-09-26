@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2013, 2022 Synchrotron SOLEIL
+ * Copyright (C) 2003-2013, 2022, 2024, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -454,7 +454,7 @@ static void hkl_gui_engine_init (HklGuiEngine * self)
 	priv->engine = NULL;
 	priv->builder = builder = gtk_builder_new ();
 
-	get_ui(builder, "pseudo.ui");
+	get_ui(builder, "pseudo-4.ui");
 
 	get_object(builder, GTK_FRAME, priv, frame1);
 	get_object(builder, GTK_LABEL, priv, label2);
@@ -467,8 +467,6 @@ static void hkl_gui_engine_init (HklGuiEngine * self)
 	get_object(builder, GTK_LIST_STORE, priv, store_mode);
 	get_object(builder, GTK_LIST_STORE, priv, store_pseudo);
 	get_object(builder, GTK_LIST_STORE, priv, store_mode_parameter);
-
-	gtk_builder_connect_signals (builder, self);
 
 	g_signal_connect_object (priv->combobox1,
 				 "changed",
