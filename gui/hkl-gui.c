@@ -100,6 +100,127 @@ typedef enum  {
 	DIFFRACTOMETER_COL_N_COLUMNS
 } DiffractometerCol;
 
+/***********/
+/* Factory */
+/***********/
+
+enum {
+	PROP_0,
+	PROP_FACTORY,
+	NUM_PROPERTIES,
+};
+
+static GParamSpec *props[NUM_PROPERTIES] = { NULL, };
+
+typedef struct _HklGuiFactory HklGuiFactory;
+
+struct _HklGuiFactory {
+	GObject parent_instance;
+
+	/* instance members */
+	HklFactory *factory;
+};
+
+
+static void
+hkl_gui_factory_set_property (GObject      *object,
+			      guint         prop_id,
+			      const GValue *value,
+			      GParamSpec   *pspec)
+{
+	HklGuiFactory *factory = HKL_GUI_FACTORY (object);
+
+	switch (prop_id)
+	{
+	case PROP_FACTORY:
+	{
+		factory->factory = g_value_get_pointer (value);
+		g_object_notify_by_pspec (object, pspec);
+	}
+	break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+
+	}
+}
+
+static void
+hkl_gui_factory_get_property (GObject    *object,
+			      guint       prop_id,
+			      GValue     *value,
+			      GParamSpec *pspec)
+{
+  HklGuiFactory *factory = HKL_GUI_FACTORY (object);
+
+  switch (prop_id)
+    {
+    case PROP_FACTORY:
+      g_value_set_pointer (value, factory->factory);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
+hkl_gui_factory_init(HklGuiFactory *factory)
+{
+}
+
+static void
+hkl_gui_factory_class_init (HklGuiFactoryClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+	object_class->set_property = hkl_gui_factory_set_property;
+	object_class->get_property = hkl_gui_factory_get_property;
+
+	props[PROP_FACTORY] =
+		g_param_spec_pointer ("factory",
+				      "Factory",
+				      "the embeded HklFactory.",
+				      G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+
+	g_object_class_install_properties (object_class,
+					   NUM_PROPERTIES,
+					   props);
+}
+
+
+HklGuiFactory *hkl_gui_factory_new(const HklFactory *factory)
+{
+	return g_object_new (HKL_GUI_TYPE_FACTORY,
+			     "factory", factory,
+			     NULL);
+}
+
+G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
+
+static void
+setup_factory_name_cb (GtkListItemFactory *factory,
+		       GtkListItem        *list_item)
+{
+	GtkWidget *label;
+
+	label = gtk_label_new ("");
+	gtk_list_item_set_child (list_item, label);
+}
+
+static void
+bind_factory_name_cb (GtkListItemFactory *factory,
+		      GtkListItem        *list_item)
+{
+	GtkWidget *label;
+	HklGuiFactory *hkl_gui_factory;
+
+	label = gtk_list_item_get_child (list_item);
+	hkl_gui_factory = gtk_list_item_get_item (list_item);
+
+	gtk_label_set_label (GTK_LABEL (label), hkl_factory_name_get(hkl_gui_factory->factory));
+}
+
 /******************/
 /* Diffractometer */
 /******************/
@@ -111,7 +232,6 @@ struct diffractometer_t {
 	HklEngineList *engines;
 	HklGeometryList *solutions;
 };
-
 
 static struct diffractometer_t *
 create_diffractometer(HklFactory *factory)
@@ -768,29 +888,6 @@ set_up_pseudo_axes_frames (HklGuiWindow* self)
 	gtk_widget_set_visible (GTK_WIDGET (priv->vbox2), TRUE);
 }
 
-
-static void
-set_up_diffractometer_model (HklGuiWindow* self)
-{
-	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self);
-	unsigned int i;
-	size_t n;
-	HklFactory **factories;
-
-	g_return_if_fail (self != NULL);
-
-	factories = hkl_factory_get_all(&n);
-	for(i=0; i<n; ++i){
-		GtkTreeIter iter = {0};
-
-		gtk_list_store_append (priv->liststore_diffractometer, &iter);
-		gtk_list_store_set (priv->liststore_diffractometer, &iter,
-				    DIFFRACTOMETER_COL_NAME, hkl_factory_name_get(factories[i]),
-				    DIFFRACTOMETER_COL_FACTORY, factories[i],
-				    DIFFRACTOMETER_COL_DIFFRACTOMETER, NULL,
-				    -1);
-	}
-}
 
 static void
 set_up_tree_view_axes (HklGuiWindow* self)
@@ -2320,16 +2417,70 @@ static void
 new_window (GApplication *app,
             GFile        *file)
 {
-	GtkWidget *window, *grid, *scrolled, *view;
-	GtkWidget *toolbar;
-	GtkWidget *button;
-	window = gtk_application_window_new (GTK_APPLICATION (app));
-	gtk_window_set_default_size ((GtkWindow*)window, 640, 480);
+	unsigned int i;
+	size_t n;
+
+	GListStore *liststore1;
+
+	GtkListItemFactory *item_factory1;
+
+	GtkWidget *dropdown1;
+	GtkWidget *vpaned1;
+	GtkWidget *vbox1;
+	GtkWidget *vbox2;
+	GtkWidget *window1;
+
+	HklFactory **factories;
+
+	/**********/
+	/* Models */
+	/**********/
+
+	/* liststore1 */
+	liststore1 = g_list_store_new (HKL_GUI_TYPE_FACTORY);
+
+	factories = hkl_factory_get_all(&n);
+	for(i=0; i<n; ++i){
+		g_list_store_append (liststore1, hkl_gui_factory_new(factories[i]));
+	}
+
+	/* item_factory1 */
+	item_factory1 = gtk_signal_list_item_factory_new ();
+	g_signal_connect (item_factory1, "setup", G_CALLBACK (setup_factory_name_cb), NULL);
+	g_signal_connect (item_factory1, "bind", G_CALLBACK (bind_factory_name_cb), NULL);
+
+	/***********/
+	/* widgets */
+	/***********/
+
+	/* dropdown1 */
+	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
+	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory1);
+
+	window1 = gtk_application_window_new (GTK_APPLICATION (app));
+	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	vpaned1 = gtk_paned_new (GTK_ORIENTATION_VERTICAL);
+
+	/*  window1 */
+	gtk_window_set_default_size (GTK_WINDOW(window1), 640, 480);
 	/* g_action_map_add_action_entries (G_ACTION_MAP (window), win_entries, G_N_ELEMENTS (win_entries), window); */
-	gtk_window_set_title (GTK_WINDOW (window), "Bloatpad");
-	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (window), TRUE);
+	gtk_window_set_title (GTK_WINDOW (window1), "hkl library GUI");
+	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (window1), TRUE);
+	gtk_window_set_child (GTK_WINDOW (window1), vbox1);
+
+	/* vbox1 */
+	gtk_box_append(GTK_BOX(vbox1), vpaned1);
+
+	/* vbox2 */
+	gtk_box_append(GTK_BOX(vbox2), dropdown1);
+
+	/* vpaned1 */
+	gtk_paned_set_start_child (GTK_PANED (vpaned1), vbox2);
+	/* gtk_paned_set_end_child (GTK_PANED (vpaned), frame2); */
+
+
 	/* grid = gtk_grid_new (); */
-	/* gtk_window_set_child (GTK_WINDOW (window), grid); */
 	/* toolbar = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0); */
 	/* gtk_widget_add_css_class (toolbar, "toolbar"); */
 	/* button = gtk_toggle_button_new (); */
@@ -2374,7 +2525,7 @@ new_window (GApplication *app,
 	/* g_signal_connect (gtk_text_view_get_buffer (GTK_TEXT_VIEW (view)), "changed", */
 	/*                   G_CALLBACK (text_buffer_changed_cb), window); */
 	/* text_buffer_changed_cb (gtk_text_view_get_buffer (GTK_TEXT_VIEW (view)), window); */
-	gtk_window_present (GTK_WINDOW (window));
+	gtk_window_present (GTK_WINDOW (window1));
 }
 
 static void hkl_gui_window_startup (GApplication *application)
@@ -2404,23 +2555,22 @@ static void hkl_gui_window_startup (GApplication *application)
 
   G_APPLICATION_CLASS (hkl_gui_window_parent_class)->startup (application);
 
-	HklGuiWindowPrivate *priv =  hkl_gui_window_get_instance_private(ghkl);
+  HklGuiWindowPrivate *priv =  hkl_gui_window_get_instance_private(ghkl);
 
-	priv->diffractometer = NULL;
-	priv->sample = NULL;
+  priv->diffractometer = NULL;
+  priv->sample = NULL;
 
-	darray_init(priv->pseudo_frames);
+  darray_init(priv->pseudo_frames);
 
-	priv->reciprocal = hkl_lattice_new_default ();
+  priv->reciprocal = hkl_lattice_new_default ();
 
-	hkl_gui_window_get_widgets_and_objects_from_ui (ghkl);
+  /* hkl_gui_window_get_widgets_and_objects_from_ui (ghkl); */
 
-	set_up_diffractometer_model (ghkl);
+  /* set_up_diffractometer_model (ghkl); */
 
-	set_up_tree_view_crystals (ghkl);
+  /* set_up_tree_view_crystals (ghkl); */
 
-	set_up_tree_view_reflections(ghkl);
-
+  /* set_up_tree_view_reflections(ghkl); */
 
 
 /* g_action_map_add_action_entries (G_ACTION_MAP (application), app_entries, G_N_ELEMENTS (app_entries), application); */
@@ -2488,12 +2638,6 @@ static void hkl_gui_window_startup (GApplication *application)
 static void
 hkl_gui_window_shutdown (GApplication *application)
 {
-	/* HklGuiWindow *ghkl = (HklGuiWindow *) application; */
-	/* if (ghkl->timeout) */
-	/* { */
-	/* 	g_source_remove (ghkl->timeout); */
-	/* 	ghkl->timeout = 0; */
-	/* } */
 	G_APPLICATION_CLASS (hkl_gui_window_parent_class)->shutdown (application);
 }
 

@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2024 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2024, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -26,6 +26,10 @@
 #include <gdk/gdk.h>
 #include "hkl.h"
 #include "hkl-gui-pseudoaxes.h"
+
+#define HKL_GUI_TYPE_FACTORY (hkl_gui_factory_get_type ())
+G_DECLARE_FINAL_TYPE (HklGuiFactory, hkl_gui_factory, HKL_GUI, FACTORY, GObject)
+
 
 #define HKL_GUI_TYPE_WINDOW (hkl_gui_window_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplication)
