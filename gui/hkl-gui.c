@@ -100,6 +100,105 @@
 /* 	DIFFRACTOMETER_COL_N_COLUMNS */
 /* } DiffractometerCol; */
 
+/******************/
+/* Diffractometer */
+/******************/
+
+struct diffractometer_t {
+	HklFactory *factory;
+	HklGeometry *geometry;
+	HklDetector *detector;
+	HklEngineList *engines;
+	HklGeometryList *solutions;
+};
+
+static struct diffractometer_t *
+create_diffractometer(HklFactory *factory)
+{
+	struct diffractometer_t *self = g_new(struct diffractometer_t, 1);
+
+	self->factory = factory;
+	self->geometry = hkl_factory_create_new_geometry (factory);
+	self->engines = hkl_factory_create_new_engine_list (factory);
+	self->detector = hkl_detector_factory_new (HKL_DETECTOR_TYPE_0D);
+	self->solutions = NULL;
+
+	return self;
+}
+
+static void
+fprintf_diffractometer(FILE *f, struct diffractometer_t *self)
+{
+	hkl_geometry_fprintf(f, self->geometry);
+	hkl_detector_fprintf(f, self->detector);
+	hkl_engine_list_fprintf(f, self->engines);
+	/* hkl_geometry_list_fprintf(f, self->solutions); */
+}
+
+static void
+delete_diffractometer(struct diffractometer_t *self)
+{
+	hkl_geometry_free(self->geometry);
+	hkl_engine_list_free(self->engines);
+	hkl_detector_free(self->detector);
+	if(self->solutions)
+		hkl_geometry_list_free(self->solutions);
+}
+
+static void
+diffractometer_set_sample(struct diffractometer_t *self,
+			  HklSample *sample)
+{
+	if (NULL != sample){
+		hkl_engine_list_init(self->engines,
+				     self->geometry,
+				     self->detector,
+				     sample);
+		hkl_engine_list_get(self->engines);
+	}
+}
+
+static void
+diffractometer_set_wavelength(struct diffractometer_t *self,
+			      double wavelength)
+{
+	if(hkl_geometry_wavelength_set(self->geometry,
+				       wavelength, HKL_UNIT_USER, NULL))
+		hkl_engine_list_get(self->engines);
+}
+
+static gboolean
+diffractometer_set_solutions(struct diffractometer_t *self, HklGeometryList *solutions)
+{
+	if(solutions){
+		if(self->solutions)
+			hkl_geometry_list_free(self->solutions);
+		self->solutions = solutions;
+	}
+
+	return NULL != solutions;
+}
+
+static gboolean
+diffractometer_pseudo_axis_values_set(struct diffractometer_t *self,
+				      HklEngine *engine, gdouble values[], guint n_values,
+				      GError **error)
+{
+	HklGeometryList *solutions;
+
+
+	solutions = hkl_engine_pseudo_axis_values_set(engine, values, n_values, HKL_UNIT_USER, error);
+
+	return diffractometer_set_solutions(self, solutions);
+}
+
+static void
+diffractometer_set_solution(struct diffractometer_t *self,
+			    const HklGeometryListItem *item)
+{
+	hkl_engine_list_select_solution(self->engines, item);
+}
+
 /***********/
 /* Factory */
 /***********/
@@ -119,6 +218,7 @@ struct _HklGuiFactory {
 
 	/* instance members */
 	HklFactory *factory;
+	struct diffractometer_t *diffractometer;
 };
 
 
@@ -134,7 +234,19 @@ hkl_gui_factory_set_property (GObject      *object,
 	{
 	case PROP_FACTORY:
 	{
-		factory->factory = g_value_get_pointer (value);
+		HklFactory *old_factory = factory->factory;
+		HklFactory *new_factory = g_value_get_pointer (value);
+		factory->factory = new_factory;
+		if (new_factory != old_factory) {
+			if (old_factory != NULL && factory->diffractometer != NULL){
+				delete_diffractometer(factory->diffractometer);
+				factory->diffractometer = NULL;
+			}
+
+		}
+		if (NULL == factory->diffractometer && NULL != factory->factory)
+			factory->diffractometer = create_diffractometer(new_factory);
+
 		g_object_notify_by_pspec (object, pspec);
 	}
 	break;
@@ -167,6 +279,8 @@ hkl_gui_factory_get_property (GObject    *object,
 static void
 hkl_gui_factory_init(HklGuiFactory *factory)
 {
+	factory->factory = NULL;
+	factory->diffractometer = NULL;
 }
 
 static void
@@ -221,93 +335,6 @@ bind_factory_name_cb (GtkListItemFactory *factory,
 	gtk_label_set_label (GTK_LABEL (label), hkl_factory_name_get(hkl_gui_factory->factory));
 }
 
-/******************/
-/* Diffractometer */
-/******************/
-
-/* struct diffractometer_t { */
-/* 	HklFactory *factory; */
-/* 	HklGeometry *geometry; */
-/* 	HklDetector *detector; */
-/* 	HklEngineList *engines; */
-/* 	HklGeometryList *solutions; */
-/* }; */
-
-/* static struct diffractometer_t * */
-/* create_diffractometer(HklFactory *factory) */
-/* { */
-/* 	struct diffractometer_t *self = g_new(struct diffractometer_t, 1); */
-
-/* 	self->factory = factory; */
-/* 	self->geometry = hkl_factory_create_new_geometry (factory); */
-/* 	self->engines = hkl_factory_create_new_engine_list (factory); */
-/* 	self->detector = hkl_detector_factory_new (HKL_DETECTOR_TYPE_0D); */
-/* 	self->solutions = NULL; */
-
-/* 	return self; */
-/* } */
-
-/* static void */
-/* delete_diffractometer(struct diffractometer_t *self) */
-/* { */
-/* 	hkl_geometry_free(self->geometry); */
-/* 	hkl_engine_list_free(self->engines); */
-/* 	hkl_detector_free(self->detector); */
-/* 	if(self->solutions) */
-/* 		hkl_geometry_list_free(self->solutions); */
-/* } */
-
-/* static void */
-/* diffractometer_set_sample(struct diffractometer_t *self, */
-/* 			  HklSample *sample) */
-/* { */
-/* 	hkl_engine_list_init(self->engines, */
-/* 			     self->geometry, */
-/* 			     self->detector, */
-/* 			     sample); */
-/* 	hkl_engine_list_get(self->engines); */
-/* } */
-
-/* static void */
-/* diffractometer_set_wavelength(struct diffractometer_t *self, */
-/* 			      double wavelength) */
-/* { */
-/* 	if(hkl_geometry_wavelength_set(self->geometry, */
-/* 				       wavelength, HKL_UNIT_USER, NULL)) */
-/* 		hkl_engine_list_get(self->engines); */
-/* } */
-
-/* static gboolean */
-/* diffractometer_set_solutions(struct diffractometer_t *self, HklGeometryList *solutions) */
-/* { */
-/* 	if(solutions){ */
-/* 		if(self->solutions) */
-/* 			hkl_geometry_list_free(self->solutions); */
-/* 		self->solutions = solutions; */
-/* 	} */
-
-/* 	return NULL != solutions; */
-/* } */
-
-/* static gboolean */
-/* diffractometer_pseudo_axis_values_set(struct diffractometer_t *self, */
-/* 				      HklEngine *engine, gdouble values[], guint n_values, */
-/* 				      GError **error) */
-/* { */
-/* 	HklGeometryList *solutions; */
-
-
-/* 	solutions = hkl_engine_pseudo_axis_values_set(engine, values, n_values, HKL_UNIT_USER, error); */
-
-/* 	return diffractometer_set_solutions(self, solutions); */
-/* } */
-
-/* static void */
-/* diffractometer_set_solution(struct diffractometer_t *self, */
-/* 			    const HklGeometryListItem *item) */
-/* { */
-/* 	hkl_engine_list_select_solution(self->engines, item); */
-/* } */
 
 
 /****************/
@@ -1024,45 +1051,30 @@ finalize (GObject* object)
 /* #endif */
 /* } */
 
-/* /\* select diffractometer *\/ */
-/* void */
-/* hkl_gui_window_dropdown1_activate_cb(GtkDropDown *dropdown, gpointer *user_data) */
-/* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-/* 	HklFactory *factory; */
-/* 	struct diffractometer_t *dif = NULL; */
+/* select diffractometer */
+static void
+dropdown1_notify_selected_item_cb(GtkDropDown *dropdown, gpointer *user_data)
+{
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self);
+	HklGuiFactory *factory;
 
-/* 	GtkTreeIter iter = {0}; */
+	factory = gtk_drop_down_get_selected_item(dropdown);
 
-/* 	if(gtk_combo_box_get_active_iter (combobox, &iter)){ */
-/* 		gtk_tree_model_get(GTK_TREE_MODEL(priv->liststore_diffractometer), */
-/* 				   &iter, */
-/* 				   DIFFRACTOMETER_COL_FACTORY, &factory, */
-/* 				   DIFFRACTOMETER_COL_DIFFRACTOMETER, &dif, */
-/* 				   -1); */
+	if(NULL != factory->diffractometer && factory->diffractometer != priv->diffractometer){
+		priv->diffractometer = factory->diffractometer;
 
-/* 		if (NULL == dif){ */
-/* 			dif = create_diffractometer(factory); */
-/* 			gtk_list_store_set(priv->liststore_diffractometer, */
-/* 					   &iter, */
-/* 					   DIFFRACTOMETER_COL_DIFFRACTOMETER, dif, */
-/* 					   -1); */
-/* 		} */
-/* 	} */
-/* 	if(NULL != dif && dif != priv->diffractometer){ */
-/* 		priv->diffractometer = dif; */
+		diffractometer_set_sample(priv->diffractometer, priv->sample);
+		fprintf_diffractometer(stdout, priv->diffractometer);
 
-/* 		diffractometer_set_sample(dif, priv->sample); */
-
-/* 		set_up_lambda(self); */
-/* 		set_up_pseudo_axes_frames(self); */
-/* 		set_up_tree_view_axes(self); */
-/* 		set_up_tree_view_pseudo_axes(self); */
-/* 		set_up_tree_view_solutions(self); */
-/* 		set_up_3D(self); */
-/* 	} */
-/* } */
+		/* set_up_lambda(self); */
+		/* set_up_pseudo_axes_frames(self); */
+		/* set_up_tree_view_axes(self); */
+		/* set_up_tree_view_pseudo_axes(self); */
+		/* set_up_tree_view_solutions(self); */
+		/* set_up_3D(self); */
+	}
+}
 
 
 /* /\* axis read cb *\/ */
@@ -2428,6 +2440,7 @@ new_window (GApplication *app,
 	/* dropdown1 */
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
 	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory1);
+	g_signal_connect (dropdown1, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), NULL);
 
 	window1 = gtk_application_window_new (GTK_APPLICATION (app));
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
