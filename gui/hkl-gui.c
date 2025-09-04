@@ -158,6 +158,12 @@ diffractometer_set_sample(struct diffractometer_t *self,
 	}
 }
 
+static gdouble
+diffractometer_get_wavelength(const struct diffractometer_t *self)
+{
+	return hkl_geometry_wavelength_get(self->geometry, HKL_UNIT_USER);
+}
+
 static void
 diffractometer_set_wavelength(struct diffractometer_t *self,
 			      double wavelength)
@@ -206,6 +212,7 @@ diffractometer_set_solution(struct diffractometer_t *self,
 enum {
 	PROP_0,
 	PROP_FACTORY,
+	PROP_WAVELENGTH,
 	NUM_PROPERTIES,
 };
 
@@ -217,7 +224,6 @@ struct _HklGuiFactory {
 	GObject parent_instance;
 
 	/* instance members */
-	HklFactory *factory;
 	struct diffractometer_t *diffractometer;
 };
 
@@ -228,24 +234,22 @@ hkl_gui_factory_set_property (GObject      *object,
 			      const GValue *value,
 			      GParamSpec   *pspec)
 {
-	HklGuiFactory *factory = HKL_GUI_FACTORY (object);
+	HklGuiFactory *self = HKL_GUI_FACTORY (object);
+
 
 	switch (prop_id)
 	{
 	case PROP_FACTORY:
 	{
-		HklFactory *old_factory = factory->factory;
 		HklFactory *new_factory = g_value_get_pointer (value);
-		factory->factory = new_factory;
-		if (new_factory != old_factory) {
-			if (old_factory != NULL && factory->diffractometer != NULL){
-				delete_diffractometer(factory->diffractometer);
-				factory->diffractometer = NULL;
-			}
-
-		}
-		if (NULL == factory->diffractometer && NULL != factory->factory)
-			factory->diffractometer = create_diffractometer(new_factory);
+		self->diffractometer = create_diffractometer(new_factory);
+		g_object_notify_by_pspec (object, pspec);
+	}
+	break;
+	case PROP_WAVELENGTH:
+	{
+		gdouble wavelength = g_value_get_double (value);
+		diffractometer_set_wavelength(self->diffractometer, wavelength);
 
 		g_object_notify_by_pspec (object, pspec);
 	}
@@ -263,23 +267,26 @@ hkl_gui_factory_get_property (GObject    *object,
 			      GValue     *value,
 			      GParamSpec *pspec)
 {
-  HklGuiFactory *factory = HKL_GUI_FACTORY (object);
+	HklGuiFactory *self = HKL_GUI_FACTORY (object);
 
-  switch (prop_id)
-    {
-    case PROP_FACTORY:
-      g_value_set_pointer (value, factory->factory);
-      break;
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
-    }
+	switch (prop_id)
+	{
+	case PROP_FACTORY:
+		g_value_set_pointer (value, self->diffractometer->factory);
+		break;
+	case PROP_WAVELENGTH:
+		g_value_set_double (value,
+				    diffractometer_get_wavelength(self->diffractometer));
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
 }
 
 static void
 hkl_gui_factory_init(HklGuiFactory *factory)
 {
-	factory->factory = NULL;
 	factory->diffractometer = NULL;
 }
 
@@ -296,6 +303,13 @@ hkl_gui_factory_class_init (HklGuiFactoryClass *klass)
 				      "Factory",
 				      "the embeded HklFactory.",
 				      G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+
+	props[PROP_WAVELENGTH] =
+		g_param_spec_double ("wavelength",
+				     "Wavelength",
+				     "the diffractometer wavelength",
+				     0.0, 100.0, 1.54,
+				     G_PARAM_READWRITE);
 
 	g_object_class_install_properties (object_class,
 					   NUM_PROPERTIES,
@@ -327,12 +341,15 @@ bind_factory_name_cb (GtkListItemFactory *factory,
 		      GtkListItem        *list_item)
 {
 	GtkWidget *label;
-	HklGuiFactory *hkl_gui_factory;
+	HklGuiFactory *self;
+
 
 	label = gtk_list_item_get_child (list_item);
-	hkl_gui_factory = gtk_list_item_get_item (list_item);
+	self = gtk_list_item_get_item (list_item);
 
-	gtk_label_set_label (GTK_LABEL (label), hkl_factory_name_get(hkl_gui_factory->factory));
+	g_assert(NULL != self->diffractometer);
+
+	gtk_label_set_label (GTK_LABEL (label), hkl_factory_name_get(self->diffractometer->factory));
 }
 
 
@@ -341,111 +358,113 @@ bind_factory_name_cb (GtkListItemFactory *factory,
 /* HklGuiWindow */
 /****************/
 
-typedef struct _HklGuiWindowPrivate HklGuiWindowPrivate;
+/* typedef struct _HklGuiWindowPrivate HklGuiWindowPrivate; */
 
-struct _HklGuiWindowPrivate {
-	GtkLabel* label_UB11;
-	GtkLabel* label_UB12;
-	GtkLabel* label_UB13;
-	GtkLabel* label_UB21;
-	GtkLabel* label_UB22;
-	GtkLabel* label_UB23;
-	GtkLabel* label_UB31;
-	GtkLabel* label_UB32;
-	GtkLabel* label_UB33;
-	GtkButton* button2;
-	GtkSpinButton* spinbutton_a;
-	GtkSpinButton* spinbutton_b;
-	GtkSpinButton* spinbutton_c;
-	GtkSpinButton* spinbutton_alpha;
-	GtkSpinButton* spinbutton_beta;
-	GtkSpinButton* spinbutton_gamma;
-	GtkSpinButton* spinbutton_a_min;
-	GtkSpinButton* spinbutton_b_min;
-	GtkSpinButton* spinbutton_c_min;
-	GtkSpinButton* spinbutton_alpha_min;
-	GtkSpinButton* spinbutton_beta_min;
-	GtkSpinButton* spinbutton_gamma_min;
-	GtkSpinButton* spinbutton_a_max;
-	GtkSpinButton* spinbutton_b_max;
-	GtkSpinButton* spinbutton_c_max;
-	GtkSpinButton* spinbutton_alpha_max;
-	GtkSpinButton* spinbutton_beta_max;
-	GtkSpinButton* spinbutton_gamma_max;
-	GtkSpinButton* spinbutton_lambda;
-	GtkSpinButton* spinbutton_a_star;
-	GtkSpinButton* spinbutton_b_star;
-	GtkSpinButton* spinbutton_c_star;
-	GtkSpinButton* spinbutton_alpha_star;
-	GtkSpinButton* spinbutton_beta_star;
-	GtkSpinButton* spinbutton_gamma_star;
-	GtkSpinButton* spinbutton_ux;
-	GtkSpinButton* spinbutton_uy;
-	GtkSpinButton* spinbutton_uz;
-	GtkSpinButton* spinbutton_U11;
-	GtkSpinButton* spinbutton_U12;
-	GtkSpinButton* spinbutton_U13;
-	GtkSpinButton* spinbutton_U21;
-	GtkSpinButton* spinbutton_U22;
-	GtkSpinButton* spinbutton_U23;
-	GtkSpinButton* spinbutton_U31;
-	GtkSpinButton* spinbutton_U32;
-	GtkSpinButton* spinbutton_U33;
-	GtkCheckButton* checkbutton_a;
-	GtkCheckButton* checkbutton_b;
-	GtkCheckButton* checkbutton_c;
-	GtkCheckButton* checkbutton_alpha;
-	GtkCheckButton* checkbutton_beta;
-	GtkCheckButton* checkbutton_gamma;
-	GtkCheckButton* checkbutton_ux;
-	GtkCheckButton* checkbutton_uy;
-	GtkCheckButton* checkbutton_uz;
-	GtkTreeView* treeview_reflections;
-	GtkTreeView* treeview_crystals;
-	GtkTreeView* treeview_axes;
-	GtkTreeView* treeview_pseudo_axes;
-	GtkTreeView* treeview_solutions;
-	GtkButton* toolbutton_add_reflection;
-	GtkButton* toolbutton_goto_reflection;
-	GtkButton* toolbutton_del_reflection;
-	GtkButton* toolbutton_setUB;
-	GtkButton* toolbutton_computeUB;
-	GtkButton* toolbutton_add_crystal;
-	GtkButton* toolbutton_copy_crystal;
-	GtkButton* toolbutton_del_crystal;
-	GtkButton* toolbutton_affiner;
-	GtkStatusbar* statusbar;
-	/* GtkMenuItem* menuitem5; */
-	GtkBox* vbox7;
-	GtkBox* vbox2;
-	GtkDialog* dialog1;
-	GtkButton* button1;
-	GtkComboBox* combobox1;
-	GtkListStore* liststore_axis;
-	GtkListStore* liststore_pseudo_axes;
-	GtkListStore* liststore_solutions;
-	GtkListStore* liststore_reflections;
-	GtkListStore* liststore_crystals;
+/* struct _HklGuiWindowPrivate { */
+/* 	GtkLabel* label_UB11; */
+/* 	GtkLabel* label_UB12; */
+/* 	GtkLabel* label_UB13; */
+/* 	GtkLabel* label_UB21; */
+/* 	GtkLabel* label_UB22; */
+/* 	GtkLabel* label_UB23; */
+/* 	GtkLabel* label_UB31; */
+/* 	GtkLabel* label_UB32; */
+/* 	GtkLabel* label_UB33; */
+/* 	GtkButton* button2; */
+/* 	GtkSpinButton* spinbutton_a; */
+/* 	GtkSpinButton* spinbutton_b; */
+/* 	GtkSpinButton* spinbutton_c; */
+/* 	GtkSpinButton* spinbutton_alpha; */
+/* 	GtkSpinButton* spinbutton_beta; */
+/* 	GtkSpinButton* spinbutton_gamma; */
+/* 	GtkSpinButton* spinbutton_a_min; */
+/* 	GtkSpinButton* spinbutton_b_min; */
+/* 	GtkSpinButton* spinbutton_c_min; */
+/* 	GtkSpinButton* spinbutton_alpha_min; */
+/* 	GtkSpinButton* spinbutton_beta_min; */
+/* 	GtkSpinButton* spinbutton_gamma_min; */
+/* 	GtkSpinButton* spinbutton_a_max; */
+/* 	GtkSpinButton* spinbutton_b_max; */
+/* 	GtkSpinButton* spinbutton_c_max; */
+/* 	GtkSpinButton* spinbutton_alpha_max; */
+/* 	GtkSpinButton* spinbutton_beta_max; */
+/* 	GtkSpinButton* spinbutton_gamma_max; */
+/* 	GtkSpinButton* spinbutton_a_star; */
+/* 	GtkSpinButton* spinbutton_b_star; */
+/* 	GtkSpinButton* spinbutton_c_star; */
+/* 	GtkSpinButton* spinbutton_alpha_star; */
+/* 	GtkSpinButton* spinbutton_beta_star; */
+/* 	GtkSpinButton* spinbutton_gamma_star; */
+/* 	GtkSpinButton* spinbutton_ux; */
+/* 	GtkSpinButton* spinbutton_uy; */
+/* 	GtkSpinButton* spinbutton_uz; */
+/* 	GtkSpinButton* spinbutton_U11; */
+/* 	GtkSpinButton* spinbutton_U12; */
+/* 	GtkSpinButton* spinbutton_U13; */
+/* 	GtkSpinButton* spinbutton_U21; */
+/* 	GtkSpinButton* spinbutton_U22; */
+/* 	GtkSpinButton* spinbutton_U23; */
+/* 	GtkSpinButton* spinbutton_U31; */
+/* 	GtkSpinButton* spinbutton_U32; */
+/* 	GtkSpinButton* spinbutton_U33; */
+/* 	GtkCheckButton* checkbutton_a; */
+/* 	GtkCheckButton* checkbutton_b; */
+/* 	GtkCheckButton* checkbutton_c; */
+/* 	GtkCheckButton* checkbutton_alpha; */
+/* 	GtkCheckButton* checkbutton_beta; */
+/* 	GtkCheckButton* checkbutton_gamma; */
+/* 	GtkCheckButton* checkbutton_ux; */
+/* 	GtkCheckButton* checkbutton_uy; */
+/* 	GtkCheckButton* checkbutton_uz; */
+/* 	GtkTreeView* treeview_reflections; */
+/* 	GtkTreeView* treeview_crystals; */
+/* 	GtkTreeView* treeview_axes; */
+/* 	GtkTreeView* treeview_pseudo_axes; */
+/* 	GtkTreeView* treeview_solutions; */
+/* 	GtkButton* toolbutton_add_reflection; */
+/* 	GtkButton* toolbutton_goto_reflection; */
+/* 	GtkButton* toolbutton_del_reflection; */
+/* 	GtkButton* toolbutton_setUB; */
+/* 	GtkButton* toolbutton_computeUB; */
+/* 	GtkButton* toolbutton_add_crystal; */
+/* 	GtkButton* toolbutton_copy_crystal; */
+/* 	GtkButton* toolbutton_del_crystal; */
+/* 	GtkButton* toolbutton_affiner; */
+/* 	GtkStatusbar* statusbar; */
+/* 	/\* GtkMenuItem* menuitem5; *\/ */
+/* 	GtkBox* vbox7; */
+/* 	GtkBox* vbox2; */
+/* 	GtkDialog* dialog1; */
+/* 	GtkButton* button1; */
+/* 	GtkComboBox* combobox1; */
+/* 	GtkListStore* liststore_axis; */
+/* 	GtkListStore* liststore_pseudo_axes; */
+/* 	GtkListStore* liststore_solutions; */
+/* 	GtkListStore* liststore_reflections; */
+/* 	GtkListStore* liststore_crystals; */
 
-	GtkInfoBar *info_bar;
-	GtkLabel *info_message;
+/* 	GtkInfoBar *info_bar; */
+/* 	GtkLabel *info_message; */
 
-	darray(HklGuiEngine *) pseudo_frames;
+/* 	darray(HklGuiEngine *) pseudo_frames; */
 
-#if HKL3D
-	HklGui3D *frame3d;
-#endif
-	struct diffractometer_t *diffractometer; /* unowned */
-	HklSample *sample; /* unowned */
-	HklLattice *reciprocal;
-};
+/* #if HKL3D */
+/* 	HklGui3D *frame3d; */
+/* #endif */
+/* 	HklLattice *reciprocal; */
+/* }; */
 
 struct _HklGuiWindow {
 	GtkApplication parent_instance;
-	HklGuiWindowPrivate * priv;
+
+	GtkAdjustment *adjustment_wavelength;
+	GtkWidget *spinbutton_wavelength;
+
+	struct diffractometer_t *diffractometer; /* unowned */
+	HklSample *sample; /* unowned */
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (HklGuiWindow, hkl_gui_window, GTK_TYPE_APPLICATION);
+G_DEFINE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, GTK_TYPE_APPLICATION);
 
 /* static gboolean */
 /* finalize_liststore_samples(GtkTreeModel *model, */
@@ -465,10 +484,6 @@ G_DEFINE_TYPE_WITH_PRIVATE (HklGuiWindow, hkl_gui_window, GTK_TYPE_APPLICATION);
 static void
 finalize (GObject* object)
 {
-	HklGuiWindowPrivate *priv =  hkl_gui_window_get_instance_private(HKL_GUI_WINDOW(object));
-
-	darray_free(priv->pseudo_frames);
-
 	G_OBJECT_CLASS (hkl_gui_window_parent_class)->finalize (object);
 }
 
@@ -1006,20 +1021,6 @@ finalize (GObject* object)
 /* } */
 
 /* static void */
-/* set_up_lambda(HklGuiWindow *self) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-
-/* 	g_object_set(G_OBJECT(priv->spinbutton_lambda), */
-/* 		     "sensitive", TRUE, */
-/* 		     NULL); */
-
-/* 	gtk_spin_button_set_value(priv->spinbutton_lambda, */
-/* 				  hkl_geometry_wavelength_get(priv->diffractometer->geometry, */
-/* 							      HKL_UNIT_USER)); */
-/* } */
-
-/* static void */
 /* set_up_3D (HklGuiWindow* self) */
 /* { */
 /* #if HKL3D */
@@ -1053,29 +1054,36 @@ finalize (GObject* object)
 
 /* select diffractometer */
 static void
-dropdown1_notify_selected_item_cb(GtkDropDown *dropdown, gpointer *user_data)
+dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
+				  GParamSpec* pspec,
+				  gpointer *user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
-	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self);
 	HklGuiFactory *factory;
 
 	factory = gtk_drop_down_get_selected_item(dropdown);
+	if (NULL != factory) {
 
-	if(NULL != factory->diffractometer && factory->diffractometer != priv->diffractometer){
-		priv->diffractometer = factory->diffractometer;
+		g_return_if_fail(factory->diffractometer != self->diffractometer);
 
-		diffractometer_set_sample(priv->diffractometer, priv->sample);
-		fprintf_diffractometer(stdout, priv->diffractometer);
+		self->diffractometer = factory->diffractometer;
 
-		/* set_up_lambda(self); */
-		/* set_up_pseudo_axes_frames(self); */
-		/* set_up_tree_view_axes(self); */
-		/* set_up_tree_view_pseudo_axes(self); */
-		/* set_up_tree_view_solutions(self); */
-		/* set_up_3D(self); */
+		if (NULL != self->sample){
+			diffractometer_set_sample(self->diffractometer, self->sample);
+		}
+
+		/* setup spinbutton_wavelength */
+		gtk_adjustment_set_value(self->adjustment_wavelength, diffractometer_get_wavelength(self->diffractometer));
+		gtk_widget_set_sensitive(self->spinbutton_wavelength, TRUE);
+		g_object_bind_property(factory, "wavelength", self->adjustment_wavelength, "value", G_BINDING_BIDIRECTIONAL);
 	}
-}
 
+	/* set_up_pseudo_axes_frames(self); */
+	/* set_up_tree_view_axes(self); */
+	/* set_up_tree_view_pseudo_axes(self); */
+	/* set_up_tree_view_solutions(self); */
+	/* set_up_3D(self); */
+}
 
 /* /\* axis read cb *\/ */
 /* void */
@@ -2105,17 +2113,19 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown, gpointer *user_data)
 /* 	} */
 /* } */
 
-/* void */
-/* hkl_gui_window_spinbutton_lambda_value_changed_cb (GtkSpinButton* _sender, gpointer user_data) */
-/* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
+static void
+spinbutton_wavelength_value_changed_cb (GtkSpinButton* spinbutton, gpointer user_data)
+{
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 
-/* 	diffractometer_set_wavelength(priv->diffractometer, */
-/* 				      gtk_spin_button_get_value(_sender)); */
-/* 	update_pseudo_axes (self); */
-/* 	update_pseudo_axes_frames (self); */
-/* } */
+	if (NULL != self->diffractometer){
+		diffractometer_set_wavelength(self->diffractometer,
+					      gtk_spin_button_get_value(spinbutton));
+		fprintf_diffractometer(stdout, self->diffractometer);
+	}
+	/* update_pseudo_axes (self); */
+	/* update_pseudo_axes_frames (self); */
+}
 
 /* void */
 /* hkl_gui_window_spinbutton_ux_value_changed_cb (GtkSpinButton *_senser, gpointer user_data) */
@@ -2369,35 +2379,6 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown, gpointer *user_data)
 /* *\/ */
 
 static void
-fullscreen_changed (GObject    *object,
-                    GParamSpec *pspec,
-                    gpointer    user_data)
-{
-	if (gtk_window_is_fullscreen (GTK_WINDOW (object)))
-		gtk_button_set_icon_name (GTK_BUTTON (user_data), "view-restore-symbolic");
-	else
-		gtk_button_set_icon_name (GTK_BUTTON (user_data), "view-fullscreen-symbolic");
-}
-
-static GActionEntry win_entries[] = {
-	/* { "copy", window_copy, NULL, NULL, NULL }, */
-	/* { "paste", window_paste, NULL, NULL, NULL }, */
-	/* { "fullscreen", activate_toggle, NULL, "false", change_fullscreen_state }, */
-	/* { "busy", activate_toggle, NULL, "false", change_busy_state }, */
-	/* { "justify", activate_radio, "s", "'left'", change_justify_state }, */
-	/* { "clear", activate_clear, NULL, NULL, NULL } */
-};
-
-static GActionEntry app_entries[] = {
-/*  { "new", new_activated, NULL, NULL, NULL }, */
-/*   { "about", about_activated, NULL, NULL, NULL }, */
-/*   { "quit", quit_activated, NULL, NULL, NULL }, */
-/*   { "edit-accels", edit_accels }, */
-/*   { "time-active", NULL, NULL, "false", time_active_changed }, */
-/*   { "clear-all", activate_clear_all } */
-};
-
-static void
 new_window (GApplication *app,
             GFile        *file)
 {
@@ -2409,14 +2390,17 @@ new_window (GApplication *app,
 	GtkListItemFactory *item_factory1;
 
 	GtkWidget *dropdown1;
+	GtkWidget *frame1;
+	GtkWidget *frame2;
 	GtkWidget *vpaned1;
 	GtkWidget *vbox1;
 	GtkWidget *vbox2;
 	GtkWidget *window1;
 
 	HklFactory **factories;
+	HklGuiWindow *self = HKL_GUI_WINDOW(app);
 
-	/**********/
+        /**********/
 	/* Models */
 	/**********/
 
@@ -2437,15 +2421,40 @@ new_window (GApplication *app,
 	/* widgets */
 	/***********/
 
-	/* dropdown1 */
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
-	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory1);
-	g_signal_connect (dropdown1, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), NULL);
-
-	window1 = gtk_application_window_new (GTK_APPLICATION (app));
+	frame1 = gtk_frame_new("Diffractometer");
+	frame2 = gtk_frame_new("Wavelength");
+	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vpaned1 = gtk_paned_new (GTK_ORIENTATION_VERTICAL);
+	window1 = gtk_application_window_new (GTK_APPLICATION (app));
+
+	/* dropdown1 */
+	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory1);
+	g_signal_connect (dropdown1, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), self);
+
+	/* frame1 */
+	gtk_frame_set_child(GTK_FRAME(frame1), dropdown1);
+
+	/* frame2 */
+	gtk_frame_set_child(GTK_FRAME(frame2), self->spinbutton_wavelength);
+
+	/* spinbutton_wavelength */
+	gtk_widget_set_sensitive(self->spinbutton_wavelength, FALSE);
+	g_signal_connect (self->spinbutton_wavelength, "value-changed", G_CALLBACK (spinbutton_wavelength_value_changed_cb), self);
+
+	/* vbox1 */
+	gtk_box_append(GTK_BOX(vbox1), vpaned1);
+
+	/* vbox2 */
+	gtk_box_append(GTK_BOX(vbox2), frame1);
+	gtk_box_append(GTK_BOX(vbox2), frame2);
+
+	/* vpaned1 */
+	gtk_paned_set_start_child (GTK_PANED (vpaned1), vbox2);
+	/* gtk_paned_set_end_child (GTK_PANED (vpaned), frame2); */
+
 
 	/*  window1 */
 	gtk_window_set_default_size (GTK_WINDOW(window1), 640, 480);
@@ -2453,17 +2462,6 @@ new_window (GApplication *app,
 	gtk_window_set_title (GTK_WINDOW (window1), "hkl library GUI");
 	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (window1), TRUE);
 	gtk_window_set_child (GTK_WINDOW (window1), vbox1);
-
-	/* vbox1 */
-	gtk_box_append(GTK_BOX(vbox1), vpaned1);
-
-	/* vbox2 */
-	gtk_box_append(GTK_BOX(vbox2), dropdown1);
-
-	/* vpaned1 */
-	gtk_paned_set_start_child (GTK_PANED (vpaned1), vbox2);
-	/* gtk_paned_set_end_child (GTK_PANED (vpaned), frame2); */
-
 
 	/* grid = gtk_grid_new (); */
 	/* toolbar = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0); */
@@ -2515,39 +2513,14 @@ new_window (GApplication *app,
 
 static void hkl_gui_window_startup (GApplication *application)
 {
-  HklGuiWindow *ghkl = (HklGuiWindow*) application;
-  GtkApplication *app = GTK_APPLICATION (application);
-  GMenu *menu;
-  GMenuItem *item;
-  GBytes *bytes;
-  GIcon *icon;
-  GIcon *icon2;
-  GEmblem *emblem;
-  GFile *file;
-  int i;
-  struct {
-    const char *action_and_target;
-    const char *accelerators[2];
-  } accels[] = {
-    { "app.new", { "<Control>n", NULL } },
-    { "app.quit", { "<Control>q", NULL } },
-    { "win.copy", { "<Control>c", NULL } },
-    { "win.paste", { "<Control>p", NULL } },
-    { "win.justify::left", { "<Control>l", NULL } },
-    { "win.justify::center", { "<Control>m", NULL } },
-    { "win.justify::right", { "<Control>r", NULL } }
-  };
+	G_APPLICATION_CLASS (hkl_gui_window_parent_class)->startup (application);
 
-  G_APPLICATION_CLASS (hkl_gui_window_parent_class)->startup (application);
+  /* priv->diffractometer = NULL; */
+  /* priv->sample = hkl_sample_new("default"); */
 
-  HklGuiWindowPrivate *priv =  hkl_gui_window_get_instance_private(ghkl);
+  /* darray_init(priv->pseudo_frames); */
 
-  priv->diffractometer = NULL;
-  priv->sample = NULL;
-
-  darray_init(priv->pseudo_frames);
-
-  priv->reciprocal = hkl_lattice_new_default ();
+  /* priv->reciprocal = hkl_lattice_new_default (); */
 
   /* hkl_gui_window_get_widgets_and_objects_from_ui (ghkl); */
 
@@ -2629,6 +2602,7 @@ hkl_gui_window_shutdown (GApplication *application)
 
 static void hkl_gui_window_activate (GApplication *application)
 {
+	G_APPLICATION_CLASS (hkl_gui_window_parent_class)->activate (application);
 	new_window (application, NULL);
 }
 
@@ -2641,6 +2615,9 @@ static void hkl_gui_window_open (GApplication  *application,
 
 static void hkl_gui_window_init (HklGuiWindow * self)
 {
+	self->adjustment_wavelength = gtk_adjustment_new (0.0, 0.0, 5.0, 0.0001, 0.01, 0.0);
+	self->diffractometer = NULL;
+	self->sample = NULL;
 }
 
 static void hkl_gui_window_class_init (HklGuiWindowClass *class)
