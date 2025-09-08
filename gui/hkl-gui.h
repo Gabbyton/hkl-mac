@@ -24,11 +24,39 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
+
 #include "hkl.h"
-#include "hkl-gui-pseudoaxes.h"
+
+/* factory */
 
 #define HKL_GUI_TYPE_FACTORY (hkl_gui_factory_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiFactory, hkl_gui_factory, HKL_GUI, FACTORY, GObject)
+
+HKLAPI HklGuiFactory* hkl_gui_factory_new(const HklFactory *factory);
+
+HKLAPI struct diffractometer_t* hkl_gui_factory_get_diffractometer(HklGuiFactory *self);
+
+HKLAPI GtkSelectionModel* hkl_gui_factory_get_axes_selection_model(const HklGuiFactory *self);
+
+HKLAPI GtkListItemFactory* hkl_gui_factory_name_factory_new(void);
+
+HKLAPI GListStore* hkl_gui_factory_has_liststore(void);
+
+HKLAPI GtkWidget* hkl_gui_factory_get_column_view_axes(void);
+
+/* parameter */
+
+#define HKL_GUI_TYPE_PARAMETER (hkl_gui_parameter_get_type ())
+G_DECLARE_FINAL_TYPE (HklGuiParameter, hkl_gui_parameter, HKL_GUI, PARAMETER, GObject)
+
+HklGuiParameter* hkl_gui_parameter_new(const HklParameter *parameter);
+
+GtkListItemFactory *hkl_gui_parameter_factory_name_new(void);
+GtkListItemFactory *hkl_gui_parameter_factory_value_new(void);
+GtkListItemFactory *hkl_gui_parameter_factory_min_new(void);
+GtkListItemFactory *hkl_gui_parameter_factory_max_new(void);
+
+/* window */
 
 #define HKL_GUI_TYPE_WINDOW (hkl_gui_window_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplication)

@@ -33,6 +33,7 @@
 
 #include "hkl.h"
 #include "hkl-gui.h"
+#include "hkl-gui-diffractometer-private.h"
 #include "hkl-gui-macros.h"
 #if HKL3D
 # include "hkl-gui-3d.h"
@@ -100,260 +101,6 @@
 /* 	DIFFRACTOMETER_COL_N_COLUMNS */
 /* } DiffractometerCol; */
 
-/******************/
-/* Diffractometer */
-/******************/
-
-struct diffractometer_t {
-	HklFactory *factory;
-	HklGeometry *geometry;
-	HklDetector *detector;
-	HklEngineList *engines;
-	HklGeometryList *solutions;
-};
-
-static struct diffractometer_t *
-create_diffractometer(HklFactory *factory)
-{
-	struct diffractometer_t *self = g_new(struct diffractometer_t, 1);
-
-	self->factory = factory;
-	self->geometry = hkl_factory_create_new_geometry (factory);
-	self->engines = hkl_factory_create_new_engine_list (factory);
-	self->detector = hkl_detector_factory_new (HKL_DETECTOR_TYPE_0D);
-	self->solutions = NULL;
-
-	return self;
-}
-
-static void
-fprintf_diffractometer(FILE *f, struct diffractometer_t *self)
-{
-	hkl_geometry_fprintf(f, self->geometry);
-	hkl_detector_fprintf(f, self->detector);
-	hkl_engine_list_fprintf(f, self->engines);
-	/* hkl_geometry_list_fprintf(f, self->solutions); */
-}
-
-static void
-delete_diffractometer(struct diffractometer_t *self)
-{
-	hkl_geometry_free(self->geometry);
-	hkl_engine_list_free(self->engines);
-	hkl_detector_free(self->detector);
-	if(self->solutions)
-		hkl_geometry_list_free(self->solutions);
-}
-
-static void
-diffractometer_set_sample(struct diffractometer_t *self,
-			  HklSample *sample)
-{
-	if (NULL != sample){
-		hkl_engine_list_init(self->engines,
-				     self->geometry,
-				     self->detector,
-				     sample);
-		hkl_engine_list_get(self->engines);
-	}
-}
-
-static gdouble
-diffractometer_get_wavelength(const struct diffractometer_t *self)
-{
-	return hkl_geometry_wavelength_get(self->geometry, HKL_UNIT_USER);
-}
-
-static void
-diffractometer_set_wavelength(struct diffractometer_t *self,
-			      double wavelength)
-{
-	if(hkl_geometry_wavelength_set(self->geometry,
-				       wavelength, HKL_UNIT_USER, NULL))
-		hkl_engine_list_get(self->engines);
-}
-
-static gboolean
-diffractometer_set_solutions(struct diffractometer_t *self, HklGeometryList *solutions)
-{
-	if(solutions){
-		if(self->solutions)
-			hkl_geometry_list_free(self->solutions);
-		self->solutions = solutions;
-	}
-
-	return NULL != solutions;
-}
-
-static gboolean
-diffractometer_pseudo_axis_values_set(struct diffractometer_t *self,
-				      HklEngine *engine, gdouble values[], guint n_values,
-				      GError **error)
-{
-	HklGeometryList *solutions;
-
-
-	solutions = hkl_engine_pseudo_axis_values_set(engine, values, n_values, HKL_UNIT_USER, error);
-
-	return diffractometer_set_solutions(self, solutions);
-}
-
-static void
-diffractometer_set_solution(struct diffractometer_t *self,
-			    const HklGeometryListItem *item)
-{
-	hkl_engine_list_select_solution(self->engines, item);
-}
-
-/***********/
-/* Factory */
-/***********/
-
-enum {
-	PROP_0,
-	PROP_FACTORY,
-	PROP_WAVELENGTH,
-	NUM_PROPERTIES,
-};
-
-static GParamSpec *props[NUM_PROPERTIES] = { NULL, };
-
-typedef struct _HklGuiFactory HklGuiFactory;
-
-struct _HklGuiFactory {
-	GObject parent_instance;
-
-	/* instance members */
-	struct diffractometer_t *diffractometer;
-};
-
-
-static void
-hkl_gui_factory_set_property (GObject      *object,
-			      guint         prop_id,
-			      const GValue *value,
-			      GParamSpec   *pspec)
-{
-	HklGuiFactory *self = HKL_GUI_FACTORY (object);
-
-
-	switch (prop_id)
-	{
-	case PROP_FACTORY:
-	{
-		HklFactory *new_factory = g_value_get_pointer (value);
-		self->diffractometer = create_diffractometer(new_factory);
-		g_object_notify_by_pspec (object, pspec);
-	}
-	break;
-	case PROP_WAVELENGTH:
-	{
-		gdouble wavelength = g_value_get_double (value);
-		diffractometer_set_wavelength(self->diffractometer, wavelength);
-
-		g_object_notify_by_pspec (object, pspec);
-	}
-	break;
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-		break;
-
-	}
-}
-
-static void
-hkl_gui_factory_get_property (GObject    *object,
-			      guint       prop_id,
-			      GValue     *value,
-			      GParamSpec *pspec)
-{
-	HklGuiFactory *self = HKL_GUI_FACTORY (object);
-
-	switch (prop_id)
-	{
-	case PROP_FACTORY:
-		g_value_set_pointer (value, self->diffractometer->factory);
-		break;
-	case PROP_WAVELENGTH:
-		g_value_set_double (value,
-				    diffractometer_get_wavelength(self->diffractometer));
-		break;
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-		break;
-	}
-}
-
-static void
-hkl_gui_factory_init(HklGuiFactory *factory)
-{
-	factory->diffractometer = NULL;
-}
-
-static void
-hkl_gui_factory_class_init (HklGuiFactoryClass *klass)
-{
-	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-	object_class->set_property = hkl_gui_factory_set_property;
-	object_class->get_property = hkl_gui_factory_get_property;
-
-	props[PROP_FACTORY] =
-		g_param_spec_pointer ("factory",
-				      "Factory",
-				      "the embeded HklFactory.",
-				      G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
-
-	props[PROP_WAVELENGTH] =
-		g_param_spec_double ("wavelength",
-				     "Wavelength",
-				     "the diffractometer wavelength",
-				     0.0, 100.0, 1.54,
-				     G_PARAM_READWRITE);
-
-	g_object_class_install_properties (object_class,
-					   NUM_PROPERTIES,
-					   props);
-}
-
-
-HklGuiFactory *hkl_gui_factory_new(const HklFactory *factory)
-{
-	return g_object_new (HKL_GUI_TYPE_FACTORY,
-			     "factory", factory,
-			     NULL);
-}
-
-G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
-
-static void
-setup_factory_name_cb (GtkListItemFactory *factory,
-		       GtkListItem        *list_item)
-{
-	GtkWidget *label;
-
-	label = gtk_label_new ("");
-	gtk_list_item_set_child (list_item, label);
-}
-
-static void
-bind_factory_name_cb (GtkListItemFactory *factory,
-		      GtkListItem        *list_item)
-{
-	GtkWidget *label;
-	HklGuiFactory *self;
-
-
-	label = gtk_list_item_get_child (list_item);
-	self = gtk_list_item_get_item (list_item);
-
-	g_assert(NULL != self->diffractometer);
-
-	gtk_label_set_label (GTK_LABEL (label), hkl_factory_name_get(self->diffractometer->factory));
-}
-
-
-
 /****************/
 /* HklGuiWindow */
 /****************/
@@ -418,7 +165,6 @@ bind_factory_name_cb (GtkListItemFactory *factory,
 /* 	GtkCheckButton* checkbutton_uz; */
 /* 	GtkTreeView* treeview_reflections; */
 /* 	GtkTreeView* treeview_crystals; */
-/* 	GtkTreeView* treeview_axes; */
 /* 	GtkTreeView* treeview_pseudo_axes; */
 /* 	GtkTreeView* treeview_solutions; */
 /* 	GtkButton* toolbutton_add_reflection; */
@@ -459,6 +205,7 @@ struct _HklGuiWindow {
 
 	GtkAdjustment *adjustment_wavelength;
 	GtkWidget *spinbutton_wavelength;
+	GtkWidget *column_view_axes;
 
 	struct diffractometer_t *diffractometer; /* unowned */
 	HklSample *sample; /* unowned */
@@ -904,27 +651,6 @@ finalize (GObject* object)
 
 
 /* static void */
-/* set_up_tree_view_axes (HklGuiWindow* self) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-/* 	const darray_string *axes; */
-/* 	const char **axis; */
-/* 	GtkTreeIter iter = {0}; */
-
-/* 	gtk_list_store_clear (priv->liststore_axis); */
-
-/* 	axes = hkl_geometry_axis_names_get(priv->diffractometer->geometry); */
-/* 	darray_foreach (axis, *axes){ */
-/* 		gtk_list_store_append (priv->liststore_axis, &iter); */
-/* 		gtk_list_store_set (priv->liststore_axis, &iter, */
-/* 				    AXIS_COL_NAME, *axis, */
-/* 				    -1); */
-/* 	} */
-
-/* 	update_axes (self); */
-/* } */
-
-/* static void */
 /* set_up_tree_view_pseudo_axes (HklGuiWindow* self) */
 /* { */
 /* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
@@ -1064,9 +790,9 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 	factory = gtk_drop_down_get_selected_item(dropdown);
 	if (NULL != factory) {
 
-		g_return_if_fail(factory->diffractometer != self->diffractometer);
+		g_return_if_fail(hkl_gui_factory_get_diffractometer(factory) != self->diffractometer);
 
-		self->diffractometer = factory->diffractometer;
+		self->diffractometer = hkl_gui_factory_get_diffractometer(factory);
 
 		if (NULL != self->sample){
 			diffractometer_set_sample(self->diffractometer, self->sample);
@@ -1076,13 +802,17 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		gtk_adjustment_set_value(self->adjustment_wavelength, diffractometer_get_wavelength(self->diffractometer));
 		gtk_widget_set_sensitive(self->spinbutton_wavelength, TRUE);
 		g_object_bind_property(factory, "wavelength", self->adjustment_wavelength, "value", G_BINDING_BIDIRECTIONAL);
+
+		/* setup column axes view */
+		gtk_column_view_set_model(GTK_COLUMN_VIEW(self->column_view_axes),
+					  hkl_gui_factory_get_axes_selection_model(factory));
+
+		/* set_up_pseudo_axes_frames(self); */
+		/* set_up_tree_view_pseudo_axes(self); */
+		/* set_up_tree_view_solutions(self); */
+		/* set_up_3D(self); */
 	}
 
-	/* set_up_pseudo_axes_frames(self); */
-	/* set_up_tree_view_axes(self); */
-	/* set_up_tree_view_pseudo_axes(self); */
-	/* set_up_tree_view_solutions(self); */
-	/* set_up_3D(self); */
 }
 
 /* /\* axis read cb *\/ */
@@ -2382,9 +2112,6 @@ static void
 new_window (GApplication *app,
             GFile        *file)
 {
-	unsigned int i;
-	size_t n;
-
 	GListStore *liststore1;
 
 	GtkListItemFactory *item_factory1;
@@ -2392,12 +2119,12 @@ new_window (GApplication *app,
 	GtkWidget *dropdown1;
 	GtkWidget *frame1;
 	GtkWidget *frame2;
+	GtkWidget *frame3;
 	GtkWidget *vpaned1;
 	GtkWidget *vbox1;
 	GtkWidget *vbox2;
 	GtkWidget *window1;
 
-	HklFactory **factories;
 	HklGuiWindow *self = HKL_GUI_WINDOW(app);
 
         /**********/
@@ -2405,25 +2132,18 @@ new_window (GApplication *app,
 	/**********/
 
 	/* liststore1 */
-	liststore1 = g_list_store_new (HKL_GUI_TYPE_FACTORY);
-
-	factories = hkl_factory_get_all(&n);
-	for(i=0; i<n; ++i){
-		g_list_store_append (liststore1, hkl_gui_factory_new(factories[i]));
-	}
-
-	/* item_factory1 */
-	item_factory1 = gtk_signal_list_item_factory_new ();
-	g_signal_connect (item_factory1, "setup", G_CALLBACK (setup_factory_name_cb), NULL);
-	g_signal_connect (item_factory1, "bind", G_CALLBACK (bind_factory_name_cb), NULL);
+	liststore1 = hkl_gui_factory_has_liststore();
+	item_factory1 = hkl_gui_factory_name_factory_new();
 
 	/***********/
 	/* widgets */
 	/***********/
 
+	self->column_view_axes = hkl_gui_factory_get_column_view_axes();
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
 	frame1 = gtk_frame_new("Diffractometer");
 	frame2 = gtk_frame_new("Wavelength");
+	frame3 = gtk_frame_new("Axes");
 	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -2440,6 +2160,9 @@ new_window (GApplication *app,
 	/* frame2 */
 	gtk_frame_set_child(GTK_FRAME(frame2), self->spinbutton_wavelength);
 
+	/* frame3 */
+	gtk_frame_set_child(GTK_FRAME(frame3), self->column_view_axes);
+
 	/* spinbutton_wavelength */
 	gtk_widget_set_sensitive(self->spinbutton_wavelength, FALSE);
 	g_signal_connect (self->spinbutton_wavelength, "value-changed", G_CALLBACK (spinbutton_wavelength_value_changed_cb), self);
@@ -2450,11 +2173,11 @@ new_window (GApplication *app,
 	/* vbox2 */
 	gtk_box_append(GTK_BOX(vbox2), frame1);
 	gtk_box_append(GTK_BOX(vbox2), frame2);
+	gtk_box_append(GTK_BOX(vbox2), frame3);
 
 	/* vpaned1 */
 	gtk_paned_set_start_child (GTK_PANED (vpaned1), vbox2);
 	/* gtk_paned_set_end_child (GTK_PANED (vpaned), frame2); */
-
 
 	/*  window1 */
 	gtk_window_set_default_size (GTK_WINDOW(window1), 640, 480);
@@ -2463,51 +2186,6 @@ new_window (GApplication *app,
 	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (window1), TRUE);
 	gtk_window_set_child (GTK_WINDOW (window1), vbox1);
 
-	/* grid = gtk_grid_new (); */
-	/* toolbar = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0); */
-	/* gtk_widget_add_css_class (toolbar, "toolbar"); */
-	/* button = gtk_toggle_button_new (); */
-	/* gtk_button_set_icon_name (GTK_BUTTON (button), "format-justify-left"); */
-	/* gtk_actionable_set_detailed_action_name (GTK_ACTIONABLE (button), "win.justify::left"); */
-	/* gtk_box_append (GTK_BOX (toolbar), button); */
-	/* button = gtk_toggle_button_new (); */
-	/* gtk_button_set_icon_name (GTK_BUTTON (button), "format-justify-center"); */
-	/* gtk_actionable_set_detailed_action_name (GTK_ACTIONABLE (button), "win.justify::center"); */
-	/* gtk_box_append (GTK_BOX (toolbar), button); */
-	/* button = gtk_toggle_button_new (); */
-	/* gtk_button_set_icon_name (GTK_BUTTON (button), "format-justify-right"); */
-	/* gtk_actionable_set_detailed_action_name (GTK_ACTIONABLE (button), "win.justify::right"); */
-	/* gtk_box_append (GTK_BOX (toolbar), button); */
-	/* button = gtk_toggle_button_new (); */
-	/* gtk_button_set_icon_name (GTK_BUTTON (button), "view-fullscreen-symbolic"); */
-	/* gtk_actionable_set_action_name (GTK_ACTIONABLE (button), "win.fullscreen"); */
-	/* gtk_box_append (GTK_BOX (toolbar), button); */
-	/* g_signal_connect (window, "notify::fullscreened", G_CALLBACK (fullscreen_changed), button); */
-	/* gtk_grid_attach (GTK_GRID (grid), toolbar, 0, 0, 1, 1); */
-	/* scrolled = gtk_scrolled_window_new (); */
-	/* gtk_widget_set_hexpand (scrolled, TRUE); */
-	/* gtk_widget_set_vexpand (scrolled, TRUE); */
-	/* gtk_scrolled_window_set_has_frame (GTK_SCROLLED_WINDOW (scrolled), TRUE); */
-	/* view = gtk_text_view_new (); */
-	/* g_object_set_data ((GObject*)window, "bloatpad-text", view); */
-	/* gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrolled), view); */
-	/* gtk_grid_attach (GTK_GRID (grid), scrolled, 0, 1, 1, 1); */
-	/* if (file != NULL) */
-	/* { */
-	/* 	char *contents; */
-	/* 	gsize length; */
-	/* 	if (g_file_load_contents (file, NULL, &contents, &length, NULL, NULL)) */
-
-	/* 	{ */
-	/* 		GtkTextBuffer *buffer; */
-	/* 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view)); */
-	/* 		gtk_text_buffer_set_text (buffer, contents, length); */
-	/* 		g_free (contents); */
-	/* 	} */
-	/* } */
-	/* g_signal_connect (gtk_text_view_get_buffer (GTK_TEXT_VIEW (view)), "changed", */
-	/*                   G_CALLBACK (text_buffer_changed_cb), window); */
-	/* text_buffer_changed_cb (gtk_text_view_get_buffer (GTK_TEXT_VIEW (view)), window); */
 	gtk_window_present (GTK_WINDOW (window1));
 }
 
@@ -2529,68 +2207,6 @@ static void hkl_gui_window_startup (GApplication *application)
   /* set_up_tree_view_crystals (ghkl); */
 
   /* set_up_tree_view_reflections(ghkl); */
-
-
-/* g_action_map_add_action_entries (G_ACTION_MAP (application), app_entries, G_N_ELEMENTS (app_entries), application); */
-  /* for (i = 0; i < G_N_ELEMENTS (accels); i++) */
-  /*   gtk_application_set_accels_for_action (app, accels[i].action_and_target, accels[i].accelerators); */
-  /* menu = gtk_application_get_menu_by_id (GTK_APPLICATION (application), "icon-menu"); */
-  /* file = g_file_new_for_uri ("resource:///org/gtk/libgtk/icons/16x16/actions/insert-image.png"); */
-  /* icon = g_file_icon_new (file); */
-  /* item = g_menu_item_new ("File Icon", NULL); */
-  /* g_menu_item_set_icon (item, icon); */
-  /* g_menu_append_item (menu, item); */
-  /* g_object_unref (item); */
-  /* g_object_unref (icon); */
-  /* g_object_unref (file); */
-  /* icon = g_themed_icon_new ("edit-find"); */
-  /* item = g_menu_item_new ("Themed Icon", NULL); */
-  /* g_menu_item_set_icon (item, icon); */
-  /* g_menu_append_item (menu, item); */
-  /* g_object_unref (item); */
-  /* g_object_unref (icon); */
-  /* bytes = g_resources_lookup_data ("/org/gtk/libgtk/icons/16x16/actions/media-eject.png", 0, NULL); */
-  /* icon = g_bytes_icon_new (bytes); */
-  /* item = g_menu_item_new ("Bytes Icon", NULL); */
-  /* g_menu_item_set_icon (item, icon); */
-  /* g_menu_append_item (menu, item); */
-  /* g_object_unref (item); */
-  /* g_object_unref (icon); */
-  /* g_bytes_unref (bytes); */
-  /* icon = G_ICON (gdk_texture_new_from_resource ("/org/gtk/libgtk/icons/16x16/actions/folder-new.png")); */
-  /* item = g_menu_item_new ("Texture", NULL); */
-  /* g_menu_item_set_icon (item, icon); */
-  /* g_menu_append_item (menu, item); */
-  /* g_object_unref (item); */
-  /* g_object_unref (icon); */
-  /* file = g_file_new_for_uri ("resource:///org/gtk/libgtk/icons/16x16/actions/bookmark-new.png"); */
-  /* icon = g_file_icon_new (file); */
-
-  /* emblem = g_emblem_new (icon); */
-  /* g_object_unref (icon); */
-  /* g_object_unref (file); */
-  /* file = g_file_new_for_uri ("resource:///org/gtk/libgtk/icons/16x16/actions/dialog-warning.png"); */
-  /* icon2 = g_file_icon_new (file); */
-  /* icon = g_emblemed_icon_new (icon2, emblem); */
-  /* item = g_menu_item_new ("Emblemed Icon", NULL); */
-  /* g_menu_item_set_icon (item, icon); */
-  /* g_menu_append_item (menu, item); */
-  /* g_object_unref (item); */
-  /* g_object_unref (icon); */
-  /* g_object_unref (icon2); */
-  /* g_object_unref (file); */
-  /* g_object_unref (emblem); */
-  /* icon = g_themed_icon_new ("weather-severe-alert-symbolic"); */
-  /* item = g_menu_item_new ("Symbolic Icon", NULL); */
-  /* g_menu_item_set_icon (item, icon); */
-  /* g_menu_append_item (menu, item); */
-  /* g_object_unref (item); */
-  /* g_object_unref (icon); */
-  /* const char *new_accels[] = { "<Control>n", "<Control>t", NULL }; */
-  /* gtk_application_set_accels_for_action (GTK_APPLICATION (application), "app.new", new_accels); */
-  //dump_accels (GTK_APPLICATION (application));
-  // gtk_application_set_menubar (GTK_APPLICATION (application), G_MENU_MODEL (gtk_builder_get_object (builder, "app-menu")));
-  //ghkl->time = gtk_application_get_menu_by_id (GTK_APPLICATION (application), "time-menu");
 }
 
 static void

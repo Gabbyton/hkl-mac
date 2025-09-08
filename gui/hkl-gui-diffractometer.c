@@ -1,0 +1,117 @@
+/* This file is part of the hkl library.
+ *
+ * The hkl library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The hkl library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Copyright (C) 2003-2019, 2022, 2024, 2025 Synchrotron SOLEIL
+ *                         L'Orme des Merisiers Saint-Aubin
+ *                         BP 48 91192 GIF-sur-YVETTE CEDEX
+ *
+ * Authors: Picca Frédéric-Emmanuel <picca@synchrotron-soleil.fr>
+ */
+
+#include <stdlib.h>
+#include <string.h>
+#include <float.h>
+#include <math.h>
+#include <stdio.h>
+
+#include <glib.h>
+#include <glib-object.h>
+
+#include "hkl.h"
+#include "hkl-gui-diffractometer-private.h"
+
+struct diffractometer_t *create_diffractometer(HklFactory *factory)
+{
+	struct diffractometer_t *self = g_new(struct diffractometer_t, 1);
+
+	self->factory = factory;
+	self->geometry = hkl_factory_create_new_geometry (factory);
+	self->engines = hkl_factory_create_new_engine_list (factory);
+	self->detector = hkl_detector_factory_new (HKL_DETECTOR_TYPE_0D);
+	self->solutions = NULL;
+
+	return self;
+}
+
+void fprintf_diffractometer(FILE *f, struct diffractometer_t *self)
+{
+	hkl_geometry_fprintf(f, self->geometry);
+	hkl_detector_fprintf(f, self->detector);
+	hkl_engine_list_fprintf(f, self->engines);
+	/* hkl_geometry_list_fprintf(f, self->solutions); */
+}
+
+void delete_diffractometer(struct diffractometer_t *self)
+{
+	hkl_geometry_free(self->geometry);
+	hkl_engine_list_free(self->engines);
+	hkl_detector_free(self->detector);
+	if(self->solutions)
+		hkl_geometry_list_free(self->solutions);
+}
+
+void diffractometer_set_sample(struct diffractometer_t *self,
+			  HklSample *sample)
+{
+	if (NULL != sample){
+		hkl_engine_list_init(self->engines,
+				     self->geometry,
+				     self->detector,
+				     sample);
+		hkl_engine_list_get(self->engines);
+	}
+}
+
+gdouble diffractometer_get_wavelength(const struct diffractometer_t *self)
+{
+	return hkl_geometry_wavelength_get(self->geometry, HKL_UNIT_USER);
+}
+
+void diffractometer_set_wavelength(struct diffractometer_t *self,
+				   double wavelength)
+{
+	if(hkl_geometry_wavelength_set(self->geometry,
+				       wavelength, HKL_UNIT_USER, NULL))
+		hkl_engine_list_get(self->engines);
+}
+
+gboolean diffractometer_set_solutions(struct diffractometer_t *self, HklGeometryList *solutions)
+{
+	if(solutions){
+		if(self->solutions)
+			hkl_geometry_list_free(self->solutions);
+		self->solutions = solutions;
+	}
+
+	return NULL != solutions;
+}
+
+gboolean diffractometer_pseudo_axis_values_set(struct diffractometer_t *self,
+					       HklEngine *engine, gdouble values[], guint n_values,
+					       GError **error)
+{
+	HklGeometryList *solutions;
+
+
+	solutions = hkl_engine_pseudo_axis_values_set(engine, values, n_values, HKL_UNIT_USER, error);
+
+	return diffractometer_set_solutions(self, solutions);
+}
+
+void diffractometer_set_solution(struct diffractometer_t *self,
+				 const HklGeometryListItem *item)
+{
+	hkl_engine_list_select_solution(self->engines, item);
+}

@@ -26,7 +26,11 @@ ghkl_LDADD = \
 	$(top_builddir)/hkl/libhkl.la
 
 ghkl_SOURCES = \
+	hkl-gui-diffractometer.c \
+	hkl-gui-diffractometer-private.h \
+	hkl-gui-factory.c \
 	hkl-gui-macros.h \
+	hkl-gui-parameter.c \
 	hkl-gui-pseudoaxes.c \
 	hkl-gui-pseudoaxes.h \
 	hkl-gui.c \
