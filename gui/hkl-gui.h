@@ -38,11 +38,15 @@ HKLAPI struct diffractometer_t* hkl_gui_factory_get_diffractometer(HklGuiFactory
 
 HKLAPI GtkSelectionModel* hkl_gui_factory_get_axes_selection_model(const HklGuiFactory *self);
 
+HKLAPI GtkSelectionModel* hkl_gui_factory_get_pseudo_axes_selection_model(const HklGuiFactory *self);
+
 HKLAPI GtkListItemFactory* hkl_gui_factory_name_factory_new(void);
 
 HKLAPI GListStore* hkl_gui_factory_has_liststore(void);
 
 HKLAPI GtkWidget* hkl_gui_factory_get_column_view_axes(void);
+
+HKLAPI GtkWidget* hkl_gui_factory_get_column_view_pseudo_axes(void);
 
 /* parameter */
 

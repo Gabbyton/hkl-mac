@@ -507,18 +507,6 @@ finalize (GObject* object)
 /* } */
 
 /* static void */
-/* update_source (HklGuiWindow* self) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-
-/* 	g_return_if_fail (self != NULL); */
-
-/* 	gtk_spin_button_set_value (priv->spinbutton_lambda, */
-/* 				   hkl_geometry_wavelength_get(priv->diffractometer->geometry, */
-/* 							       HKL_UNIT_USER)); */
-/* } */
-
-/* static void */
 /* update_reflections (HklGuiWindow *self) */
 /* { */
 /* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
@@ -1843,20 +1831,6 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 /* 	} */
 /* } */
 
-static void
-spinbutton_wavelength_value_changed_cb (GtkSpinButton* spinbutton, gpointer user_data)
-{
-	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
-
-	if (NULL != self->diffractometer){
-		diffractometer_set_wavelength(self->diffractometer,
-					      gtk_spin_button_get_value(spinbutton));
-		fprintf_diffractometer(stdout, self->diffractometer);
-	}
-	/* update_pseudo_axes (self); */
-	/* update_pseudo_axes_frames (self); */
-}
-
 /* void */
 /* hkl_gui_window_spinbutton_ux_value_changed_cb (GtkSpinButton *_senser, gpointer user_data) */
 /* { */
@@ -2165,7 +2139,6 @@ new_window (GApplication *app,
 
 	/* spinbutton_wavelength */
 	gtk_widget_set_sensitive(self->spinbutton_wavelength, FALSE);
-	g_signal_connect (self->spinbutton_wavelength, "value-changed", G_CALLBACK (spinbutton_wavelength_value_changed_cb), self);
 
 	/* vbox1 */
 	gtk_box_append(GTK_BOX(vbox1), vpaned1);
