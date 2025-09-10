@@ -45,7 +45,7 @@ struct diffractometer_t *create_diffractometer(HklFactory *factory)
 	return self;
 }
 
-void fprintf_diffractometer(FILE *f, struct diffractometer_t *self)
+void diffractometer_fprintf(FILE *f, struct diffractometer_t *self)
 {
 	hkl_geometry_fprintf(f, self->geometry);
 	hkl_detector_fprintf(f, self->detector);
@@ -63,7 +63,7 @@ void delete_diffractometer(struct diffractometer_t *self)
 }
 
 void diffractometer_set_sample(struct diffractometer_t *self,
-			  HklSample *sample)
+			       HklSample *sample)
 {
 	if (NULL != sample){
 		hkl_engine_list_init(self->engines,
@@ -83,8 +83,10 @@ void diffractometer_set_wavelength(struct diffractometer_t *self,
 				   double wavelength)
 {
 	if(hkl_geometry_wavelength_set(self->geometry,
-				       wavelength, HKL_UNIT_USER, NULL))
+				       wavelength, HKL_UNIT_USER, NULL)){
 		hkl_engine_list_get(self->engines);
+		diffractometer_fprintf(stdout, self);
+	}
 }
 
 gboolean diffractometer_set_solutions(struct diffractometer_t *self, HklGeometryList *solutions)
