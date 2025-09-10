@@ -37,9 +37,11 @@ struct diffractometer_t {
 
 struct diffractometer_t * create_diffractometer(HklFactory *factory);
 
-void fprintf_diffractometer(FILE *f, struct diffractometer_t *self);
+void diffractometer_fprintf(FILE *f, struct diffractometer_t *self);
 
-void delete_diffractometer(struct diffractometer_t *self);
+void diffractometer_free(struct diffractometer_t *self);
+
+void diffractometer_update(struct diffractometer_t *self);
 
 void diffractometer_set_sample(struct diffractometer_t *self,
 			       HklSample *sample);

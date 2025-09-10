@@ -206,6 +206,7 @@ struct _HklGuiWindow {
 	GtkAdjustment *adjustment_wavelength;
 	GtkWidget *spinbutton_wavelength;
 	GtkWidget *column_view_axes;
+	GtkWidget *column_view_pseudo_axes;
 
 	struct diffractometer_t *diffractometer; /* unowned */
 	HklSample *sample; /* unowned */
@@ -638,31 +639,6 @@ finalize (GObject* object)
 /* } */
 
 
-/* static void */
-/* set_up_tree_view_pseudo_axes (HklGuiWindow* self) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-/* 	HklEngine **engine; */
-/* 	const darray_engine *engines; */
-
-/* 	gtk_list_store_clear(priv->liststore_pseudo_axes); */
-
-/* 	engines = hkl_engine_list_engines_get(priv->diffractometer->engines); */
-/* 	darray_foreach(engine, *engines){ */
-/* 		const darray_string *pseudo_axes = hkl_engine_pseudo_axis_names_get(*engine); */
-/* 		GtkTreeIter iter = {0}; */
-/* 		guint idx; */
-
-/* 		for(idx=0; idx<darray_size(*pseudo_axes); ++idx){ */
-/* 			gtk_list_store_append (priv->liststore_pseudo_axes, &iter); */
-/* 			gtk_list_store_set (priv->liststore_pseudo_axes, &iter, */
-/* 					    PSEUDO_AXIS_COL_IDX, idx, */
-/* 					    PSEUDO_AXIS_COL_ENGINE, *engine, */
-/* 					    PSEUDO_AXIS_COL_NAME, darray_item(*pseudo_axes, idx), */
-/* 					    -1); */
-/* 		} */
-/* 	} */
-
 /* 	update_pseudo_axes (self); */
 /* } */
 
@@ -795,7 +771,10 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		gtk_column_view_set_model(GTK_COLUMN_VIEW(self->column_view_axes),
 					  hkl_gui_factory_get_axes_selection_model(factory));
 
-		/* set_up_pseudo_axes_frames(self); */
+		/* setup column view pseudo axes */
+		gtk_column_view_set_model(GTK_COLUMN_VIEW(self->column_view_pseudo_axes),
+					  hkl_gui_factory_get_pseudo_axes_selection_model(factory));
+
 		/* set_up_tree_view_pseudo_axes(self); */
 		/* set_up_tree_view_solutions(self); */
 		/* set_up_3D(self); */
@@ -2094,6 +2073,7 @@ new_window (GApplication *app,
 	GtkWidget *frame1;
 	GtkWidget *frame2;
 	GtkWidget *frame3;
+	GtkWidget *frame4;
 	GtkWidget *vpaned1;
 	GtkWidget *vbox1;
 	GtkWidget *vbox2;
@@ -2114,11 +2094,14 @@ new_window (GApplication *app,
 	/***********/
 
 	self->column_view_axes = hkl_gui_factory_get_column_view_axes();
+	self->column_view_pseudo_axes = hkl_gui_factory_get_column_view_pseudo_axes();
+	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
+
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
 	frame1 = gtk_frame_new("Diffractometer");
 	frame2 = gtk_frame_new("Wavelength");
 	frame3 = gtk_frame_new("Axes");
-	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
+	frame4 = gtk_frame_new("Pseudo Axes");
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vpaned1 = gtk_paned_new (GTK_ORIENTATION_VERTICAL);
@@ -2137,6 +2120,9 @@ new_window (GApplication *app,
 	/* frame3 */
 	gtk_frame_set_child(GTK_FRAME(frame3), self->column_view_axes);
 
+	/* frame4 */
+	gtk_frame_set_child(GTK_FRAME(frame4), self->column_view_pseudo_axes);
+
 	/* spinbutton_wavelength */
 	gtk_widget_set_sensitive(self->spinbutton_wavelength, FALSE);
 
@@ -2147,6 +2133,7 @@ new_window (GApplication *app,
 	gtk_box_append(GTK_BOX(vbox2), frame1);
 	gtk_box_append(GTK_BOX(vbox2), frame2);
 	gtk_box_append(GTK_BOX(vbox2), frame3);
+	gtk_box_append(GTK_BOX(vbox2), frame4);
 
 	/* vpaned1 */
 	gtk_paned_set_start_child (GTK_PANED (vpaned1), vbox2);
@@ -2206,7 +2193,7 @@ static void hkl_gui_window_init (HklGuiWindow * self)
 {
 	self->adjustment_wavelength = gtk_adjustment_new (0.0, 0.0, 5.0, 0.0001, 0.01, 0.0);
 	self->diffractometer = NULL;
-	self->sample = NULL;
+	self->sample = hkl_sample_new("sample"); /* TODO */
 }
 
 static void hkl_gui_window_class_init (HklGuiWindowClass *class)

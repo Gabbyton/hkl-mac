@@ -55,7 +55,28 @@ struct _HklGuiFactory {
 
 	/* instance members */
 	struct diffractometer_t *diffractometer;
+	GListStore *liststore_axes;
+	GListStore *liststore_pseudo_axes;
 };
+
+G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
+
+
+void hkl_gui_parameter_notify_value_cb(HklGuiParameter *parameter,
+				       GParamSpec* pspec,
+				       gpointer *user_data)
+{
+	HklGuiFactory *self = HKL_GUI_FACTORY(user_data);
+	diffractometer_update(self->diffractometer);
+}
+void hkl_gui_parameter_notify_value_2_cb(HklGuiParameter *parameter,
+					 GParamSpec* pspec,
+					 gpointer *user_data)
+{
+	HklGuiParameter *self = HKL_GUI_PARAMETER(user_data);
+	hkl_gui_parameter_update(self);
+}
+
 
 static void
 hkl_gui_factory_set_property (GObject      *object,
@@ -70,8 +91,55 @@ hkl_gui_factory_set_property (GObject      *object,
 	{
 	case PROP_FACTORY:
 	{
+		/* diffractometer */
 		HklFactory *new_factory = g_value_get_pointer (value);
 		self->diffractometer = create_diffractometer(new_factory);
+
+		/* liststore_axes */
+		self->liststore_axes = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
+		const darray_string *names;
+		const char **name;
+
+		names = hkl_geometry_axis_names_get(self->diffractometer->geometry);
+		darray_foreach(name, *names){
+			const HklParameter *parameter = hkl_geometry_axis_get(self->diffractometer->geometry, *name, NULL);
+			g_list_store_append (self->liststore_axes,
+					     hkl_gui_parameter_new(parameter));
+		}
+
+		/* liststore_pseudo_axes */
+		self->liststore_pseudo_axes = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
+		const darray_engine *engines;
+		HklEngine **engine;
+
+		engines = hkl_engine_list_engines_get(self->diffractometer->engines);
+		darray_foreach(engine, *engines){
+			const darray_string *pseudo_axes = hkl_engine_pseudo_axis_names_get(*engine);
+
+			darray_foreach(name, *pseudo_axes){
+				const HklParameter *parameter = hkl_engine_pseudo_axis_get(*engine,
+											   *name, NULL);
+				g_list_store_append (self->liststore_pseudo_axes,
+						     hkl_gui_parameter_new(parameter));
+			}
+		}
+
+
+		/* connect pseudo axes parameters to axes */
+		guint n_axes = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_axes));
+		guint n_pseudo_axes = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_pseudo_axes));
+		guint i;
+		guint j;
+
+		for(i=0; i<n_axes; ++i){
+			HklGuiParameter *g_axis = g_list_model_get_item(G_LIST_MODEL(self->liststore_axes), i);
+			g_signal_connect(g_axis, "notify::value", G_CALLBACK(hkl_gui_parameter_notify_value_cb), self);
+			for(j=0; j<n_pseudo_axes; ++j){
+				HklGuiParameter *g_pseudo_axis =  g_list_model_get_item(G_LIST_MODEL(self->liststore_pseudo_axes), j);
+				g_signal_connect(g_axis, "notify::value", G_CALLBACK(hkl_gui_parameter_notify_value_2_cb), g_pseudo_axis);
+			}
+		}
+
 		g_object_notify_by_pspec (object, pspec);
 	}
 	break;
@@ -114,6 +182,45 @@ hkl_gui_factory_get_property (GObject    *object,
 }
 
 static void
+hkl_gui_factory_dispose (GObject *gobject)
+{
+	HklGuiFactory *self = HKL_GUI_FACTORY (gobject);
+
+	/* In dispose(), you are supposed to free all types referenced from this
+	 * object which might themselves hold a reference to self. Generally,
+	 * the most simple solution is to unref all members on which you own a
+	 * reference.
+	 */
+
+	/* dispose() might be called multiple times, so we must guard against
+	 * calling g_object_unref() on an invalid GObject by setting the member
+	 * NULL; g_clear_object() does this for us.
+	 */
+	g_clear_object (&self->liststore_pseudo_axes);
+	g_clear_object (&self->liststore_axes);
+
+	/* Always chain up to the parent class; there is no need to check if
+	 * the parent class implements the dispose() virtual function: it is
+	 * always guaranteed to do so
+	 */
+	G_OBJECT_CLASS (hkl_gui_factory_parent_class)->dispose (gobject);
+}
+
+static void
+hkl_gui_factory_finalize (GObject *gobject)
+{
+	HklGuiFactory *self = HKL_GUI_FACTORY(gobject);
+
+	if (NULL != self->diffractometer)
+		diffractometer_free(self->diffractometer);
+
+	/* Always chain up to the parent class; as with dispose(), finalize()
+	 * is guaranteed to exist on the parent's class virtual function table
+	 */
+	G_OBJECT_CLASS (hkl_gui_factory_parent_class)->finalize (gobject);
+}
+
+static void
 hkl_gui_factory_init(HklGuiFactory *factory)
 {
 	factory->diffractometer = NULL;
@@ -124,8 +231,10 @@ hkl_gui_factory_class_init (HklGuiFactoryClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-	object_class->set_property = hkl_gui_factory_set_property;
+	object_class->dispose = hkl_gui_factory_dispose;
+	object_class->finalize = hkl_gui_factory_finalize;
 	object_class->get_property = hkl_gui_factory_get_property;
+	object_class->set_property = hkl_gui_factory_set_property;
 
 	props[PROP_FACTORY] =
 		g_param_spec_pointer ("factory",
@@ -144,9 +253,6 @@ hkl_gui_factory_class_init (HklGuiFactoryClass *klass)
 					   NUM_PROPERTIES,
 					   props);
 }
-
-
-G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
 
 HklGuiFactory *
 hkl_gui_factory_new(const HklFactory *factory)
@@ -177,7 +283,7 @@ bind_factory_name_cb (GtkListItemFactory *factory,
 	label = gtk_list_item_get_child (list_item);
 	self = gtk_list_item_get_item (list_item);
 
-	g_assert(NULL != self->diffractometer);
+	g_return_if_fail(NULL != self->diffractometer);
 
 	gtk_label_set_label (GTK_LABEL (label), hkl_factory_name_get(self->diffractometer->factory));
 }
@@ -202,22 +308,13 @@ hkl_gui_factory_get_diffractometer(HklGuiFactory *self)
 GtkSelectionModel *
 hkl_gui_factory_get_axes_selection_model(const HklGuiFactory *self)
 {
-	GListStore *liststore = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
-	GtkSelectionModel *selection_model;
-	const darray_string *names;
-	const char **name;
+	return GTK_SELECTION_MODEL(gtk_single_selection_new (G_LIST_MODEL(self->liststore_axes)));
+}
 
-	names = hkl_geometry_axis_names_get(self->diffractometer->geometry);
-	darray_foreach(name, *names){
-		const HklParameter *parameter = hkl_geometry_axis_get(self->diffractometer->geometry, *name, NULL);
-		g_list_store_append (liststore,
-				    hkl_gui_parameter_new(parameter));
-	}
-
-	selection_model = GTK_SELECTION_MODEL(gtk_single_selection_new (G_LIST_MODEL(liststore)));
-
-	return selection_model;
-
+GtkSelectionModel *
+hkl_gui_factory_get_pseudo_axes_selection_model(const HklGuiFactory *self)
+{
+	return GTK_SELECTION_MODEL(gtk_single_selection_new (G_LIST_MODEL(self->liststore_pseudo_axes)));
 }
 
 /* Sort of class method */
@@ -241,6 +338,26 @@ hkl_gui_factory_has_liststore(void)
 
 GtkWidget *
 hkl_gui_factory_get_column_view_axes(void)
+{
+	GtkWidget *column_view;
+	GtkColumnViewColumn *column;
+
+	/* columnview1 */
+	column_view = gtk_column_view_new(NULL);
+	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
+	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
+	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_new());
+	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
+	column = gtk_column_view_column_new("min", hkl_gui_parameter_factory_min_new());
+	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
+	column = gtk_column_view_column_new("max", hkl_gui_parameter_factory_max_new());
+	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
+
+	return column_view;
+}
+
+GtkWidget *
+hkl_gui_factory_get_column_view_pseudo_axes(void)
 {
 	GtkWidget *column_view;
 	GtkColumnViewColumn *column;

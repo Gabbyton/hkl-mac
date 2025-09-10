@@ -53,59 +53,89 @@ void diffractometer_fprintf(FILE *f, struct diffractometer_t *self)
 	/* hkl_geometry_list_fprintf(f, self->solutions); */
 }
 
-void delete_diffractometer(struct diffractometer_t *self)
+void diffractometer_free(struct diffractometer_t *self)
 {
-	hkl_geometry_free(self->geometry);
-	hkl_engine_list_free(self->engines);
-	hkl_detector_free(self->detector);
-	if(self->solutions)
+	if (NULL != self->geometry) {
+		hkl_geometry_free(self->geometry);
+		self->geometry = NULL;
+	}
+
+	if (NULL != self->engines){
+		hkl_engine_list_free(self->engines);
+		self->engines = NULL;
+	}
+	if(NULL != self->detector){
+		hkl_detector_free(self->detector);
+		self->detector = NULL;
+	}
+
+	if(NULL != self->solutions){
 		hkl_geometry_list_free(self->solutions);
+		self->solutions = NULL;
+	}
+	g_free(self);
+}
+
+void diffractometer_update(struct diffractometer_t *self)
+{
+	g_return_if_fail(NULL != self);
+	g_return_if_fail(NULL != self->engines);
+
+	hkl_engine_list_get(self->engines);
+	diffractometer_fprintf(stdout, self);
 }
 
 void diffractometer_set_sample(struct diffractometer_t *self,
 			       HklSample *sample)
 {
-	if (NULL != sample){
-		hkl_engine_list_init(self->engines,
-				     self->geometry,
-				     self->detector,
-				     sample);
-		hkl_engine_list_get(self->engines);
-	}
+	g_return_if_fail(NULL != self);
+	g_return_if_fail(NULL != sample);
+
+	hkl_engine_list_init(self->engines,
+			     self->geometry,
+			     self->detector,
+			     sample);
+	diffractometer_update(self);
 }
 
 gdouble diffractometer_get_wavelength(const struct diffractometer_t *self)
 {
+	g_return_val_if_fail(NULL != self, 0);
+
 	return hkl_geometry_wavelength_get(self->geometry, HKL_UNIT_USER);
 }
 
 void diffractometer_set_wavelength(struct diffractometer_t *self,
 				   double wavelength)
 {
+	g_return_if_fail(NULL != self);
+
 	if(hkl_geometry_wavelength_set(self->geometry,
 				       wavelength, HKL_UNIT_USER, NULL)){
-		hkl_engine_list_get(self->engines);
-		diffractometer_fprintf(stdout, self);
+		diffractometer_update(self);
 	}
 }
 
 gboolean diffractometer_set_solutions(struct diffractometer_t *self, HklGeometryList *solutions)
 {
-	if(solutions){
-		if(self->solutions)
-			hkl_geometry_list_free(self->solutions);
-		self->solutions = solutions;
-	}
+	g_return_val_if_fail(NULL != self, FALSE);
+	g_return_val_if_fail(NULL != solutions, FALSE);
 
-	return NULL != solutions;
+	if(self->solutions)
+		hkl_geometry_list_free(self->solutions);
+	self->solutions = solutions;
+
+	return TRUE;
 }
 
 gboolean diffractometer_pseudo_axis_values_set(struct diffractometer_t *self,
 					       HklEngine *engine, gdouble values[], guint n_values,
 					       GError **error)
 {
-	HklGeometryList *solutions;
+	g_return_val_if_fail(NULL != self, FALSE);
+	g_return_val_if_fail(NULL != engine, FALSE);
 
+	HklGeometryList *solutions;
 
 	solutions = hkl_engine_pseudo_axis_values_set(engine, values, n_values, HKL_UNIT_USER, error);
 
@@ -115,5 +145,8 @@ gboolean diffractometer_pseudo_axis_values_set(struct diffractometer_t *self,
 void diffractometer_set_solution(struct diffractometer_t *self,
 				 const HklGeometryListItem *item)
 {
+	g_return_if_fail(NULL != self);
+	g_return_if_fail(NULL != item);
+
 	hkl_engine_list_select_solution(self->engines, item);
 }

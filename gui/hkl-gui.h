@@ -55,6 +55,16 @@ G_DECLARE_FINAL_TYPE (HklGuiParameter, hkl_gui_parameter, HKL_GUI, PARAMETER, GO
 
 HklGuiParameter* hkl_gui_parameter_new(const HklParameter *parameter);
 
+gdouble hkl_gui_parameter_get_maximum(HklGuiParameter *self);
+gdouble hkl_gui_parameter_get_minimum(HklGuiParameter *self);
+gdouble hkl_gui_parameter_get_value(HklGuiParameter *self);
+
+void hkl_gui_parameter_set_maximum(HklGuiParameter *self, gdouble value);
+void hkl_gui_parameter_set_minimum(HklGuiParameter *self, gdouble value);
+void hkl_gui_parameter_set_value(HklGuiParameter *self, gdouble value);
+
+void hkl_gui_parameter_update(HklGuiParameter *self);
+
 GtkListItemFactory *hkl_gui_parameter_factory_name_new(void);
 GtkListItemFactory *hkl_gui_parameter_factory_value_new(void);
 GtkListItemFactory *hkl_gui_parameter_factory_min_new(void);
