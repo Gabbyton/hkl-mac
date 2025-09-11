@@ -27,10 +27,19 @@
 
 #include "hkl.h"
 
-/* factory */
-
 #define HKL_GUI_TYPE_FACTORY (hkl_gui_factory_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiFactory, hkl_gui_factory, HKL_GUI, FACTORY, GObject)
+
+#define HKL_GUI_TYPE_GEOMETRY (hkl_gui_geometry_get_type ())
+G_DECLARE_FINAL_TYPE (HklGuiGeometry, hkl_gui_geometry, HKL_GUI, GEOMETRY, GObject)
+
+#define HKL_GUI_TYPE_PARAMETER (hkl_gui_parameter_get_type ())
+G_DECLARE_FINAL_TYPE (HklGuiParameter, hkl_gui_parameter, HKL_GUI, PARAMETER, GObject)
+
+#define HKL_GUI_TYPE_WINDOW (hkl_gui_window_get_type ())
+G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplication)
+
+/* factory */
 
 HKLAPI HklGuiFactory* hkl_gui_factory_new(const HklFactory *factory);
 
@@ -40,6 +49,8 @@ HKLAPI GtkSelectionModel* hkl_gui_factory_get_axes_selection_model(const HklGuiF
 
 HKLAPI GtkSelectionModel* hkl_gui_factory_get_pseudo_axes_selection_model(const HklGuiFactory *self);
 
+HKLAPI GtkSelectionModel* hkl_gui_factory_get_solutions_selection_model(HklGuiFactory *self);
+
 HKLAPI GtkListItemFactory* hkl_gui_factory_name_factory_new(void);
 
 HKLAPI GListStore* hkl_gui_factory_has_liststore(void);
@@ -48,10 +59,23 @@ HKLAPI GtkWidget* hkl_gui_factory_get_column_view_axes(void);
 
 HKLAPI GtkWidget* hkl_gui_factory_get_column_view_pseudo_axes(void);
 
-/* parameter */
+HKLAPI GtkWidget* hkl_gui_factory_get_column_view_pseudo_axes(void);
 
-#define HKL_GUI_TYPE_PARAMETER (hkl_gui_parameter_get_type ())
-G_DECLARE_FINAL_TYPE (HklGuiParameter, hkl_gui_parameter, HKL_GUI, PARAMETER, GObject)
+HKLAPI GtkWidget* hkl_gui_factory_get_column_view_solutions(void);
+
+HKLAPI void hkl_gui_factory_set_geometry(HklGuiFactory *self, HklGuiGeometry *ggeometry);
+
+HKLAPI void hkl_gui_factory_setup_solutions(HklGuiFactory *self, GtkWidget **column_view);
+
+/* geometry */
+
+HKLAPI HklGuiGeometry* hkl_gui_geometry_new(const HklGeometry *geometry);
+
+HKLAPI HklGeometry* hkl_gui_geometry_get_geometry(HklGuiGeometry *geometry);
+
+GtkListItemFactory* hkl_gui_geometry_axis_value_factory_new(gint idx);
+
+/* parameter */
 
 HklGuiParameter* hkl_gui_parameter_new(const HklParameter *parameter);
 
@@ -69,8 +93,3 @@ GtkListItemFactory *hkl_gui_parameter_factory_name_new(void);
 GtkListItemFactory *hkl_gui_parameter_factory_value_new(void);
 GtkListItemFactory *hkl_gui_parameter_factory_min_new(void);
 GtkListItemFactory *hkl_gui_parameter_factory_max_new(void);
-
-/* window */
-
-#define HKL_GUI_TYPE_WINDOW (hkl_gui_window_get_type ())
-G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplication)

@@ -29,6 +29,7 @@ ghkl_SOURCES = \
 	hkl-gui-diffractometer.c \
 	hkl-gui-diffractometer-private.h \
 	hkl-gui-factory.c \
+	hkl-gui-geometry.c \
 	hkl-gui-macros.h \
 	hkl-gui-parameter.c \
 	hkl-gui-pseudoaxes.c \

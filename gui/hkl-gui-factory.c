@@ -57,6 +57,7 @@ struct _HklGuiFactory {
 	struct diffractometer_t *diffractometer;
 	GListStore *liststore_axes;
 	GListStore *liststore_pseudo_axes;
+	GListStore *liststore_solutions;
 };
 
 G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
@@ -69,6 +70,7 @@ void hkl_gui_parameter_notify_value_cb(HklGuiParameter *parameter,
 	HklGuiFactory *self = HKL_GUI_FACTORY(user_data);
 	diffractometer_update(self->diffractometer);
 }
+
 void hkl_gui_parameter_notify_value_2_cb(HklGuiParameter *parameter,
 					 GParamSpec* pspec,
 					 gpointer *user_data)
@@ -77,6 +79,33 @@ void hkl_gui_parameter_notify_value_2_cb(HklGuiParameter *parameter,
 	hkl_gui_parameter_update(self);
 }
 
+
+void update_liststore_axes(HklGuiFactory *self)
+{
+	guint i;
+	guint n_items = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_axes));
+	for(i=0; i<n_items; ++i){
+		HklGuiParameter *item = HKL_GUI_PARAMETER(g_list_model_get_item(G_LIST_MODEL(self->liststore_axes), i));
+		hkl_gui_parameter_update(item);
+	}
+
+
+}
+
+static void
+update_liststore_solutions(HklGuiFactory *self)
+{
+	/* liststore_solutions */
+	self->liststore_solutions = g_list_store_new(HKL_GUI_TYPE_GEOMETRY);
+	const HklGeometryListItem *item;
+	if(NULL != self->diffractometer->solutions){
+		HKL_GEOMETRY_LIST_FOREACH(item, self->diffractometer->solutions){
+			const HklGeometry *geometry = hkl_geometry_list_item_geometry_get(item);
+			g_list_store_append (self->liststore_solutions,
+					     hkl_gui_geometry_new(geometry));
+		}
+	}
+}
 
 static void
 hkl_gui_factory_set_property (GObject      *object,
@@ -139,6 +168,9 @@ hkl_gui_factory_set_property (GObject      *object,
 				g_signal_connect(g_axis, "notify::value", G_CALLBACK(hkl_gui_parameter_notify_value_2_cb), g_pseudo_axis);
 			}
 		}
+
+		/* liststore_solutions */
+		update_liststore_solutions(self);
 
 		g_object_notify_by_pspec (object, pspec);
 	}
@@ -262,6 +294,21 @@ hkl_gui_factory_new(const HklFactory *factory)
 			     NULL);
 }
 
+
+void
+hkl_gui_factory_set_geometry(HklGuiFactory *self,
+			     HklGuiGeometry *geometry)
+{
+	diffractometer_set_geometry(self->diffractometer,
+				    hkl_gui_geometry_get_geometry(geometry));
+	update_liststore_axes(self);
+}
+
+
+/*****************/
+/* Gui factories */
+/*****************/
+
 static void
 setup_factory_name_cb (GtkListItemFactory *factory,
 		       GtkListItem        *list_item)
@@ -317,6 +364,14 @@ hkl_gui_factory_get_pseudo_axes_selection_model(const HklGuiFactory *self)
 	return GTK_SELECTION_MODEL(gtk_single_selection_new (G_LIST_MODEL(self->liststore_pseudo_axes)));
 }
 
+/* TODO remove the update */
+GtkSelectionModel *
+hkl_gui_factory_get_solutions_selection_model(HklGuiFactory *self)
+{
+	update_liststore_solutions(self);
+	return GTK_SELECTION_MODEL(gtk_single_selection_new (G_LIST_MODEL(self->liststore_solutions)));
+}
+
 /* Sort of class method */
 
 GListStore *
@@ -342,7 +397,6 @@ hkl_gui_factory_get_column_view_axes(void)
 	GtkWidget *column_view;
 	GtkColumnViewColumn *column;
 
-	/* columnview1 */
 	column_view = gtk_column_view_new(NULL);
 	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
 	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
@@ -362,16 +416,52 @@ hkl_gui_factory_get_column_view_pseudo_axes(void)
 	GtkWidget *column_view;
 	GtkColumnViewColumn *column;
 
-	/* columnview1 */
 	column_view = gtk_column_view_new(NULL);
 	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
 	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
 	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_new());
 	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
-	column = gtk_column_view_column_new("min", hkl_gui_parameter_factory_min_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
-	column = gtk_column_view_column_new("max", hkl_gui_parameter_factory_max_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
 
 	return column_view;
+}
+
+GtkWidget *
+hkl_gui_factory_get_column_view_solutions(void)
+{
+	return gtk_column_view_new(NULL);
+}
+
+void
+hkl_gui_factory_setup_solutions(HklGuiFactory *self,
+				GtkWidget **widget)
+{
+	gint idx, n_columns;
+	GListModel *columns;
+	GMenu *menu;
+	GMenuItem *item;
+	GtkColumnViewColumn *column;
+	const darray_string *names = hkl_geometry_axis_names_get(self->diffractometer->geometry);
+	const char **name;
+
+	/* menu */
+	menu = g_menu_new ();
+	item = g_menu_item_new ("GoTo position", "app.go-to-position");
+	g_menu_append_item (menu, item);
+
+	/* remove all columns */
+	columns = gtk_column_view_get_columns(GTK_COLUMN_VIEW(*widget));
+	n_columns = g_list_model_get_n_items(columns);
+	for(idx=n_columns-1; idx>=0; --idx){
+		gtk_column_view_remove_column(GTK_COLUMN_VIEW(*widget),
+					      g_list_model_get_item(columns, idx));
+	}
+
+	/* Add the right columns */
+	idx=0;
+	darray_foreach(name, *names){
+		column = gtk_column_view_column_new(*name, hkl_gui_geometry_axis_value_factory_new(idx));
+		gtk_column_view_column_set_header_menu(column, G_MENU_MODEL(menu));
+		gtk_column_view_append_column(GTK_COLUMN_VIEW(*widget), column);
+		++idx;
+	}
 }

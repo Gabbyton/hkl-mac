@@ -57,5 +57,5 @@ gboolean diffractometer_pseudo_axis_values_set(struct diffractometer_t *self,
 					       HklEngine *engine, gdouble values[], guint n_values,
 					       GError **error);
 
-void diffractometer_set_solution(struct diffractometer_t *self,
-				 const HklGeometryListItem *item);
+void diffractometer_set_geometry(struct diffractometer_t *self,
+				 const HklGeometry *geometry);

@@ -95,6 +95,17 @@ void diffractometer_set_sample(struct diffractometer_t *self,
 			     self->geometry,
 			     self->detector,
 			     sample);
+
+	/* TOTO remove ...*/
+	HklEngine *engine = darray_item(*hkl_engine_list_engines_get(self->engines), 0);
+	const darray_string *pseudo_axes = hkl_engine_pseudo_axis_names_get(engine);
+	const size_t n_pseudo_axes = darray_size(*pseudo_axes);
+	double targets[] = {0, 1, 0};
+	self->solutions = hkl_engine_pseudo_axis_values_set(engine,
+							    targets, n_pseudo_axes,
+							    HKL_UNIT_DEFAULT, NULL);
+	/* TODO remove until here */
+
 	diffractometer_update(self);
 }
 
@@ -142,11 +153,12 @@ gboolean diffractometer_pseudo_axis_values_set(struct diffractometer_t *self,
 	return diffractometer_set_solutions(self, solutions);
 }
 
-void diffractometer_set_solution(struct diffractometer_t *self,
-				 const HklGeometryListItem *item)
+void diffractometer_set_geometry(struct diffractometer_t *self,
+				 const HklGeometry *geometry)
 {
 	g_return_if_fail(NULL != self);
-	g_return_if_fail(NULL != item);
+	g_return_if_fail(NULL != geometry);
 
-	hkl_engine_list_select_solution(self->engines, item);
+	hkl_geometry_set(self->geometry, geometry);
+	hkl_engine_list_geometry_set(self->engines, geometry);
 }

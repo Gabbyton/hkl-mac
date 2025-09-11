@@ -207,7 +207,9 @@ struct _HklGuiWindow {
 	GtkWidget *spinbutton_wavelength;
 	GtkWidget *column_view_axes;
 	GtkWidget *column_view_pseudo_axes;
+	GtkWidget *column_view_solutions;
 
+	HklGuiFactory *factory; /* not owned */
 	struct diffractometer_t *diffractometer; /* unowned */
 	HklSample *sample; /* unowned */
 };
@@ -754,8 +756,7 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 	factory = gtk_drop_down_get_selected_item(dropdown);
 	if (NULL != factory) {
 
-		g_return_if_fail(hkl_gui_factory_get_diffractometer(factory) != self->diffractometer);
-
+		self->factory = factory;
 		self->diffractometer = hkl_gui_factory_get_diffractometer(factory);
 
 		if (NULL != self->sample){
@@ -774,6 +775,11 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		/* setup column view pseudo axes */
 		gtk_column_view_set_model(GTK_COLUMN_VIEW(self->column_view_pseudo_axes),
 					  hkl_gui_factory_get_pseudo_axes_selection_model(factory));
+
+		/* setup column view solutions */
+		hkl_gui_factory_setup_solutions(factory, &self->column_view_solutions);
+		gtk_column_view_set_model(GTK_COLUMN_VIEW(self->column_view_solutions),
+                                          hkl_gui_factory_get_solutions_selection_model(factory));
 
 		/* set_up_tree_view_pseudo_axes(self); */
 		/* set_up_tree_view_solutions(self); */
@@ -1023,34 +1029,35 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 /* } */
 
 
-/* void */
-/* hkl_gui_window_treeview_solutions_cursor_changed_cb (GtkTreeView *tree_view, */
-/* 						     gpointer     user_data) */
-/* { */
-/* 	HklGuiWindow* self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
+void
+column_view_solutions_activate_cb (GtkColumnView *column_view,
+				   guint position,
+				   gpointer user_data)
+{
+	HklGuiWindow* self = HKL_GUI_WINDOW(user_data);
+	GtkSingleSelection *selection_model;
+	HklGuiGeometry *ggeometry;
 
-/* 	GtkTreePath* path = NULL; */
-/* 	GtkTreeViewColumn* focus_column = NULL; */
-/* 	GtkTreeIter iter = {0}; */
-/* 	const HklGeometryListItem *solution; */
+	fprintf(stdout, "tutu\n");
+	selection_model = GTK_SINGLE_SELECTION(gtk_column_view_get_model(column_view));
+	ggeometry = HKL_GUI_GEOMETRY(gtk_single_selection_get_selected_item(selection_model));
 
-/* 	gtk_tree_view_get_cursor (tree_view, &path, &focus_column); */
-/* 	if (gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_solutions), &iter, path)) { */
-/* 		gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_solutions), &iter, */
-/* 				    SOLUTION_COL_HKL_GEOMETRY_LIST_ITEM, &solution, */
-/* 				    -1); */
+	hkl_gui_factory_set_geometry(self->factory, ggeometry);
+	/* if (gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_solutions), &iter, path)) { */
+	/* 	gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_solutions), &iter, */
+	/* 			    SOLUTION_COL_HKL_GEOMETRY_LIST_ITEM, &solution, */
+	/* 			    -1); */
 
-/* 		diffractometer_set_solution(priv->diffractometer, solution); */
+	/* 	diffractometer_set_solution(priv->diffractometer, solution); */
 
-/* 		update_axes (self); */
-/* 		update_pseudo_axes (self); */
-/* 		update_pseudo_axes_frames (self); */
-/* 		update_3d(self); */
+	/* 	update_axes (self); */
+	/* 	update_pseudo_axes (self); */
+	/* 	update_pseudo_axes_frames (self); */
+	/* 	update_3d(self); */
 
-/* 		gtk_tree_path_free (path); */
-/* 	} */
-/* } */
+	/* 	gtk_tree_path_free (path); */
+	/* } */
+}
 
 /* /\* reflection h k l *\/ */
 /* #define HKL_GUI_WINDOW_CELLRENDERERTEXT_HKL_EDITED_CB(_number, _hkl, _HKL) \ */
@@ -2074,6 +2081,9 @@ new_window (GApplication *app,
 	GtkWidget *frame2;
 	GtkWidget *frame3;
 	GtkWidget *frame4;
+	GtkWidget *frame5;
+	GtkWidget *hbox1;
+	GtkWidget *scrolledwindow1;
 	GtkWidget *vpaned1;
 	GtkWidget *vbox1;
 	GtkWidget *vbox2;
@@ -2095,6 +2105,7 @@ new_window (GApplication *app,
 
 	self->column_view_axes = hkl_gui_factory_get_column_view_axes();
 	self->column_view_pseudo_axes = hkl_gui_factory_get_column_view_pseudo_axes();
+	self->column_view_solutions = hkl_gui_factory_get_column_view_solutions();
 	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
 
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
@@ -2102,10 +2113,16 @@ new_window (GApplication *app,
 	frame2 = gtk_frame_new("Wavelength");
 	frame3 = gtk_frame_new("Axes");
 	frame4 = gtk_frame_new("Pseudo Axes");
+	frame5 = gtk_frame_new("Solutions");
+	hbox1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	scrolledwindow1 = gtk_scrolled_window_new();
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vpaned1 = gtk_paned_new (GTK_ORIENTATION_VERTICAL);
 	window1 = gtk_application_window_new (GTK_APPLICATION (app));
+
+	/* column view solutions */
+	g_signal_connect (self->column_view_solutions, "activate", G_CALLBACK (column_view_solutions_activate_cb), self);
 
 	/* dropdown1 */
 	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory1);
@@ -2120,8 +2137,20 @@ new_window (GApplication *app,
 	/* frame3 */
 	gtk_frame_set_child(GTK_FRAME(frame3), self->column_view_axes);
 
-	/* frame4 */
-	gtk_frame_set_child(GTK_FRAME(frame4), self->column_view_pseudo_axes);
+        /* frame4 */
+	gtk_frame_set_child(GTK_FRAME(frame4), scrolledwindow1);
+
+	/* frame5 */
+	gtk_frame_set_child(GTK_FRAME(frame5), self->column_view_solutions);
+
+	/* hbox1 */
+	gtk_box_append(GTK_BOX(hbox1), frame4);
+	gtk_box_append(GTK_BOX(hbox1), frame5);
+
+	/* scrolledwindow1 */
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow1),
+				       GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledwindow1), self->column_view_pseudo_axes);
 
 	/* spinbutton_wavelength */
 	gtk_widget_set_sensitive(self->spinbutton_wavelength, FALSE);
@@ -2133,7 +2162,7 @@ new_window (GApplication *app,
 	gtk_box_append(GTK_BOX(vbox2), frame1);
 	gtk_box_append(GTK_BOX(vbox2), frame2);
 	gtk_box_append(GTK_BOX(vbox2), frame3);
-	gtk_box_append(GTK_BOX(vbox2), frame4);
+	gtk_box_append(GTK_BOX(vbox2), hbox1);
 
 	/* vpaned1 */
 	gtk_paned_set_start_child (GTK_PANED (vpaned1), vbox2);
@@ -2191,7 +2220,8 @@ static void hkl_gui_window_open (GApplication  *application,
 
 static void hkl_gui_window_init (HklGuiWindow * self)
 {
-	self->adjustment_wavelength = gtk_adjustment_new (0.0, 0.0, 5.0, 0.0001, 0.01, 0.0);
+	self->adjustment_wavelength = gtk_adjustment_new (0.0, 0.0, G_MAXDOUBLE,
+							  0.0001, 0.01, 0.0);
 	self->diffractometer = NULL;
 	self->sample = hkl_sample_new("sample"); /* TODO */
 }
