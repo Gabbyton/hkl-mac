@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -193,7 +193,7 @@ static HklMode *mode_eulerians()
 	static const HklParameter parameters[] = {
 		{ HKL_PARAMETER_DEFAULTS,.name = "solutions", ._value = 1,
 		  .description = "(0/1) to select the first or second solution",
-		  .range = { .max = 1 },
+		  .range = { .min = 0, .max = 1 },
 		},
 	};
 	static const HklModeInfo info = {

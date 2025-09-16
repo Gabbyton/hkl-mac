@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -59,17 +59,14 @@ extern HklEngine *hkl_engine_emergence_new(HklEngineList *engines);
 	{								\
 		HKL_PARAMETER_DEFAULTS, .name = "x", ._value = (_x),	\
 			.description = "the x coordinate of the surface $\\vec{n}$", \
-			.range = { .min=-1, .max=1 },			\
 			},						\
 	{								\
 		HKL_PARAMETER_DEFAULTS, .name = "y", ._value = (_y),	\
 			.description = "the y coordinate of the surface $\\vec{n}$", \
-			.range = { .min=-1, .max=1 },			\
 			},						\
 	{								\
 		HKL_PARAMETER_DEFAULTS, .name = "z", ._value = (_z),	\
 			.description = "the z coordinate of the surface $\\vec{n}$", \
-			.range = { .min=-1, .max=1 },			\
 			}
 
 static const HklParameter surface_parameters_y[] = {

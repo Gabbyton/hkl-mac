@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -838,17 +838,14 @@ HklEngine *hkl_engine_hkl_new(HklEngineList *engines)
 	static const HklParameter h = {
 		HKL_PARAMETER_DEFAULTS, .name = "h",
 		.description = "h coordinate of the diffracting plan",
-		.range = { .min=-1, .max=1 },
 	};
 	static const HklParameter k = {
 		HKL_PARAMETER_DEFAULTS, .name = "k",
 		.description = "k coordinate of the diffracting plan",
-		.range = { .min=-1, .max=1 },
 	};
 	static const HklParameter l = {
 		HKL_PARAMETER_DEFAULTS, .name = "l",
 		.description = "l coordinate of the diffracting plan",
-		.range={ .min=-1, .max=1 },
 	};
 	static const HklParameter *pseudo_axes[] = {&h, &k, &l};
 	static HklEngineInfo info = {

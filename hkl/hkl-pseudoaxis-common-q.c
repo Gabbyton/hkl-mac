@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -121,7 +121,6 @@ static int get_q_real(HklMode *self,
 static const HklParameter q = {
 	HKL_PARAMETER_DEFAULTS, .name="q",
 	.description = "the norm of $\\vec{q}$",
-	.range = { .max=1 },
 };
 
 static HklMode *mode_q(void)
@@ -448,12 +447,10 @@ HklEngine *hkl_engine_qper_qpar_new(HklEngineList *engines)
 	static const HklParameter qper = {
 		HKL_PARAMETER_DEFAULTS, .name = "qper",
 		.description = "perpendicular component of $\\vec{q}$ along the normal of the sample surface",
-		.range = { .min=-1, .max=1 },
 	};
 	static const HklParameter qpar = {
 		HKL_PARAMETER_DEFAULTS, .name = "qpar",
 		.description = "parallel component of $\\vec{q}$",
-		.range = { .min=-1, .max=1 },
 	};
 	static const HklParameter *pseudo_axes[] = {&qper, &qpar};
 	static const HklEngineInfo info = {

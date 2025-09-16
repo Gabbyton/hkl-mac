@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2021 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2021, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -178,7 +178,7 @@ static int _get(HklEngine *engine, HklEngineList *engine_list, UNUSED unsigned i
 					     HKL_UNIT_DEFAULT);
 
 	/* randomize the parameters */
-	hkl_tap_engine_parameters_randomize(engine);
+	/* hkl_tap_engine_parameters_randomize(engine); */
 
 	/* pseudo -> geometry */
 	if(HKL_ENGINE_CAPABILITIES_INITIALIZABLE & hkl_engine_capabilities_get(engine))
@@ -229,7 +229,7 @@ static int _set(HklEngine *engine, HklEngineList *engine_list, UNUSED unsigned i
 					     HKL_UNIT_DEFAULT);
 
 	/* randomize the parameters */
-	hkl_tap_engine_parameters_randomize(engine);
+	/* hkl_tap_engine_parameters_randomize(engine); */
 
 	/* pseudo -> geometry */
 	res &= DIAG(hkl_engine_initialized_set(engine, TRUE, &error));
