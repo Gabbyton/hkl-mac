@@ -28,16 +28,15 @@ ghkl_LDADD = \
 ghkl_SOURCES = \
 	hkl-gui-diffractometer.c \
 	hkl-gui-diffractometer-private.h \
+	hkl-gui-engine.c \
 	hkl-gui-factory.c \
 	hkl-gui-geometry.c \
 	hkl-gui-macros.h \
 	hkl-gui-parameter.c \
-	hkl-gui-pseudoaxes.c \
-	hkl-gui-pseudoaxes.h \
 	hkl-gui.c \
 	hkl-gui.h
 
-dist_pkgdata_DATA = ghkl.ui ghkl-4.ui pseudo.ui pseudo-4.ui
+dist_pkgdata_DATA = ghkl.ui ghkl-4.ui
 
 appldir = ${datadir}/applications
 dist_appl_DATA = ghkl.desktop

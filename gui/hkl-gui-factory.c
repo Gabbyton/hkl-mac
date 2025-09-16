@@ -56,6 +56,7 @@ struct _HklGuiFactory {
 	/* instance members */
 	struct diffractometer_t *diffractometer;
 	GListStore *liststore_axes;
+	GListStore *liststore_engines;
 	GListStore *liststore_pseudo_axes;
 	GListStore *liststore_solutions;
 };
@@ -63,24 +64,37 @@ struct _HklGuiFactory {
 G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
 
 
-void hkl_gui_parameter_notify_value_cb(HklGuiParameter *parameter,
-				       GParamSpec* pspec,
-				       gpointer *user_data)
+static void
+update_diffractometer_cb(HklGuiParameter *parameter,
+			 GParamSpec* pspec,
+			 gpointer *user_data)
 {
 	HklGuiFactory *self = HKL_GUI_FACTORY(user_data);
 	diffractometer_update(self->diffractometer);
 }
 
-void hkl_gui_parameter_notify_value_2_cb(HklGuiParameter *parameter,
-					 GParamSpec* pspec,
-					 gpointer *user_data)
+static void
+update_pseudo_axes_cb(HklGuiParameter *parameter,
+		      GParamSpec* pspec,
+		      gpointer *user_data)
 {
 	HklGuiParameter *self = HKL_GUI_PARAMETER(user_data);
 	hkl_gui_parameter_update(self);
 }
 
 
-void update_liststore_axes(HklGuiFactory *self)
+static void
+update_engines_cb(HklGuiParameter *parameter,
+		  GParamSpec* pspec,
+		  gpointer *user_data)
+{
+	HklGuiEngine *self = HKL_GUI_ENGINE(user_data);
+	hkl_gui_engine_update(self);
+}
+
+
+static void
+update_liststore_axes(HklGuiFactory *self)
 {
 	guint i;
 	guint n_items = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_axes));
@@ -88,8 +102,6 @@ void update_liststore_axes(HklGuiFactory *self)
 		HklGuiParameter *item = HKL_GUI_PARAMETER(g_list_model_get_item(G_LIST_MODEL(self->liststore_axes), i));
 		hkl_gui_parameter_update(item);
 	}
-
-
 }
 
 static void
@@ -136,13 +148,17 @@ hkl_gui_factory_set_property (GObject      *object,
 					     hkl_gui_parameter_new(parameter));
 		}
 
-		/* liststore_pseudo_axes */
+		/* liststore_engines and pseudo_axes */
+		self->liststore_engines = g_list_store_new(HKL_GUI_TYPE_ENGINE);
 		self->liststore_pseudo_axes = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
 		const darray_engine *engines;
 		HklEngine **engine;
 
 		engines = hkl_engine_list_engines_get(self->diffractometer->engines);
 		darray_foreach(engine, *engines){
+			g_list_store_append (self->liststore_engines,
+					     hkl_gui_engine_new(*engine));
+
 			const darray_string *pseudo_axes = hkl_engine_pseudo_axis_names_get(*engine);
 
 			darray_foreach(name, *pseudo_axes){
@@ -153,19 +169,33 @@ hkl_gui_factory_set_property (GObject      *object,
 			}
 		}
 
-
-		/* connect pseudo axes parameters to axes */
+		/* connect pseudo axes and engines parameters to axes */
 		guint n_axes = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_axes));
 		guint n_pseudo_axes = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_pseudo_axes));
 		guint i;
 		guint j;
 
 		for(i=0; i<n_axes; ++i){
-			HklGuiParameter *g_axis = g_list_model_get_item(G_LIST_MODEL(self->liststore_axes), i);
-			g_signal_connect(g_axis, "notify::value", G_CALLBACK(hkl_gui_parameter_notify_value_cb), self);
+			HklGuiParameter *g_axis;
+			HklGuiEngine *g_engine;
+			guint n_engines;
+
+			g_axis = g_list_model_get_item(G_LIST_MODEL(self->liststore_axes), i);
+
+			/* update the diffractometer */
+			g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_diffractometer_cb), self);
+
+			/* update the pseudo axes */
 			for(j=0; j<n_pseudo_axes; ++j){
 				HklGuiParameter *g_pseudo_axis =  g_list_model_get_item(G_LIST_MODEL(self->liststore_pseudo_axes), j);
-				g_signal_connect(g_axis, "notify::value", G_CALLBACK(hkl_gui_parameter_notify_value_2_cb), g_pseudo_axis);
+				g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_pseudo_axes_cb), g_pseudo_axis);
+			}
+
+			/* update the gui engines */
+			n_engines = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_engines));
+			for(j=0; j<n_engines; ++j){
+				g_engine = g_list_model_get_item(G_LIST_MODEL(self->liststore_engines), j);
+				g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_engines_cb), g_engine);
 			}
 		}
 
@@ -294,6 +324,30 @@ hkl_gui_factory_new(const HklFactory *factory)
 			     NULL);
 }
 
+void hkl_gui_factory_add_engine_frames(HklGuiFactory *self, GtkBox *box)
+{
+	guint i;
+	guint n_items;
+	GtkWidget *child;
+
+	g_return_if_fail(HKL_GUI_IS_FACTORY(self));
+	g_return_if_fail(GTK_IS_BOX(box));
+
+	/* first remove all the box content */
+	for (child = gtk_widget_get_first_child (GTK_WIDGET (box));
+	     child != NULL;
+	     child = gtk_widget_get_next_sibling (child)){
+		gtk_box_remove(box, child);
+	}
+
+	/* add all frames */
+	n_items = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_engines));
+	for (i=0;i<n_items; ++i){
+		HklGuiEngine *gengine = g_list_model_get_item(G_LIST_MODEL(self->liststore_engines), i);
+
+		gtk_box_append(box, hkl_gui_engine_get_frame(gengine));
+	}
+}
 
 void
 hkl_gui_factory_set_geometry(HklGuiFactory *self,

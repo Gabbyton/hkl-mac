@@ -27,6 +27,9 @@
 
 #include "hkl.h"
 
+#define HKL_GUI_TYPE_ENGINE (hkl_gui_engine_get_type ())
+G_DECLARE_FINAL_TYPE (HklGuiEngine, hkl_gui_engine, HKL_GUI, ENGINE, GObject)
+
 #define HKL_GUI_TYPE_FACTORY (hkl_gui_factory_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiFactory, hkl_gui_factory, HKL_GUI, FACTORY, GObject)
 
@@ -39,9 +42,25 @@ G_DECLARE_FINAL_TYPE (HklGuiParameter, hkl_gui_parameter, HKL_GUI, PARAMETER, GO
 #define HKL_GUI_TYPE_WINDOW (hkl_gui_window_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplication)
 
+/* engine */
+
+HklGuiEngine* hkl_gui_engine_new (HklEngine* engine);
+
+void hkl_gui_engine_set_engine (HklGuiEngine *gui_engine,
+				HklEngine *engine);
+
+HklEngine* hkl_gui_engine_get_engine (HklGuiEngine *gui_engine);
+
+GtkWidget *hkl_gui_engine_get_frame(HklGuiEngine *self);
+
+void hkl_gui_engine_update (HklGuiEngine* self);
+
+
 /* factory */
 
 HKLAPI HklGuiFactory* hkl_gui_factory_new(const HklFactory *factory);
+
+HKLAPI void hkl_gui_factory_add_engine_frames(HklGuiFactory *self, GtkBox *box);
 
 HKLAPI struct diffractometer_t* hkl_gui_factory_get_diffractometer(HklGuiFactory *self);
 

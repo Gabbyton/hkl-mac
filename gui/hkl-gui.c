@@ -38,7 +38,6 @@
 #if HKL3D
 # include "hkl-gui-3d.h"
 #endif
-#include "hkl-gui-pseudoaxes.h"
 
 /****************/
 /* HklGuiWindow */
@@ -143,10 +142,12 @@ struct _HklGuiWindow {
 	GtkApplication parent_instance;
 
 	GtkAdjustment *adjustment_wavelength;
-	GtkWidget *spinbutton_wavelength;
+
 	GtkWidget *column_view_axes;
 	GtkWidget *column_view_pseudo_axes;
 	GtkWidget *column_view_solutions;
+	GtkWidget *hbox_engines;
+	GtkWidget *spinbutton_wavelength;
 
 	HklGuiFactory *factory; /* not owned */
 	struct diffractometer_t *diffractometer; /* unowned */
@@ -515,6 +516,9 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		gtk_column_view_set_model(GTK_COLUMN_VIEW(self->column_view_solutions),
                                           hkl_gui_factory_get_solutions_selection_model(factory));
 
+		/* setup engines */
+		hkl_gui_factory_add_engine_frames(factory, GTK_BOX(self->hbox_engines));
+
 		/* set_up_tree_view_pseudo_axes(self); */
 		/* set_up_tree_view_solutions(self); */
 		/* set_up_3D(self); */
@@ -603,7 +607,6 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 	GtkSingleSelection *selection_model;
 	HklGuiGeometry *ggeometry;
 
-	fprintf(stdout, "tutu\n");
 	selection_model = GTK_SINGLE_SELECTION(gtk_column_view_get_model(column_view));
 	ggeometry = HKL_GUI_GEOMETRY(gtk_single_selection_get_selected_item(selection_model));
 
@@ -1644,10 +1647,11 @@ new_window (GApplication *app,
 	GtkWidget *dropdown1;
 	GtkWidget *frame1;
 	GtkWidget *frame2;
-	GtkWidget *frame3;
-	GtkWidget *frame4;
-	GtkWidget *frame5;
+	GtkWidget *frame_axes;
+	GtkWidget *frame_pseudo_axes;
+	GtkWidget *frame_solutions;
 	GtkWidget *hbox1;
+	GtkWidget *hbox2;
 	GtkWidget *scrolledwindow1;
 	GtkWidget *vpaned1;
 	GtkWidget *vbox1;
@@ -1671,15 +1675,17 @@ new_window (GApplication *app,
 	self->column_view_axes = hkl_gui_factory_get_column_view_axes();
 	self->column_view_pseudo_axes = hkl_gui_factory_get_column_view_pseudo_axes();
 	self->column_view_solutions = hkl_gui_factory_get_column_view_solutions();
+	self->hbox_engines = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
 
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
 	frame1 = gtk_frame_new("Diffractometer");
 	frame2 = gtk_frame_new("Wavelength");
-	frame3 = gtk_frame_new("Axes");
-	frame4 = gtk_frame_new("Pseudo Axes");
-	frame5 = gtk_frame_new("Solutions");
+	frame_axes = gtk_frame_new("Axes");
+	frame_pseudo_axes = gtk_frame_new("Pseudo Axes");
+	frame_solutions = gtk_frame_new("Solutions");
 	hbox1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	hbox2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	scrolledwindow1 = gtk_scrolled_window_new();
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -1699,18 +1705,23 @@ new_window (GApplication *app,
 	/* frame2 */
 	gtk_frame_set_child(GTK_FRAME(frame2), self->spinbutton_wavelength);
 
-	/* frame3 */
-	gtk_frame_set_child(GTK_FRAME(frame3), self->column_view_axes);
+	/* frame axes */
+	gtk_frame_set_child(GTK_FRAME(frame_axes), self->column_view_axes);
 
-        /* frame4 */
-	gtk_frame_set_child(GTK_FRAME(frame4), scrolledwindow1);
+        /* frame pseudo axes */
+	gtk_frame_set_child(GTK_FRAME(frame_pseudo_axes), scrolledwindow1);
 
-	/* frame5 */
-	gtk_frame_set_child(GTK_FRAME(frame5), self->column_view_solutions);
+	/* frame solutions*/
+	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);
 
 	/* hbox1 */
-	gtk_box_append(GTK_BOX(hbox1), frame4);
-	gtk_box_append(GTK_BOX(hbox1), frame5);
+	gtk_box_append(GTK_BOX(hbox1), self->hbox_engines);
+
+	/* hbox2 */
+	gtk_box_append(GTK_BOX(hbox2), frame_axes);
+	gtk_box_append(GTK_BOX(hbox2), frame_solutions);
+	gtk_box_append(GTK_BOX(hbox2), frame_pseudo_axes);
+
 
 	/* scrolledwindow1 */
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow1),
@@ -1726,7 +1737,7 @@ new_window (GApplication *app,
 	/* vbox2 */
 	gtk_box_append(GTK_BOX(vbox2), frame1);
 	gtk_box_append(GTK_BOX(vbox2), frame2);
-	gtk_box_append(GTK_BOX(vbox2), frame3);
+	gtk_box_append(GTK_BOX(vbox2), hbox2);
 	gtk_box_append(GTK_BOX(vbox2), hbox1);
 
 	/* vpaned1 */
@@ -1818,7 +1829,6 @@ static HklGuiWindow* hkl_gui_window_new (void)
 			     NULL);
 	return ghkl;
 }
-
 
 int main (int argc, char ** argv)
 {
