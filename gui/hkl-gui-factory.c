@@ -65,6 +65,12 @@ G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
 
 
 static void
+engine_changed_cb(HklGuiEngine *engine)
+{
+	fprintf(stdout, "set the engine :)\n");
+}
+
+static void
 update_diffractometer_cb(HklGuiParameter *parameter,
 			 GParamSpec* pspec,
 			 gpointer *user_data)
@@ -132,6 +138,10 @@ hkl_gui_factory_set_property (GObject      *object,
 	{
 	case PROP_FACTORY:
 	{
+		HklGuiParameter *g_axis;
+		HklGuiEngine *g_engine;
+		guint n_engines;
+
 		/* diffractometer */
 		HklFactory *new_factory = g_value_get_pointer (value);
 		self->diffractometer = create_diffractometer(new_factory);
@@ -155,9 +165,10 @@ hkl_gui_factory_set_property (GObject      *object,
 		HklEngine **engine;
 
 		engines = hkl_engine_list_engines_get(self->diffractometer->engines);
+		n_engines = darray_size(*engines);
 		darray_foreach(engine, *engines){
-			g_list_store_append (self->liststore_engines,
-					     hkl_gui_engine_new(*engine));
+			g_engine = hkl_gui_engine_new(*engine);
+			g_list_store_append (self->liststore_engines, g_engine);
 
 			const darray_string *pseudo_axes = hkl_engine_pseudo_axis_names_get(*engine);
 
@@ -167,6 +178,8 @@ hkl_gui_factory_set_property (GObject      *object,
 				g_list_store_append (self->liststore_pseudo_axes,
 						     hkl_gui_parameter_new(parameter));
 			}
+
+			g_signal_connect(g_engine, "changed", G_CALLBACK(engine_changed_cb), NULL);
 		}
 
 		/* connect pseudo axes and engines parameters to axes */
@@ -176,10 +189,6 @@ hkl_gui_factory_set_property (GObject      *object,
 		guint j;
 
 		for(i=0; i<n_axes; ++i){
-			HklGuiParameter *g_axis;
-			HklGuiEngine *g_engine;
-			guint n_engines;
-
 			g_axis = g_list_model_get_item(G_LIST_MODEL(self->liststore_axes), i);
 
 			/* update the diffractometer */
@@ -192,7 +201,6 @@ hkl_gui_factory_set_property (GObject      *object,
 			}
 
 			/* update the gui engines */
-			n_engines = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_engines));
 			for(j=0; j<n_engines; ++j){
 				g_engine = g_list_model_get_item(G_LIST_MODEL(self->liststore_engines), j);
 				g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_engines_cb), g_engine);
@@ -359,9 +367,9 @@ hkl_gui_factory_set_geometry(HklGuiFactory *self,
 }
 
 
-/*****************/
-/* Gui factories */
-/*****************/
+/**************************/
+/* Gui ListItem factories */
+/**************************/
 
 static void
 setup_factory_name_cb (GtkListItemFactory *factory,

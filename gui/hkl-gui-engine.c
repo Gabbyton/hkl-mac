@@ -106,6 +106,13 @@ finalize (GObject* object)
 
 
 static void
+button_apply_clicked_cb (GtkButton* button, HklGuiEngine* self)
+{
+	g_signal_emit(self, signals[CHANGED], 0);
+}
+
+
+static void
 update_liststore_mode_parameters(HklGuiEngine *self)
 {
 	const char * *name;
@@ -164,6 +171,10 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	button_init = gtk_button_new_with_label("Initialize");
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+
+	/* button apply */
+	g_signal_connect (button_apply, "clicked",
+			  G_CALLBACK (button_apply_clicked_cb), self);
 
 	/* column_view parameters */
 	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
@@ -304,13 +315,6 @@ hkl_gui_engine_update(HklGuiEngine *self)
 		hkl_gui_parameter_update(parameter);
 	}
 }
-
-/* static void */
-/* button1_clicked_cb (GtkButton* button, HklGuiEngine* self) */
-/* { */
-/* 	g_signal_emit(self, signals[CHANGED], 0); */
-/* } */
-
 
 /* static void */
 /* button2_clicked_cb (GtkButton* button, HklGuiEngine* self) */
