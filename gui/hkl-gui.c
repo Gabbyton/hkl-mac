@@ -409,45 +409,6 @@ finalize (GObject* object)
 
 
 /* static void */
-/* set_up_pseudo_axes_frames (HklGuiWindow* self) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-/* 	HklGuiEngine **pseudo; */
-/* 	HklEngine **engine; */
-/* 	darray_engine *engines; */
-
-/* 	g_return_if_fail (self != NULL); */
-
-/* 	darray_foreach (pseudo, priv->pseudo_frames){ */
-/* 		gtk_box_remove(GTK_BOX (priv->vbox2), */
-/* 			       GTK_WIDGET (hkl_gui_engine_get_frame (*pseudo))); */
-/* 		g_object_unref(*pseudo); */
-/* 	} */
-/* 	darray_size (priv->pseudo_frames) = 0; */
-
-/* 	engines = hkl_engine_list_engines_get (priv->diffractometer->engines); */
-/* 	darray_foreach (engine, *engines){ */
-/* 		HklGuiEngine *pseudo; */
-
-/* 		pseudo = hkl_gui_engine_new (*engine); */
-/* 		darray_append(priv->pseudo_frames, pseudo); */
-/* 		gtk_box_append(GTK_BOX (priv->vbox2), */
-/* 			       GTK_WIDGET (hkl_gui_engine_get_frame(pseudo))); */
-
-/* 		g_signal_connect_object (pseudo, */
-/* 					 "changed", */
-/* 					 G_CALLBACK(pseudo_axes_frame_changed_cb), */
-/* 					 self, 0); */
-/* 	} */
-
-/* 	gtk_widget_set_visible (GTK_WIDGET (priv->vbox2), TRUE); */
-/* } */
-
-
-/* 	update_pseudo_axes (self); */
-/* } */
-
-/* static void */
 /* set_up_3D (HklGuiWindow* self) */
 /* { */
 /* #if HKL3D */
@@ -540,78 +501,6 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 	}
 
 }
-
-/* /\* pseudo axis write *\/ */
-/* void */
-/* hkl_gui_window_cellrenderertext5_edited_cb(GtkCellRendererText *renderer, */
-/* 					   gchar *path, */
-/* 					   gchar *new_text, */
-/* 					   gpointer user_data) */
-/* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-/* 	GtkTreeIter iter = {0}; */
-/* 	gdouble value = 0.0; */
-/* 	gdouble old_value; */
-/* 	unsigned int idx; */
-/* 	HklEngine *engine = NULL; */
-/* 	gboolean valid; */
-/* 	GtkTreeIter it = {0}; */
-/* 	guint n_values; */
-/* 	GError *error = NULL; */
-
-/* 	gtk_tree_model_get_iter_from_string (GTK_TREE_MODEL(priv->liststore_pseudo_axes), */
-/* 					     &iter, */
-/* 					     path); */
-/* 	gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_pseudo_axes), &iter, */
-/* 			    PSEUDO_AXIS_COL_IDX, &idx, */
-/* 			    PSEUDO_AXIS_COL_ENGINE, &engine, */
-/* 			    PSEUDO_AXIS_COL_WRITE, &old_value, */
-/* 			    -1); */
-
-/* 	n_values = darray_size(*hkl_engine_pseudo_axis_names_get(engine)); */
-/* 	gdouble values[n_values]; */
-
-/* 	/\* extract all the values from the listore *\/ */
-
-/* 	valid = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(priv->liststore_pseudo_axes), &it); */
-/* 	while(valid){ */
-/* 		guint it_idx; */
-/* 		HklEngine *it_engine; */
-/* 		gdouble it_value; */
-
-/* 		gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_pseudo_axes), &it, */
-/* 				    PSEUDO_AXIS_COL_IDX, &it_idx, */
-/* 				    PSEUDO_AXIS_COL_ENGINE, &it_engine, */
-/* 				    PSEUDO_AXIS_COL_WRITE, &it_value, */
-/* 				    -1); */
-
-/* 		if(engine == it_engine) */
-/* 			values[it_idx] = it_value; */
-
-/* 		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(priv->liststore_pseudo_axes), &it); */
-/* 	} */
-
-/* 	/\* replace with the new value *\/ */
-/* 	value = atof(new_text); /\* TODO need to check for the right conversion *\/ */
-/* 	values[idx] = value; */
-
-/* 	if(diffractometer_pseudo_axis_values_set(priv->diffractometer, engine, */
-/* 						 values, n_values, &error)){ */
-/* 		gtk_list_store_set (priv->liststore_pseudo_axes, */
-/* 				    &iter, */
-/* 				    PSEUDO_AXIS_COL_WRITE, value, */
-/* 				    -1); */
-
-/* 		update_axes (self); */
-/* 		update_pseudo_axes (self); */
-/* 		update_pseudo_axes_frames (self); */
-/* 		update_solutions (self); */
-/* 		update_3d(self); */
-/* 	}else */
-/* 		raise_error(self, &error); */
-/* } */
-
 
 void
 column_view_solutions_activate_cb (GtkColumnView *column_view,
