@@ -69,10 +69,6 @@ void diffractometer_free(struct diffractometer_t *self)
 		self->detector = NULL;
 	}
 
-	if(NULL != self->solutions){
-		hkl_geometry_list_free(self->solutions);
-		self->solutions = NULL;
-	}
 	g_free(self);
 }
 
@@ -123,8 +119,6 @@ gboolean diffractometer_set_solutions(struct diffractometer_t *self,
 	g_return_val_if_fail(NULL != self, FALSE);
 	g_return_val_if_fail(NULL != solutions, FALSE);
 
-	if(self->solutions)
-		hkl_geometry_list_free(self->solutions);
 	self->solutions = solutions;
 
 	return TRUE;

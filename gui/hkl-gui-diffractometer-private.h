@@ -32,7 +32,7 @@ struct diffractometer_t {
 	HklGeometry *geometry;
 	HklDetector *detector;
 	HklEngineList *engines;
-	HklGeometryList *solutions;
+	HklGeometryList *solutions; /* not owned */
 };
 
 struct diffractometer_t * create_diffractometer(HklFactory *factory);

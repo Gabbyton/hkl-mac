@@ -111,7 +111,6 @@ button_apply_clicked_cb (GtkButton* button, HklGuiEngine* self)
 {
 	HklGeometryList *solutions;
 
-
 	solutions = hkl_engine_pseudo_axis_values_set(self->engine, NULL, 0, HKL_UNIT_USER, NULL);
 
 	g_return_if_fail(NULL != solutions);
