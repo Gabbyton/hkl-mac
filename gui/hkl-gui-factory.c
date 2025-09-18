@@ -65,12 +65,6 @@ G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
 
 
 static void
-engine_changed_cb(HklGuiEngine *engine)
-{
-	fprintf(stdout, "set the engine :)\n");
-}
-
-static void
 update_diffractometer_cb(HklGuiParameter *parameter,
 			 GParamSpec* pspec,
 			 gpointer *user_data)
@@ -113,15 +107,31 @@ update_liststore_axes(HklGuiFactory *self)
 static void
 update_liststore_solutions(HklGuiFactory *self)
 {
-	/* liststore_solutions */
-	self->liststore_solutions = g_list_store_new(HKL_GUI_TYPE_GEOMETRY);
 	const HklGeometryListItem *item;
+
 	if(NULL != self->diffractometer->solutions){
+		g_list_store_remove_all(self->liststore_solutions);
 		HKL_GEOMETRY_LIST_FOREACH(item, self->diffractometer->solutions){
 			const HklGeometry *geometry = hkl_geometry_list_item_geometry_get(item);
 			g_list_store_append (self->liststore_solutions,
 					     hkl_gui_geometry_new(geometry));
 		}
+	}
+}
+
+static void
+engine_changed_cb(HklGuiEngine *engine,
+		  gpointer user_data)
+{
+	g_return_if_fail(HKL_GUI_IS_ENGINE(engine));
+	g_return_if_fail(HKL_GUI_IS_FACTORY(user_data));
+
+	HklGuiFactory *self = HKL_GUI_FACTORY(user_data);
+	HklGeometryList *solutions = hkl_gui_engine_get_solutions(engine);
+
+	if (NULL != solutions) {
+		diffractometer_set_solutions(self->diffractometer, solutions);
+		update_liststore_solutions(self);
 	}
 }
 
@@ -179,7 +189,7 @@ hkl_gui_factory_set_property (GObject      *object,
 						     hkl_gui_parameter_new(parameter));
 			}
 
-			g_signal_connect(g_engine, "changed", G_CALLBACK(engine_changed_cb), NULL);
+			g_signal_connect(g_engine, "changed", G_CALLBACK(engine_changed_cb), self);
 		}
 
 		/* connect pseudo axes and engines parameters to axes */
@@ -208,6 +218,7 @@ hkl_gui_factory_set_property (GObject      *object,
 		}
 
 		/* liststore_solutions */
+		self->liststore_solutions = g_list_store_new(HKL_GUI_TYPE_GEOMETRY);
 		update_liststore_solutions(self);
 
 		g_object_notify_by_pspec (object, pspec);
@@ -497,6 +508,9 @@ void
 hkl_gui_factory_setup_solutions(HklGuiFactory *self,
 				GtkWidget **widget)
 {
+	g_return_if_fail(HKL_GUI_IS_FACTORY(self));
+	g_return_if_fail(GTK_IS_COLUMN_VIEW(*widget));
+
 	gint idx, n_columns;
 	GListModel *columns;
 	GMenu *menu;

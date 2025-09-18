@@ -44,17 +44,18 @@ G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplicat
 
 /* engine */
 
-HklGuiEngine* hkl_gui_engine_new (HklEngine* engine);
+HKLAPI HklGuiEngine* hkl_gui_engine_new (HklEngine* engine);
 
-void hkl_gui_engine_set_engine (HklGuiEngine *gui_engine,
-				HklEngine *engine);
+HKLAPI void hkl_gui_engine_set_engine (HklGuiEngine *gui_engine,
+ 				HklEngine *engine);
 
-HklEngine* hkl_gui_engine_get_engine (HklGuiEngine *gui_engine);
+HKLAPI HklEngine* hkl_gui_engine_get_engine (HklGuiEngine *gui_engine);
 
-GtkWidget *hkl_gui_engine_get_frame(HklGuiEngine *self);
+HKLAPI GtkWidget *hkl_gui_engine_get_frame(HklGuiEngine *self);
 
-void hkl_gui_engine_update (HklGuiEngine* self);
+HKLAPI HklGeometryList *hkl_gui_engine_get_solutions(HklGuiEngine *self);
 
+HKLAPI void hkl_gui_engine_update (HklGuiEngine* self);
 
 /* factory */
 
@@ -92,23 +93,23 @@ HKLAPI HklGuiGeometry* hkl_gui_geometry_new(const HklGeometry *geometry);
 
 HKLAPI HklGeometry* hkl_gui_geometry_get_geometry(HklGuiGeometry *geometry);
 
-GtkListItemFactory* hkl_gui_geometry_axis_value_factory_new(gint idx);
+HKLAPI GtkListItemFactory* hkl_gui_geometry_axis_value_factory_new(gint idx);
 
 /* parameter */
 
-HklGuiParameter* hkl_gui_parameter_new(const HklParameter *parameter);
+HKLAPI HklGuiParameter* hkl_gui_parameter_new(const HklParameter *parameter);
 
-gdouble hkl_gui_parameter_get_maximum(HklGuiParameter *self);
-gdouble hkl_gui_parameter_get_minimum(HklGuiParameter *self);
-gdouble hkl_gui_parameter_get_value(HklGuiParameter *self);
+HKLAPI gdouble hkl_gui_parameter_get_maximum(HklGuiParameter *self);
+HKLAPI gdouble hkl_gui_parameter_get_minimum(HklGuiParameter *self);
+HKLAPI gdouble hkl_gui_parameter_get_value(HklGuiParameter *self);
 
-void hkl_gui_parameter_set_maximum(HklGuiParameter *self, gdouble value);
-void hkl_gui_parameter_set_minimum(HklGuiParameter *self, gdouble value);
-void hkl_gui_parameter_set_value(HklGuiParameter *self, gdouble value);
+HKLAPI void hkl_gui_parameter_set_maximum(HklGuiParameter *self, gdouble value);
+HKLAPI void hkl_gui_parameter_set_minimum(HklGuiParameter *self, gdouble value);
+HKLAPI void hkl_gui_parameter_set_value(HklGuiParameter *self, gdouble value);
 
-void hkl_gui_parameter_update(HklGuiParameter *self);
+HKLAPI void hkl_gui_parameter_update(HklGuiParameter *self);
 
-GtkListItemFactory *hkl_gui_parameter_factory_name_new(void);
-GtkListItemFactory *hkl_gui_parameter_factory_value_new(void);
-GtkListItemFactory *hkl_gui_parameter_factory_min_new(void);
-GtkListItemFactory *hkl_gui_parameter_factory_max_new(void);
+HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_name_new(void);
+HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_value_new(void);
+HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_min_new(void);
+HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_max_new(void);

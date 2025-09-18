@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -174,6 +174,9 @@ HklGeometryList *hkl_engine_pseudo_axis_values_set(HklEngine *self,
 
 	hkl_error(error == NULL ||*error == NULL);
 
+	if(NULL == values)
+		goto skipped_values_extraction;
+
 	if(n_values != darray_size(self->info->pseudo_axes)){
 		g_set_error(error,
 			    HKL_ENGINE_ERROR,
@@ -203,6 +206,8 @@ HklGeometryList *hkl_engine_pseudo_axis_values_set(HklEngine *self,
 			goto clean_stream_out;
 		}
 	}
+
+skipped_values_extraction:
 
 	if(!hkl_engine_set(self, error)){
 #if LOGGING

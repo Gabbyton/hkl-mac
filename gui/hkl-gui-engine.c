@@ -52,6 +52,7 @@ struct _HklGuiEngine {
 	GObject parent_instance;
 
 	HklEngine *engine;
+	HklGeometryList *solutions;
 
 	GListStore *liststore_mode_parameters;
 	GListStore *liststore_modes;
@@ -108,6 +109,17 @@ finalize (GObject* object)
 static void
 button_apply_clicked_cb (GtkButton* button, HklGuiEngine* self)
 {
+	HklGeometryList *solutions;
+
+
+	solutions = hkl_engine_pseudo_axis_values_set(self->engine, NULL, 0, HKL_UNIT_USER, NULL);
+
+	g_return_if_fail(NULL != solutions);
+
+	if (NULL != self->solutions)
+		hkl_geometry_list_free(self->solutions);
+	self->solutions = solutions;
+
 	g_signal_emit(self, signals[CHANGED], 0);
 }
 
@@ -156,6 +168,7 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	GtkColumnViewColumn *column;
 
 	self->engine = NULL;
+	self->solutions = NULL;
 	self->liststore_modes = G_LIST_STORE(gtk_string_list_new(NULL));
 	self->liststore_pseudo_axes = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
 	self->liststore_mode_parameters = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
@@ -262,6 +275,12 @@ GtkWidget *
 hkl_gui_engine_get_frame(HklGuiEngine *self)
 {
 	return self->frame;
+}
+
+HklGeometryList *
+hkl_gui_engine_get_solutions(HklGuiEngine *self)
+{
+	return self->solutions;
 }
 
 void

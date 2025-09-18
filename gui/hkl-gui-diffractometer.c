@@ -127,7 +127,8 @@ void diffractometer_set_wavelength(struct diffractometer_t *self,
 	}
 }
 
-gboolean diffractometer_set_solutions(struct diffractometer_t *self, HklGeometryList *solutions)
+gboolean diffractometer_set_solutions(struct diffractometer_t *self,
+				      HklGeometryList *solutions)
 {
 	g_return_val_if_fail(NULL != self, FALSE);
 	g_return_val_if_fail(NULL != solutions, FALSE);
