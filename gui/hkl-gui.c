@@ -490,6 +490,11 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 
 	factory = gtk_drop_down_get_selected_item(dropdown);
 	if (NULL != factory) {
+		guint i;
+		guint n_items;
+		GListStore *liststore;
+		GtkSingleSelection *single_selection;
+
 
 		self->factory = factory;
 		self->diffractometer = hkl_gui_factory_get_diffractometer(factory);
@@ -503,24 +508,34 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		gtk_widget_set_sensitive(self->spinbutton_wavelength, TRUE);
 		g_object_bind_property(factory, "wavelength", self->adjustment_wavelength, "value", G_BINDING_BIDIRECTIONAL);
 
-		/* setup column axes view */
-		gtk_column_view_set_model(GTK_COLUMN_VIEW(self->column_view_axes),
-					  hkl_gui_factory_get_axes_selection_model(factory));
+		/* set column view axes model */
+		single_selection = GTK_SINGLE_SELECTION(gtk_column_view_get_model(GTK_COLUMN_VIEW(self->column_view_axes)));
+		liststore = hkl_gui_factory_get_liststore_axes(factory);
+		gtk_single_selection_set_model(single_selection, G_LIST_MODEL(liststore));
 
-		/* setup column view pseudo axes */
-		gtk_column_view_set_model(GTK_COLUMN_VIEW(self->column_view_pseudo_axes),
-					  hkl_gui_factory_get_pseudo_axes_selection_model(factory));
+		/* set column view pseudo axes model */
+		single_selection = GTK_SINGLE_SELECTION(gtk_column_view_get_model(GTK_COLUMN_VIEW(self->column_view_pseudo_axes)));
+		liststore = hkl_gui_factory_get_liststore_pseudo_axes(factory);
+		gtk_single_selection_set_model(single_selection, G_LIST_MODEL(liststore));
 
-		/* setup column view solutions */
-		hkl_gui_factory_setup_solutions(factory, &self->column_view_solutions);
-		gtk_column_view_set_model(GTK_COLUMN_VIEW(self->column_view_solutions),
-                                          hkl_gui_factory_get_solutions_selection_model(factory));
+		/* set column view solutions model and columns */
+		hkl_gui_factory_setup_column_view_solutions(factory, GTK_COLUMN_VIEW(self->column_view_solutions));
 
-		/* setup engines */
-		hkl_gui_factory_add_engine_frames(factory, GTK_FLOW_BOX(self->flowbox_engines));
+		single_selection = GTK_SINGLE_SELECTION(gtk_column_view_get_model(GTK_COLUMN_VIEW(self->column_view_solutions)));
+		liststore = hkl_gui_factory_get_liststore_solutions(factory);
+		gtk_single_selection_set_model(single_selection, G_LIST_MODEL(liststore));
 
-		/* set_up_tree_view_pseudo_axes(self); */
-		/* set_up_tree_view_solutions(self); */
+		/* add the engines frames to the flowbox engines */
+		gtk_flow_box_remove_all(GTK_FLOW_BOX(self->flowbox_engines));
+		liststore = hkl_gui_factory_get_liststore_engines(factory);
+		n_items = g_list_model_get_n_items(G_LIST_MODEL(liststore));
+		for (i=0;i<n_items; ++i){
+			HklGuiEngine *gengine = g_list_model_get_item(G_LIST_MODEL(liststore), i);
+
+			gtk_flow_box_append(GTK_FLOW_BOX(self->flowbox_engines),
+					    hkl_gui_engine_get_frame(gengine));
+		}
+
 		/* set_up_3D(self); */
 	}
 
@@ -1642,11 +1657,12 @@ new_window (GApplication *app,
 {
 	GListStore *liststore1;
 
+	GtkColumnViewColumn *column;
 	GtkListItemFactory *item_factory1;
 
 	GtkWidget *dropdown1;
-	GtkWidget *frame1;
-	GtkWidget *frame2;
+	GtkWidget *frame_diffractometer;
+	GtkWidget *frame_wavelength;
 	GtkWidget *frame_axes;
 	GtkWidget *frame_pseudo_axes;
 	GtkWidget *frame_solutions;
@@ -1672,15 +1688,15 @@ new_window (GApplication *app,
 	/* widgets */
 	/***********/
 
-	self->column_view_axes = hkl_gui_factory_get_column_view_axes();
-	self->column_view_pseudo_axes = hkl_gui_factory_get_column_view_pseudo_axes();
-	self->column_view_solutions = hkl_gui_factory_get_column_view_solutions();
+	self->column_view_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
+	self->column_view_pseudo_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
+	self->column_view_solutions = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->flowbox_engines = gtk_flow_box_new();
 	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
 
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
-	frame1 = gtk_frame_new("Diffractometer");
-	frame2 = gtk_frame_new("Wavelength");
+	frame_diffractometer = gtk_frame_new("Diffractometer");
+	frame_wavelength = gtk_frame_new("Wavelength");
 	frame_axes = gtk_frame_new("Axes");
 	frame_pseudo_axes = gtk_frame_new("Pseudo Axes");
 	frame_solutions = gtk_frame_new("Solutions");
@@ -1692,6 +1708,22 @@ new_window (GApplication *app,
 	vpaned1 = gtk_paned_new (GTK_ORIENTATION_VERTICAL);
 	window1 = gtk_application_window_new (GTK_APPLICATION (app));
 
+	/* column view axes */
+	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
+	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_axes), column);
+	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_new());
+	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_axes), column);
+	column = gtk_column_view_column_new("min", hkl_gui_parameter_factory_min_new());
+	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_axes), column);
+	column = gtk_column_view_column_new("max", hkl_gui_parameter_factory_max_new());
+	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_axes), column);
+
+	/* column view pseudo axes */
+	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
+	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
+	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_new());
+	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
+
 	/* column view solutions */
 	g_signal_connect (self->column_view_solutions, "activate", G_CALLBACK (column_view_solutions_activate_cb), self);
 
@@ -1699,11 +1731,11 @@ new_window (GApplication *app,
 	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory1);
 	g_signal_connect (dropdown1, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), self);
 
-	/* frame1 */
-	gtk_frame_set_child(GTK_FRAME(frame1), dropdown1);
+	/* frame diffractometer */
+	gtk_frame_set_child(GTK_FRAME(frame_diffractometer), dropdown1);
 
-	/* frame2 */
-	gtk_frame_set_child(GTK_FRAME(frame2), self->spinbutton_wavelength);
+	/* frame wavelength */
+	gtk_frame_set_child(GTK_FRAME(frame_wavelength), self->spinbutton_wavelength);
 
 	/* frame axes */
 	gtk_frame_set_child(GTK_FRAME(frame_axes), self->column_view_axes);
@@ -1715,7 +1747,8 @@ new_window (GApplication *app,
 	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);
 
 	/* hbox1 */
-	gtk_box_append(GTK_BOX(hbox1), self->flowbox_engines);
+	gtk_box_append(GTK_BOX(hbox1), frame_diffractometer);
+	gtk_box_append(GTK_BOX(hbox1), frame_wavelength);
 
 	/* hbox2 */
 	gtk_box_append(GTK_BOX(hbox2), frame_axes);
@@ -1735,10 +1768,9 @@ new_window (GApplication *app,
 	gtk_box_append(GTK_BOX(vbox1), vpaned1);
 
 	/* vbox2 */
-	gtk_box_append(GTK_BOX(vbox2), frame1);
-	gtk_box_append(GTK_BOX(vbox2), frame2);
-	gtk_box_append(GTK_BOX(vbox2), hbox2);
 	gtk_box_append(GTK_BOX(vbox2), hbox1);
+	gtk_box_append(GTK_BOX(vbox2), hbox2);
+	gtk_box_append(GTK_BOX(vbox2), self->flowbox_engines);
 
 	/* vpaned1 */
 	gtk_paned_set_start_child (GTK_PANED (vpaned1), vbox2);

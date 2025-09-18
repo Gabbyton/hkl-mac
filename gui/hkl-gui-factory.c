@@ -343,22 +343,28 @@ hkl_gui_factory_new(const HklFactory *factory)
 			     NULL);
 }
 
-void hkl_gui_factory_add_engine_frames(HklGuiFactory *self, GtkFlowBox *flowbox)
+GListStore *
+hkl_gui_factory_get_liststore_axes(HklGuiFactory *self)
 {
-	guint i;
-	guint n_items;
+	return self->liststore_axes;
+}
 
-	g_return_if_fail(HKL_GUI_IS_FACTORY(self));
-	g_return_if_fail(GTK_IS_FLOW_BOX(flowbox));
+GListStore *
+hkl_gui_factory_get_liststore_engines(HklGuiFactory *self)
+{
+	return self->liststore_engines;
+}
 
-	gtk_flow_box_remove_all(flowbox);
+GListStore *
+hkl_gui_factory_get_liststore_pseudo_axes(HklGuiFactory *self)
+{
+	return self->liststore_pseudo_axes;
+}
 
-	n_items = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_engines));
-	for (i=0;i<n_items; ++i){
-		HklGuiEngine *gengine = g_list_model_get_item(G_LIST_MODEL(self->liststore_engines), i);
-
-		gtk_flow_box_append(flowbox, hkl_gui_engine_get_frame(gengine));
-	}
+GListStore *
+hkl_gui_factory_get_liststore_solutions(HklGuiFactory *self)
+{
+	return self->liststore_solutions;
 }
 
 void
@@ -418,26 +424,6 @@ hkl_gui_factory_get_diffractometer(HklGuiFactory *self)
 }
 
 
-GtkSelectionModel *
-hkl_gui_factory_get_axes_selection_model(const HklGuiFactory *self)
-{
-	return GTK_SELECTION_MODEL(gtk_single_selection_new (G_LIST_MODEL(self->liststore_axes)));
-}
-
-GtkSelectionModel *
-hkl_gui_factory_get_pseudo_axes_selection_model(const HklGuiFactory *self)
-{
-	return GTK_SELECTION_MODEL(gtk_single_selection_new (G_LIST_MODEL(self->liststore_pseudo_axes)));
-}
-
-/* TODO remove the update */
-GtkSelectionModel *
-hkl_gui_factory_get_solutions_selection_model(HklGuiFactory *self)
-{
-	update_liststore_solutions(self);
-	return GTK_SELECTION_MODEL(gtk_single_selection_new (G_LIST_MODEL(self->liststore_solutions)));
-}
-
 /* Sort of class method */
 
 GListStore *
@@ -456,53 +442,12 @@ hkl_gui_factory_has_liststore(void)
 	return liststore;
 }
 
-
-GtkWidget *
-hkl_gui_factory_get_column_view_axes(void)
-{
-	GtkWidget *column_view;
-	GtkColumnViewColumn *column;
-
-	column_view = gtk_column_view_new(NULL);
-	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
-	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
-	column = gtk_column_view_column_new("min", hkl_gui_parameter_factory_min_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
-	column = gtk_column_view_column_new("max", hkl_gui_parameter_factory_max_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
-
-	return column_view;
-}
-
-GtkWidget *
-hkl_gui_factory_get_column_view_pseudo_axes(void)
-{
-	GtkWidget *column_view;
-	GtkColumnViewColumn *column;
-
-	column_view = gtk_column_view_new(NULL);
-	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
-	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(column_view), column);
-
-	return column_view;
-}
-
-GtkWidget *
-hkl_gui_factory_get_column_view_solutions(void)
-{
-	return gtk_column_view_new(NULL);
-}
-
 void
-hkl_gui_factory_setup_solutions(HklGuiFactory *self,
-				GtkWidget **widget)
+hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self,
+					    GtkColumnView *column_view)
 {
 	g_return_if_fail(HKL_GUI_IS_FACTORY(self));
-	g_return_if_fail(GTK_IS_COLUMN_VIEW(*widget));
+	g_return_if_fail(GTK_IS_COLUMN_VIEW(column_view));
 
 	gint idx, n_columns;
 	GListModel *columns;
@@ -518,10 +463,10 @@ hkl_gui_factory_setup_solutions(HklGuiFactory *self,
 	g_menu_append_item (menu, item);
 
 	/* remove all columns */
-	columns = gtk_column_view_get_columns(GTK_COLUMN_VIEW(*widget));
+	columns = gtk_column_view_get_columns(column_view);
 	n_columns = g_list_model_get_n_items(columns);
 	for(idx=n_columns-1; idx>=0; --idx){
-		gtk_column_view_remove_column(GTK_COLUMN_VIEW(*widget),
+		gtk_column_view_remove_column(column_view,
 					      g_list_model_get_item(columns, idx));
 	}
 
@@ -530,7 +475,7 @@ hkl_gui_factory_setup_solutions(HklGuiFactory *self,
 	darray_foreach(name, *names){
 		column = gtk_column_view_column_new(*name, hkl_gui_geometry_axis_value_factory_new(idx));
 		gtk_column_view_column_set_header_menu(column, G_MENU_MODEL(menu));
-		gtk_column_view_append_column(GTK_COLUMN_VIEW(*widget), column);
+		gtk_column_view_append_column(column_view, column);
 		++idx;
 	}
 }

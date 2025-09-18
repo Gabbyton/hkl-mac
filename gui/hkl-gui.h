@@ -47,7 +47,7 @@ G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplicat
 HKLAPI HklGuiEngine* hkl_gui_engine_new (HklEngine* engine);
 
 HKLAPI void hkl_gui_engine_set_engine (HklGuiEngine *gui_engine,
- 				HklEngine *engine);
+				       HklEngine *engine);
 
 HKLAPI HklEngine* hkl_gui_engine_get_engine (HklGuiEngine *gui_engine);
 
@@ -61,31 +61,23 @@ HKLAPI void hkl_gui_engine_update (HklGuiEngine* self);
 
 HKLAPI HklGuiFactory* hkl_gui_factory_new(const HklFactory *factory);
 
-HKLAPI void hkl_gui_factory_add_engine_frames(HklGuiFactory *self, GtkFlowBox *flowbox);
-
 HKLAPI struct diffractometer_t* hkl_gui_factory_get_diffractometer(HklGuiFactory *self);
 
-HKLAPI GtkSelectionModel* hkl_gui_factory_get_axes_selection_model(const HklGuiFactory *self);
+HKLAPI GListStore* hkl_gui_factory_get_liststore_axes(HklGuiFactory *self);
 
-HKLAPI GtkSelectionModel* hkl_gui_factory_get_pseudo_axes_selection_model(const HklGuiFactory *self);
+HKLAPI GListStore* hkl_gui_factory_get_liststore_engines(HklGuiFactory *self);
 
-HKLAPI GtkSelectionModel* hkl_gui_factory_get_solutions_selection_model(HklGuiFactory *self);
+HKLAPI GListStore* hkl_gui_factory_get_liststore_pseudo_axes(HklGuiFactory *self);
+
+HKLAPI GListStore* hkl_gui_factory_get_liststore_solutions(HklGuiFactory *self);
 
 HKLAPI GtkListItemFactory* hkl_gui_factory_name_factory_new(void);
 
 HKLAPI GListStore* hkl_gui_factory_has_liststore(void);
 
-HKLAPI GtkWidget* hkl_gui_factory_get_column_view_axes(void);
-
-HKLAPI GtkWidget* hkl_gui_factory_get_column_view_pseudo_axes(void);
-
-HKLAPI GtkWidget* hkl_gui_factory_get_column_view_pseudo_axes(void);
-
-HKLAPI GtkWidget* hkl_gui_factory_get_column_view_solutions(void);
-
 HKLAPI void hkl_gui_factory_set_geometry(HklGuiFactory *self, HklGuiGeometry *ggeometry);
 
-HKLAPI void hkl_gui_factory_setup_solutions(HklGuiFactory *self, GtkWidget **column_view);
+HKLAPI void hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self, GtkColumnView *column_view);
 
 /* geometry */
 
