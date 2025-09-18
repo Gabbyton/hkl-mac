@@ -343,28 +343,21 @@ hkl_gui_factory_new(const HklFactory *factory)
 			     NULL);
 }
 
-void hkl_gui_factory_add_engine_frames(HklGuiFactory *self, GtkBox *box)
+void hkl_gui_factory_add_engine_frames(HklGuiFactory *self, GtkFlowBox *flowbox)
 {
 	guint i;
 	guint n_items;
-	GtkWidget *child;
 
 	g_return_if_fail(HKL_GUI_IS_FACTORY(self));
-	g_return_if_fail(GTK_IS_BOX(box));
+	g_return_if_fail(GTK_IS_FLOW_BOX(flowbox));
 
-	/* first remove all the box content */
-	for (child = gtk_widget_get_first_child (GTK_WIDGET (box));
-	     child != NULL;
-	     child = gtk_widget_get_next_sibling (child)){
-		gtk_box_remove(box, child);
-	}
+	gtk_flow_box_remove_all(flowbox);
 
-	/* add all frames */
 	n_items = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_engines));
 	for (i=0;i<n_items; ++i){
 		HklGuiEngine *gengine = g_list_model_get_item(G_LIST_MODEL(self->liststore_engines), i);
 
-		gtk_box_append(box, hkl_gui_engine_get_frame(gengine));
+		gtk_flow_box_append(flowbox, hkl_gui_engine_get_frame(gengine));
 	}
 }
 

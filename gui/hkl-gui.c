@@ -146,7 +146,7 @@ struct _HklGuiWindow {
 	GtkWidget *column_view_axes;
 	GtkWidget *column_view_pseudo_axes;
 	GtkWidget *column_view_solutions;
-	GtkWidget *hbox_engines;
+	GtkWidget *flowbox_engines;
 	GtkWidget *spinbutton_wavelength;
 
 	HklGuiFactory *factory; /* not owned */
@@ -517,7 +517,7 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
                                           hkl_gui_factory_get_solutions_selection_model(factory));
 
 		/* setup engines */
-		hkl_gui_factory_add_engine_frames(factory, GTK_BOX(self->hbox_engines));
+		hkl_gui_factory_add_engine_frames(factory, GTK_FLOW_BOX(self->flowbox_engines));
 
 		/* set_up_tree_view_pseudo_axes(self); */
 		/* set_up_tree_view_solutions(self); */
@@ -1675,7 +1675,7 @@ new_window (GApplication *app,
 	self->column_view_axes = hkl_gui_factory_get_column_view_axes();
 	self->column_view_pseudo_axes = hkl_gui_factory_get_column_view_pseudo_axes();
 	self->column_view_solutions = hkl_gui_factory_get_column_view_solutions();
-	self->hbox_engines = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	self->flowbox_engines = gtk_flow_box_new();
 	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
 
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
@@ -1715,7 +1715,7 @@ new_window (GApplication *app,
 	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);
 
 	/* hbox1 */
-	gtk_box_append(GTK_BOX(hbox1), self->hbox_engines);
+	gtk_box_append(GTK_BOX(hbox1), self->flowbox_engines);
 
 	/* hbox2 */
 	gtk_box_append(GTK_BOX(hbox2), frame_axes);

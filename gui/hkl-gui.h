@@ -61,7 +61,7 @@ HKLAPI void hkl_gui_engine_update (HklGuiEngine* self);
 
 HKLAPI HklGuiFactory* hkl_gui_factory_new(const HklFactory *factory);
 
-HKLAPI void hkl_gui_factory_add_engine_frames(HklGuiFactory *self, GtkBox *box);
+HKLAPI void hkl_gui_factory_add_engine_frames(HklGuiFactory *self, GtkFlowBox *flowbox);
 
 HKLAPI struct diffractometer_t* hkl_gui_factory_get_diffractometer(HklGuiFactory *self);
 
