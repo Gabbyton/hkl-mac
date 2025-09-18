@@ -105,6 +105,28 @@ update_liststore_axes(HklGuiFactory *self)
 }
 
 static void
+update_liststore_engines(HklGuiFactory *self)
+{
+	guint i;
+	guint n_items = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_engines));
+	for(i=0; i<n_items; ++i){
+		HklGuiEngine *item = HKL_GUI_ENGINE(g_list_model_get_item(G_LIST_MODEL(self->liststore_engines), i));
+		hkl_gui_engine_update(item);
+	}
+}
+
+static void
+update_liststore_pseudo_axes(HklGuiFactory *self)
+{
+	guint i;
+	guint n_items = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_pseudo_axes));
+	for(i=0; i<n_items; ++i){
+		HklGuiParameter *item = HKL_GUI_PARAMETER(g_list_model_get_item(G_LIST_MODEL(self->liststore_pseudo_axes), i));
+		hkl_gui_parameter_update(item);
+	}
+}
+
+static void
 update_liststore_solutions(HklGuiFactory *self)
 {
 	const HklGeometryListItem *item;
@@ -228,6 +250,9 @@ hkl_gui_factory_set_property (GObject      *object,
 	{
 		gdouble wavelength = g_value_get_double (value);
 		diffractometer_set_wavelength(self->diffractometer, wavelength);
+
+		update_liststore_pseudo_axes(self);
+		update_liststore_engines(self);
 
 		g_object_notify_by_pspec (object, pspec);
 	}
