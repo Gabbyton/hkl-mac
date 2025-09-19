@@ -163,6 +163,7 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	GtkWidget *button_apply;
 	GtkWidget *button_init;
 	GtkWidget *hbox;
+	GtkWidget *label_mode;
 	GtkWidget *vbox;
 	GtkColumnViewColumn *column;
 
@@ -182,6 +183,7 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	button_apply = gtk_button_new_with_label("Apply");
 	button_init = gtk_button_new_with_label("Initialize");
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	label_mode = gtk_label_new("Mode: ");
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
 	/* button apply */
@@ -210,12 +212,13 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	gtk_frame_set_child(GTK_FRAME(self->frame), vbox);
 
 	/* hbox */
+	gtk_box_append(GTK_BOX(hbox), label_mode);
 	gtk_box_append(GTK_BOX(hbox), self->dropdown);
-	gtk_box_append(GTK_BOX(hbox), button_apply);
 	gtk_box_append(GTK_BOX(hbox), button_init);
 
 	/* vbox */
 	gtk_box_append(GTK_BOX(vbox), self->column_view_pseudo_axes);
+	gtk_box_append(GTK_BOX(vbox), button_apply);
 	gtk_box_append(GTK_BOX(vbox), hbox);
 	gtk_box_append(GTK_BOX(vbox), self->column_view_parameters);
 }
