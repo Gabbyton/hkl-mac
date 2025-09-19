@@ -142,6 +142,7 @@ struct _HklGuiWindow {
 	GtkApplication parent_instance;
 
 	GtkAdjustment *adjustment_wavelength;
+	GBinding *adjustement_wavelength_binding;
 
 	GtkWidget *column_view_axes;
 	GtkWidget *column_view_pseudo_axes;
@@ -465,9 +466,14 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		}
 
 		/* setup spinbutton_wavelength */
-		gtk_adjustment_set_value(self->adjustment_wavelength, diffractometer_get_wavelength(self->diffractometer));
+		if(self->adjustement_wavelength_binding)
+			g_binding_unbind(self->adjustement_wavelength_binding);
+		gtk_adjustment_set_value(self->adjustment_wavelength,
+					 diffractometer_get_wavelength(self->diffractometer));
 		gtk_widget_set_sensitive(self->spinbutton_wavelength, TRUE);
-		g_object_bind_property(factory, "wavelength", self->adjustment_wavelength, "value", G_BINDING_BIDIRECTIONAL);
+		self->adjustement_wavelength_binding = g_object_bind_property(factory, "wavelength",
+									      self->adjustment_wavelength, "value",
+									      G_BINDING_BIDIRECTIONAL);
 
 		/* set column view axes model */
 		single_selection = GTK_SINGLE_SELECTION(gtk_column_view_get_model(GTK_COLUMN_VIEW(self->column_view_axes)));
@@ -1719,6 +1725,7 @@ static void hkl_gui_window_init (HklGuiWindow * self)
 {
 	self->adjustment_wavelength = gtk_adjustment_new (0.0, 0.0, G_MAXDOUBLE,
 							  0.0001, 0.01, 0.0);
+	self->adjustement_wavelength_binding = NULL;
 	self->diffractometer = NULL;
 	self->sample = hkl_sample_new("sample"); /* TODO */
 }
