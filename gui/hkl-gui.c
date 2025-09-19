@@ -1626,6 +1626,11 @@ new_window (GApplication *app,
 	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory1);
 	g_signal_connect (dropdown1, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), self);
 
+	/* flowbox engines */
+	gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(self->flowbox_engines), FALSE);
+	gtk_flow_box_set_selection_mode(GTK_FLOW_BOX(self->flowbox_engines),
+					GTK_SELECTION_NONE);
+
 	/* frame diffractometer */
 	gtk_frame_set_child(GTK_FRAME(frame_diffractometer), dropdown1);
 

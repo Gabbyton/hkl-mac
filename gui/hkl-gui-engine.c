@@ -175,9 +175,9 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	self->frame = g_object_ref(gtk_frame_new(""));
 	self->dropdown = gtk_drop_down_new_from_strings(NULL);
 	self->column_view_parameters = gtk_column_view_new(
-		GTK_SELECTION_MODEL(gtk_single_selection_new(G_LIST_MODEL(self->liststore_mode_parameters))));
+		GTK_SELECTION_MODEL(gtk_no_selection_new(G_LIST_MODEL(self->liststore_mode_parameters))));
 	self->column_view_pseudo_axes = gtk_column_view_new(
-		GTK_SELECTION_MODEL(gtk_single_selection_new(G_LIST_MODEL(self->liststore_pseudo_axes))));
+		GTK_SELECTION_MODEL(gtk_no_selection_new(G_LIST_MODEL(self->liststore_pseudo_axes))));
 
 	button_apply = gtk_button_new_with_label("Apply");
 	button_init = gtk_button_new_with_label("Initialize");
