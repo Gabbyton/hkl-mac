@@ -237,6 +237,11 @@ void hkl_gui_parameter_update(HklGuiParameter *self)
 	hkl_gui_parameter_set_value(self, value);
 }
 
+
+/**********************/
+/* GtkListItemFactory */
+/**********************/
+
 static void
 setup_factory_axis_label_cb (GtkListItemFactory *factory,
 			     GtkListItem        *list_item)
@@ -317,6 +322,41 @@ hkl_gui_parameter_factory_value_new(void)
 	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
 	g_signal_connect (factory, "setup", G_CALLBACK (setup_factory_axis_spin_button_cb), NULL);
 	g_signal_connect (factory, "bind", G_CALLBACK (bind_factory_axis_value_cb), NULL);
+
+	return factory;
+}
+
+static void
+bind_factory_axis_value_label_cb (GtkListItemFactory *factory,
+				  GtkListItem        *list_item)
+{
+	gdouble value;
+	GtkWidget *label;
+	HklGuiParameter *self;
+
+	label = gtk_list_item_get_child (list_item);
+
+	g_return_if_fail(GTK_IS_LABEL(label));
+
+	self = gtk_list_item_get_item (list_item);
+
+	g_return_if_fail(HKL_GUI_IS_PARAMETER(self));
+
+	value = hkl_parameter_value_get(self->parameter, HKL_UNIT_USER);
+
+	char *buf = g_strdup_printf ("%0.*f", 6, value);
+	gtk_label_set_label (GTK_LABEL (label), buf);
+	g_free(buf);
+
+	g_object_bind_property(self, "value", label, "label", G_BINDING_BIDIRECTIONAL);
+}
+
+GtkListItemFactory *
+hkl_gui_parameter_factory_value_label_new(void)
+{
+	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (factory, "setup", G_CALLBACK (setup_factory_axis_label_cb), NULL);
+	g_signal_connect (factory, "bind", G_CALLBACK (bind_factory_axis_value_label_cb), NULL);
 
 	return factory;
 }

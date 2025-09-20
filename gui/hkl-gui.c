@@ -1616,7 +1616,7 @@ new_window (GApplication *app,
 	/* column view pseudo axes */
 	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
 	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
-	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_new());
+	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_label_new());
 	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
 
 	/* column view solutions */

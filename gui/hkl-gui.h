@@ -103,5 +103,6 @@ HKLAPI void hkl_gui_parameter_update(HklGuiParameter *self);
 
 HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_name_new(void);
 HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_value_new(void);
+HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_value_label_new(void);
 HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_min_new(void);
 HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_max_new(void);
