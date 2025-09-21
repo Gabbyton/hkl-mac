@@ -34,6 +34,8 @@ enum {
 	PROP_0,
 
 	PROP_ENGINE,
+	PROP_MODE,
+	PROP_INITIALIZED,
 
 	NUM_PROPERTIES
 };
@@ -58,6 +60,8 @@ struct _HklGuiEngine {
 	GListStore *liststore_modes;
 	GListStore *liststore_pseudo_axes;
 
+	GtkWidget *button_apply;
+	GtkWidget *button_init;
 	GtkWidget *column_view_parameters;
 	GtkWidget *column_view_pseudo_axes;
 	GtkWidget *dropdown;
@@ -76,6 +80,12 @@ set_property (GObject *object, guint prop_id,
 	case PROP_ENGINE:
 		hkl_gui_engine_set_engine(self, g_value_get_pointer (value));
 		break;
+	case PROP_MODE:
+		hkl_gui_engine_set_mode(self, g_value_get_string (value));
+		break;
+	case PROP_INITIALIZED:
+		hkl_gui_engine_set_initialized(self, g_value_get_boolean (value));
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -92,6 +102,12 @@ get_property (GObject *object, guint prop_id,
 	{
 	case PROP_ENGINE:
 		g_value_set_pointer (value, hkl_gui_engine_get_engine (self));
+		break;
+	case PROP_MODE:
+		g_value_set_string (value, hkl_gui_engine_get_mode (self));
+		break;
+	case PROP_INITIALIZED:
+		g_value_set_boolean (value, hkl_gui_engine_get_initialized (self));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -124,6 +140,18 @@ button_apply_clicked_cb (GtkButton* button, HklGuiEngine* self)
 
 
 static void
+button_init_clicked_cb (GtkButton* button, HklGuiEngine* self)
+{
+	g_return_if_fail (GTK_IS_BUTTON(button));
+	g_return_if_fail (HKL_GUI_IS_ENGINE(self));
+
+	hkl_gui_engine_set_initialized(self, true);
+
+	g_signal_emit(self, signals[CHANGED], 0);
+}
+
+
+static void
 update_liststore_mode_parameters(HklGuiEngine *self)
 {
 	const char * *name;
@@ -150,18 +178,13 @@ dropdown_notify_selected_item_cb(GtkDropDown *dropdown,
 	g_return_if_fail(GTK_INVALID_LIST_POSITION != mode);
 
 	const char *name = gtk_string_list_get_string(GTK_STRING_LIST(self->liststore_modes), mode);
-	if(FALSE == hkl_engine_current_mode_set(self->engine, name, NULL)){
-		return;
-	}else{
-		update_liststore_mode_parameters(self);
-	}
+
+	hkl_gui_engine_set_mode(self, name);
 }
 
 static void
 hkl_gui_engine_init (HklGuiEngine *self)
 {
-	GtkWidget *button_apply;
-	GtkWidget *button_init;
 	GtkWidget *hbox;
 	GtkWidget *label_mode;
 	GtkWidget *vbox;
@@ -169,6 +192,8 @@ hkl_gui_engine_init (HklGuiEngine *self)
 
 	self->engine = NULL;
 	self->solutions = NULL;
+	self->button_apply = gtk_button_new_with_label("Apply");
+	self->button_init = gtk_button_new_with_label("Initialize");
 	self->liststore_modes = G_LIST_STORE(gtk_string_list_new(NULL));
 	self->liststore_pseudo_axes = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
 	self->liststore_mode_parameters = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
@@ -180,15 +205,17 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	self->column_view_pseudo_axes = gtk_column_view_new(
 		GTK_SELECTION_MODEL(gtk_no_selection_new(G_LIST_MODEL(self->liststore_pseudo_axes))));
 
-	button_apply = gtk_button_new_with_label("Apply");
-	button_init = gtk_button_new_with_label("Initialize");
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	label_mode = gtk_label_new("Mode: ");
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
 	/* button apply */
-	g_signal_connect (button_apply, "clicked",
+	g_signal_connect (self->button_apply, "clicked",
 			  G_CALLBACK (button_apply_clicked_cb), self);
+
+	/* button init */
+	g_signal_connect (self->button_init, "clicked",
+			  G_CALLBACK (button_init_clicked_cb), self);
 
 	/* column_view parameters */
 	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
@@ -214,11 +241,11 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	/* hbox */
 	gtk_box_append(GTK_BOX(hbox), label_mode);
 	gtk_box_append(GTK_BOX(hbox), self->dropdown);
-	gtk_box_append(GTK_BOX(hbox), button_init);
+	gtk_box_append(GTK_BOX(hbox), self->button_init);
 
 	/* vbox */
 	gtk_box_append(GTK_BOX(vbox), self->column_view_pseudo_axes);
-	gtk_box_append(GTK_BOX(vbox), button_apply);
+	gtk_box_append(GTK_BOX(vbox), self->button_apply);
 	gtk_box_append(GTK_BOX(vbox), hbox);
 	gtk_box_append(GTK_BOX(vbox), self->column_view_parameters);
 }
@@ -238,6 +265,22 @@ static void hkl_gui_engine_class_init (HklGuiEngineClass * class)
 				      "Engine",
 				      "The Hkl Engine used underneath",
 				      G_PARAM_CONSTRUCT_ONLY |
+				      G_PARAM_READWRITE |
+				      G_PARAM_STATIC_STRINGS);
+
+	props[PROP_MODE] =
+		g_param_spec_string ("mode",
+				     "Mode",
+				     "The curren tmode name of the engine",
+				     "invalid-mode",
+				     G_PARAM_READWRITE |
+				     G_PARAM_STATIC_STRINGS);
+
+	props[PROP_INITIALIZED] =
+		g_param_spec_boolean ("initialized",
+				      "Initialized",
+				      "The current mode was initialized or not.",
+				      FALSE,
 				      G_PARAM_READWRITE |
 				      G_PARAM_STATIC_STRINGS);
 
@@ -273,6 +316,18 @@ hkl_gui_engine_get_engine (HklGuiEngine *self)
 	return self->engine;
 }
 
+const char *
+hkl_gui_engine_get_mode (HklGuiEngine *self)
+{
+	return hkl_engine_current_mode_get(self->engine);
+}
+
+gboolean
+hkl_gui_engine_get_initialized (HklGuiEngine *self)
+{
+	return hkl_engine_initialized_get(self->engine);
+}
+
 GtkWidget *
 hkl_gui_engine_get_frame(HklGuiEngine *self)
 {
@@ -290,31 +345,64 @@ hkl_gui_engine_set_engine (HklGuiEngine *self,
 			   HklEngine *engine)
 {
 	const char * *name;
+	const char *mode;
 
 	g_return_if_fail (self != NULL);
 	g_return_if_fail (engine != NULL);
 
 	self->engine = engine;
 
+	/* engine name */
 	gtk_frame_set_label(GTK_FRAME(self->frame),
 			    hkl_engine_name_get(engine));
 
-	/* modes */
-	darray_foreach(name, *hkl_engine_modes_names_get(engine)){
-		gtk_string_list_append(GTK_STRING_LIST(self->liststore_modes), *name);
-	}
-	gtk_drop_down_set_model(GTK_DROP_DOWN(self->dropdown),
-				G_LIST_MODEL(self->liststore_modes));
-
+	/* pseudo axes only once */
 	darray_foreach(name, *hkl_engine_pseudo_axis_names_get(engine)){
 		const HklParameter *parameter = hkl_engine_pseudo_axis_get(self->engine, *name, NULL);
 		g_list_store_append(self->liststore_pseudo_axes,
 				    hkl_gui_parameter_new(parameter));
 	}
 
-	update_liststore_mode_parameters(self);
+	/* modes names only once */
+	darray_foreach(name, *hkl_engine_modes_names_get(engine)){
+		gtk_string_list_append(GTK_STRING_LIST(self->liststore_modes), *name);
+	}
+	gtk_drop_down_set_model(GTK_DROP_DOWN(self->dropdown),
+				G_LIST_MODEL(self->liststore_modes));
+
+	mode = hkl_engine_current_mode_get(self->engine);
+
+	hkl_gui_engine_set_mode(self, mode);
 
 	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ENGINE]);
+}
+
+void
+hkl_gui_engine_set_mode (HklGuiEngine *self, const char *mode)
+{
+	g_return_if_fail (self != NULL);
+	g_return_if_fail (mode != NULL);
+
+	g_return_if_fail(TRUE == hkl_engine_current_mode_set(self->engine, mode, NULL));
+
+	update_liststore_mode_parameters(self);
+
+	guint capabilities = hkl_engine_capabilities_get(self->engine);
+
+	gtk_widget_set_sensitive(self->button_init, HKL_ENGINE_CAPABILITIES_INITIALIZABLE & capabilities);
+	gtk_widget_set_sensitive(self->button_apply, HKL_ENGINE_CAPABILITIES_WRITABLE & capabilities);
+
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_MODE]);
+}
+
+void
+hkl_gui_engine_set_initialized (HklGuiEngine *self, gboolean initialized)
+{
+	g_return_if_fail (self != NULL);
+
+	g_return_if_fail (TRUE == hkl_engine_initialized_set(self->engine, initialized, NULL));
+
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_MODE]);
 }
 
 void

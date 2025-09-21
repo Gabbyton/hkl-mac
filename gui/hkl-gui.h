@@ -49,9 +49,19 @@ HKLAPI HklGuiEngine* hkl_gui_engine_new (HklEngine* engine);
 HKLAPI void hkl_gui_engine_set_engine (HklGuiEngine *gui_engine,
 				       HklEngine *engine);
 
+HKLAPI void hkl_gui_engine_set_mode (HklGuiEngine *gui_engine,
+				     const char *mode);
+
+HKLAPI void hkl_gui_engine_set_initialized (HklGuiEngine *gui_engine,
+					    gboolean initialized);
+
 HKLAPI HklEngine* hkl_gui_engine_get_engine (HklGuiEngine *gui_engine);
 
-HKLAPI GtkWidget *hkl_gui_engine_get_frame(HklGuiEngine *self);
+HKLAPI const char* hkl_gui_engine_get_mode (HklGuiEngine *gui_engine);
+
+HKLAPI gboolean hkl_gui_engine_get_initialized (HklGuiEngine *gui_engine);
+
+HKLAPI GtkWidget* hkl_gui_engine_get_frame(HklGuiEngine *self);
 
 HKLAPI HklGeometryList *hkl_gui_engine_get_solutions(HklGuiEngine *self);
 
