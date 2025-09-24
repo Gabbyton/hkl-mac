@@ -46,24 +46,26 @@ G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplicat
 
 HKLAPI HklGuiEngine* hkl_gui_engine_new (HklEngine* engine);
 
+HKLAPI HklEngine* hkl_gui_engine_get_engine (HklGuiEngine *gui_engine);
+
+HKLAPI GError* hkl_gui_engine_get_error (HklGuiEngine *gui_engine);
+
+HKLAPI GtkWidget* hkl_gui_engine_get_frame(HklGuiEngine *self);
+
+HKLAPI gboolean hkl_gui_engine_get_initialized (HklGuiEngine *gui_engine);
+
+HKLAPI const char* hkl_gui_engine_get_mode (HklGuiEngine *gui_engine);
+
+HKLAPI HklGeometryList *hkl_gui_engine_get_solutions(HklGuiEngine *self);
+
 HKLAPI void hkl_gui_engine_set_engine (HklGuiEngine *gui_engine,
 				       HklEngine *engine);
-
-HKLAPI void hkl_gui_engine_set_mode (HklGuiEngine *gui_engine,
-				     const char *mode);
 
 HKLAPI void hkl_gui_engine_set_initialized (HklGuiEngine *gui_engine,
 					    gboolean initialized);
 
-HKLAPI HklEngine* hkl_gui_engine_get_engine (HklGuiEngine *gui_engine);
-
-HKLAPI const char* hkl_gui_engine_get_mode (HklGuiEngine *gui_engine);
-
-HKLAPI gboolean hkl_gui_engine_get_initialized (HklGuiEngine *gui_engine);
-
-HKLAPI GtkWidget* hkl_gui_engine_get_frame(HklGuiEngine *self);
-
-HKLAPI HklGeometryList *hkl_gui_engine_get_solutions(HklGuiEngine *self);
+HKLAPI void hkl_gui_engine_set_mode (HklGuiEngine *gui_engine,
+				     const char *mode);
 
 HKLAPI void hkl_gui_engine_update (HklGuiEngine* self);
 
@@ -72,6 +74,8 @@ HKLAPI void hkl_gui_engine_update (HklGuiEngine* self);
 HKLAPI HklGuiFactory* hkl_gui_factory_new(const HklFactory *factory);
 
 HKLAPI struct diffractometer_t* hkl_gui_factory_get_diffractometer(HklGuiFactory *self);
+
+HKLAPI GError* hkl_gui_factory_get_error(HklGuiFactory *self);
 
 HKLAPI GListStore* hkl_gui_factory_get_liststore_axes(HklGuiFactory *self);
 
@@ -83,7 +87,7 @@ HKLAPI GListStore* hkl_gui_factory_get_liststore_solutions(HklGuiFactory *self);
 
 HKLAPI GtkListItemFactory* hkl_gui_factory_name_factory_new(void);
 
-HKLAPI GListStore* hkl_gui_factory_has_liststore(void);
+HKLAPI void hkl_gui_factory_set_error(HklGuiFactory *self, GError* error);
 
 HKLAPI void hkl_gui_factory_set_geometry(HklGuiFactory *self, HklGuiGeometry *ggeometry);
 

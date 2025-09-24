@@ -142,6 +142,7 @@ struct _HklGuiWindow {
 	GtkApplication parent_instance;
 
 	GtkAdjustment *adjustment_wavelength;
+	GtkAlertDialog *alert_dialog_solutions;
 	GBinding *adjustement_wavelength_binding;
 
 	GtkWidget *column_view_axes;
@@ -149,6 +150,7 @@ struct _HklGuiWindow {
 	GtkWidget *column_view_solutions;
 	GtkWidget *flowbox_engines;
 	GtkWidget *spinbutton_wavelength;
+	GtkWidget *window1;
 
 	HklGuiFactory *factory; /* not owned */
 	struct diffractometer_t *diffractometer; /* unowned */
@@ -295,23 +297,17 @@ finalize (GObject* object)
 /* 	get_object(builder, GTK_COMBO_BOX, priv, combobox1); */
 /* } */
 
-/* static void */
-/* raise_error(HklGuiWindow *self, GError **error) */
-/* { */
-/* 	HklGuiWindowPrivate *priv =  hkl_gui_window_get_instance_private(self); */
+static void
+raise_error(HklGuiWindow *self, GError *error)
+{
+	g_return_if_fail (error != NULL);
 
-/* 	g_return_if_fail (error != NULL); */
-/* 	g_return_if_fail (*error != NULL); */
-
-/* 	/\* show an error message *\/ */
-/* 	gtk_label_set_text (GTK_LABEL (priv->info_message), */
-/* 			    (*error)->message); */
-/* 	gtk_info_bar_set_message_type (priv->info_bar, */
-/* 				       GTK_MESSAGE_ERROR); */
-/* 	gtk_widget_show (GTK_WIDGET(priv->info_bar)); */
-
-/* 	g_clear_error(error); */
-/* } */
+	/* show an error message */
+	gtk_alert_dialog_set_message(self->alert_dialog_solutions,
+				     error->message);
+	gtk_alert_dialog_show(self->alert_dialog_solutions,
+			      GTK_WINDOW(self->window1));
+}
 
 /* static void */
 /* update_reflections (HklGuiWindow *self) */
@@ -441,6 +437,16 @@ finalize (GObject* object)
 /* #endif */
 /* } */
 
+static void
+factory_notify_error_cb(HklGuiFactory *factory,
+			GParamSpec* pspec,
+			gpointer *user_data)
+{
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+
+	raise_error(self, hkl_gui_factory_get_error(factory));
+}
+
 /* select diffractometer */
 static void
 dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
@@ -459,6 +465,7 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 
 
 		self->factory = factory;
+
 		self->diffractometer = hkl_gui_factory_get_diffractometer(factory);
 
 		if (NULL != self->sample){
@@ -1550,6 +1557,9 @@ static void
 new_window (GApplication *app,
             GFile        *file)
 {
+	HklFactory **factories;
+	size_t i, n;
+
 	GListStore *liststore1;
 
 	GtkColumnViewColumn *column;
@@ -1567,7 +1577,6 @@ new_window (GApplication *app,
 	GtkWidget *vpaned1;
 	GtkWidget *vbox1;
 	GtkWidget *vbox2;
-	GtkWidget *window1;
 
 	HklGuiWindow *self = HKL_GUI_WINDOW(app);
 
@@ -1575,19 +1584,29 @@ new_window (GApplication *app,
 	/* Models */
 	/**********/
 
-	/* liststore1 */
-	liststore1 = hkl_gui_factory_has_liststore();
+	/* liststore1 factories */
+	liststore1 = g_list_store_new (HKL_GUI_TYPE_FACTORY);
+	factories = hkl_factory_get_all(&n);
+	for(i=0; i<n; ++i){
+		HklGuiFactory *factory = hkl_gui_factory_new(factories[i]);
+		g_signal_connect (factory, "notify::error",
+				  G_CALLBACK (factory_notify_error_cb), self);
+		g_list_store_append (liststore1, factory);
+	}
+
 	item_factory1 = hkl_gui_factory_name_factory_new();
 
 	/***********/
 	/* widgets */
 	/***********/
 
+	self->alert_dialog_solutions = gtk_alert_dialog_new("Solutions");
 	self->column_view_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->column_view_pseudo_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->column_view_solutions = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->flowbox_engines = gtk_flow_box_new();
 	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
+	self->window1 = gtk_application_window_new (GTK_APPLICATION (app));
 
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
 	frame_diffractometer = gtk_frame_new("Diffractometer");
@@ -1601,7 +1620,6 @@ new_window (GApplication *app,
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vpaned1 = gtk_paned_new (GTK_ORIENTATION_VERTICAL);
-	window1 = gtk_application_window_new (GTK_APPLICATION (app));
 
 	/* column view axes */
 	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
@@ -1677,13 +1695,13 @@ new_window (GApplication *app,
 	/* gtk_paned_set_end_child (GTK_PANED (vpaned), frame2); */
 
 	/*  window1 */
-	gtk_window_set_default_size (GTK_WINDOW(window1), 640, 480);
+	gtk_window_set_default_size (GTK_WINDOW(self->window1), 640, 480);
 	/* g_action_map_add_action_entries (G_ACTION_MAP (window), win_entries, G_N_ELEMENTS (win_entries), window); */
-	gtk_window_set_title (GTK_WINDOW (window1), "hkl library GUI");
-	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (window1), TRUE);
-	gtk_window_set_child (GTK_WINDOW (window1), vbox1);
+	gtk_window_set_title (GTK_WINDOW (self->window1), "hkl library GUI");
+	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (self->window1), TRUE);
+	gtk_window_set_child (GTK_WINDOW (self->window1), vbox1);
 
-	gtk_window_present (GTK_WINDOW (window1));
+	gtk_window_present (GTK_WINDOW (self->window1));
 }
 
 static void hkl_gui_window_startup (GApplication *application)

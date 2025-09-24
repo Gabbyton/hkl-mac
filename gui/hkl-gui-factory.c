@@ -41,8 +41,11 @@
 
 enum {
 	PROP_0,
+
+	PROP_ERROR,
 	PROP_FACTORY,
 	PROP_WAVELENGTH,
+
 	NUM_PROPERTIES,
 };
 
@@ -55,6 +58,7 @@ struct _HklGuiFactory {
 
 	/* instance members */
 	struct diffractometer_t *diffractometer;
+	GError *error;
 	GListStore *liststore_axes;
 	GListStore *liststore_engines;
 	GListStore *liststore_pseudo_axes;
@@ -151,10 +155,11 @@ engine_changed_cb(HklGuiEngine *engine,
 	HklGuiFactory *self = HKL_GUI_FACTORY(user_data);
 	HklGeometryList *solutions = hkl_gui_engine_get_solutions(engine);
 
-	if (NULL != solutions) {
+	if (NULL != solutions){
 		diffractometer_set_solutions(self->diffractometer, solutions);
 		update_liststore_solutions(self);
 	}
+	hkl_gui_factory_set_error(self, hkl_gui_engine_get_error(engine));
 }
 
 static void
@@ -168,6 +173,9 @@ hkl_gui_factory_set_property (GObject      *object,
 
 	switch (prop_id)
 	{
+	case PROP_ERROR:
+		hkl_gui_factory_set_error(self, g_value_get_pointer(value));
+		break;
 	case PROP_FACTORY:
 	{
 		HklGuiParameter *g_axis;
@@ -274,6 +282,9 @@ hkl_gui_factory_get_property (GObject    *object,
 
 	switch (prop_id)
 	{
+	case PROP_ERROR:
+		g_value_set_pointer (value, hkl_gui_factory_get_error(self));
+		break;
 	case PROP_FACTORY:
 		g_value_set_pointer (value, self->diffractometer->factory);
 		break;
@@ -327,9 +338,10 @@ hkl_gui_factory_finalize (GObject *gobject)
 }
 
 static void
-hkl_gui_factory_init(HklGuiFactory *factory)
+hkl_gui_factory_init(HklGuiFactory *self)
 {
-	factory->diffractometer = NULL;
+	self->diffractometer = NULL;
+	self->error = NULL;
 }
 
 static void
@@ -341,6 +353,12 @@ hkl_gui_factory_class_init (HklGuiFactoryClass *klass)
 	object_class->finalize = hkl_gui_factory_finalize;
 	object_class->get_property = hkl_gui_factory_get_property;
 	object_class->set_property = hkl_gui_factory_set_property;
+
+	props[PROP_ERROR] =
+		g_param_spec_pointer ("error",
+				      "Error",
+				      "the last GError",
+				      G_PARAM_READWRITE);
 
 	props[PROP_FACTORY] =
 		g_param_spec_pointer ("factory",
@@ -368,6 +386,14 @@ hkl_gui_factory_new(const HklFactory *factory)
 			     NULL);
 }
 
+/* getters */
+
+GError *
+hkl_gui_factory_get_error(HklGuiFactory *self)
+{
+	return self->error;
+}
+
 GListStore *
 hkl_gui_factory_get_liststore_axes(HklGuiFactory *self)
 {
@@ -392,15 +418,26 @@ hkl_gui_factory_get_liststore_solutions(HklGuiFactory *self)
 	return self->liststore_solutions;
 }
 
+/* setters */
+
 void
-hkl_gui_factory_set_geometry(HklGuiFactory *self,
-			     HklGuiGeometry *geometry)
+hkl_gui_factory_set_error(HklGuiFactory *self,
+			  GError *error)
 {
-	diffractometer_set_geometry(self->diffractometer,
-				    hkl_gui_geometry_get_geometry(geometry));
-	update_liststore_axes(self);
+	g_clear_error(&self->error);
+	self->error = g_error_copy(error);
+
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ERROR]);
 }
 
+void
+hkl_gui_factory_set_geometry(HklGuiFactory *self,
+                             HklGuiGeometry *geometry)
+ {
+        diffractometer_set_geometry(self->diffractometer,
+                                    hkl_gui_geometry_get_geometry(geometry));
+        update_liststore_axes(self);
+}
 
 /**************************/
 /* Gui ListItem factories */
@@ -450,22 +487,6 @@ hkl_gui_factory_get_diffractometer(HklGuiFactory *self)
 
 
 /* Sort of class method */
-
-GListStore *
-hkl_gui_factory_has_liststore(void)
-{
-	HklFactory **factories;
-	size_t i, n;
-
-	GListStore *liststore = g_list_store_new (HKL_GUI_TYPE_FACTORY);
-
-	factories = hkl_factory_get_all(&n);
-	for(i=0; i<n; ++i){
-		g_list_store_append (liststore, hkl_gui_factory_new(factories[i]));
-	}
-
-	return liststore;
-}
 
 void
 hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self,

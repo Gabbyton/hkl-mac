@@ -53,6 +53,7 @@ static guint signals[NUM_SIGNALS] = { 0 };
 struct _HklGuiEngine {
 	GObject parent_instance;
 
+	GError *error;
 	HklEngine *engine;
 	HklGeometryList *solutions;
 
@@ -127,13 +128,15 @@ button_apply_clicked_cb (GtkButton* button, HklGuiEngine* self)
 {
 	HklGeometryList *solutions;
 
-	solutions = hkl_engine_pseudo_axis_values_set(self->engine, NULL, 0, HKL_UNIT_USER, NULL);
+	g_clear_error(&self->error);
 
-	g_return_if_fail(NULL != solutions);
+	solutions = hkl_engine_pseudo_axis_values_set(self->engine, NULL, 0, HKL_UNIT_USER, &self->error);
 
-	if (NULL != self->solutions)
-		hkl_geometry_list_free(self->solutions);
-	self->solutions = solutions;
+	if (NULL != solutions){
+		if (NULL != self->solutions)
+			hkl_geometry_list_free(self->solutions);
+		self->solutions = solutions;
+	}
 
 	g_signal_emit(self, signals[CHANGED], 0);
 }
@@ -191,6 +194,7 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	GtkColumnViewColumn *column;
 
 	self->engine = NULL;
+	self->error = NULL;
 	self->solutions = NULL;
 	self->button_apply = gtk_button_new_with_label("Apply");
 	self->button_init = gtk_button_new_with_label("Initialize");
@@ -316,10 +320,16 @@ hkl_gui_engine_get_engine (HklGuiEngine *self)
 	return self->engine;
 }
 
-const char *
-hkl_gui_engine_get_mode (HklGuiEngine *self)
+GError*
+hkl_gui_engine_get_error (HklGuiEngine *self)
 {
-	return hkl_engine_current_mode_get(self->engine);
+	return self->error;
+}
+
+GtkWidget *
+hkl_gui_engine_get_frame(HklGuiEngine *self)
+{
+	return self->frame;
 }
 
 gboolean
@@ -328,10 +338,10 @@ hkl_gui_engine_get_initialized (HklGuiEngine *self)
 	return hkl_engine_initialized_get(self->engine);
 }
 
-GtkWidget *
-hkl_gui_engine_get_frame(HklGuiEngine *self)
+const char *
+hkl_gui_engine_get_mode (HklGuiEngine *self)
 {
-	return self->frame;
+	return hkl_engine_current_mode_get(self->engine);
 }
 
 HklGeometryList *
