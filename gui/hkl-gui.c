@@ -1571,10 +1571,9 @@ new_window (GApplication *app,
 	GtkWidget *frame_axes;
 	GtkWidget *frame_pseudo_axes;
 	GtkWidget *frame_solutions;
-	GtkWidget *hbox1;
-	GtkWidget *hbox2;
+	GtkWidget *hpaned1;
+	GtkWidget *notebook1;
 	GtkWidget *scrolledwindow1;
-	GtkWidget *vpaned1;
 	GtkWidget *vbox1;
 	GtkWidget *vbox2;
 
@@ -1614,12 +1613,11 @@ new_window (GApplication *app,
 	frame_axes = gtk_frame_new("Axes");
 	frame_pseudo_axes = gtk_frame_new("Pseudo Axes");
 	frame_solutions = gtk_frame_new("Solutions");
-	hbox1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	hbox2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	hpaned1 = gtk_paned_new (GTK_ORIENTATION_HORIZONTAL);
+	notebook1 = gtk_notebook_new();
 	scrolledwindow1 = gtk_scrolled_window_new();
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	vpaned1 = gtk_paned_new (GTK_ORIENTATION_VERTICAL);
 
 	/* column view axes */
 	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
@@ -1659,40 +1657,42 @@ new_window (GApplication *app,
 	gtk_frame_set_child(GTK_FRAME(frame_axes), self->column_view_axes);
 
         /* frame pseudo axes */
-	gtk_frame_set_child(GTK_FRAME(frame_pseudo_axes), scrolledwindow1);
+	// gtk_frame_set_child(GTK_FRAME(frame_pseudo_axes), scrolledwindow1);
+	gtk_frame_set_child(GTK_FRAME(frame_pseudo_axes), self->column_view_pseudo_axes);
 
 	/* frame solutions*/
 	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);
 
-	/* hbox1 */
-	gtk_box_append(GTK_BOX(hbox1), frame_diffractometer);
-	gtk_box_append(GTK_BOX(hbox1), frame_wavelength);
-
-	/* hbox2 */
-	gtk_box_append(GTK_BOX(hbox2), frame_axes);
-	gtk_box_append(GTK_BOX(hbox2), frame_solutions);
-	gtk_box_append(GTK_BOX(hbox2), frame_pseudo_axes);
-
-
+	/* notebook1 */
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook1),
+				 scrolledwindow1,
+				 NULL);
+	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK(notebook1),
+					 scrolledwindow1,
+					 "Pseudo Axes");
 	/* scrolledwindow1 */
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow1),
 				       GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledwindow1), self->column_view_pseudo_axes);
+	gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledwindow1), self->flowbox_engines);
 
 	/* spinbutton_wavelength */
 	gtk_widget_set_sensitive(self->spinbutton_wavelength, FALSE);
 
 	/* vbox1 */
-	gtk_box_append(GTK_BOX(vbox1), vpaned1);
+	gtk_box_append(GTK_BOX(vbox1), hpaned1);
 
 	/* vbox2 */
-	gtk_box_append(GTK_BOX(vbox2), hbox1);
-	gtk_box_append(GTK_BOX(vbox2), hbox2);
-	gtk_box_append(GTK_BOX(vbox2), self->flowbox_engines);
+	gtk_box_append(GTK_BOX(vbox2), frame_diffractometer);
+	gtk_box_append(GTK_BOX(vbox2), frame_wavelength);
+	gtk_box_append(GTK_BOX(vbox2), frame_axes);
+	gtk_box_append(GTK_BOX(vbox2), frame_solutions);
 
 	/* vpaned1 */
-	gtk_paned_set_start_child (GTK_PANED (vpaned1), vbox2);
-	/* gtk_paned_set_end_child (GTK_PANED (vpaned), frame2); */
+	gtk_paned_set_start_child (GTK_PANED (hpaned1), vbox2);
+	gtk_paned_set_shrink_start_child (GTK_PANED (hpaned1), false);
+
+	gtk_paned_set_end_child (GTK_PANED (hpaned1), notebook1);
+	gtk_paned_set_shrink_end_child (GTK_PANED (hpaned1), false);
 
 	/*  window1 */
 	gtk_window_set_default_size (GTK_WINDOW(self->window1), 640, 480);
