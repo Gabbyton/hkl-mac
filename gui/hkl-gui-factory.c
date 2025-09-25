@@ -163,6 +163,86 @@ engine_changed_cb(HklGuiEngine *engine,
 }
 
 static void
+hkl_gui_factory_set_factory(HklGuiFactory *self,
+			    HklFactory *factory)
+{
+	HklGuiParameter *g_axis;
+	HklGuiEngine *g_engine;
+	guint n_engines;
+
+	/* diffractometer */
+	self->diffractometer = create_diffractometer(factory);
+
+	/* liststore_axes */
+	self->liststore_axes = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
+	const darray_string *names;
+	const char **name;
+
+	names = hkl_geometry_axis_names_get(self->diffractometer->geometry);
+	darray_foreach(name, *names){
+		const HklParameter *parameter = hkl_geometry_axis_get(self->diffractometer->geometry, *name, NULL);
+		g_list_store_append (self->liststore_axes,
+				     hkl_gui_parameter_new(parameter));
+	}
+
+	/* liststore_engines and pseudo_axes */
+	self->liststore_engines = g_list_store_new(HKL_GUI_TYPE_ENGINE);
+	self->liststore_pseudo_axes = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
+	const darray_engine *engines;
+	HklEngine **engine;
+
+	engines = hkl_engine_list_engines_get(self->diffractometer->engines);
+	n_engines = darray_size(*engines);
+	darray_foreach(engine, *engines){
+		g_engine = hkl_gui_engine_new(*engine);
+		g_list_store_append (self->liststore_engines, g_engine);
+
+		const darray_string *pseudo_axes = hkl_engine_pseudo_axis_names_get(*engine);
+
+		darray_foreach(name, *pseudo_axes){
+			const HklParameter *parameter = hkl_engine_pseudo_axis_get(*engine,
+										   *name, NULL);
+			g_list_store_append (self->liststore_pseudo_axes,
+					     hkl_gui_parameter_new(parameter));
+		}
+
+		g_signal_connect(g_engine, "changed", G_CALLBACK(engine_changed_cb), self);
+	}
+
+	/* connect pseudo axes and engines parameters to axes */
+	guint n_axes = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_axes));
+	guint n_pseudo_axes = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_pseudo_axes));
+	guint i;
+	guint j;
+
+	for(i=0; i<n_axes; ++i){
+		g_axis = g_list_model_get_item(G_LIST_MODEL(self->liststore_axes), i);
+
+		/* update the diffractometer */
+		g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_diffractometer_cb), self);
+
+		/* update the pseudo axes */
+		for(j=0; j<n_pseudo_axes; ++j){
+			HklGuiParameter *g_pseudo_axis =  g_list_model_get_item(G_LIST_MODEL(self->liststore_pseudo_axes), j);
+			g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_pseudo_axes_cb), g_pseudo_axis);
+		}
+
+		/* update the gui engines */
+		for(j=0; j<n_engines; ++j){
+			g_engine = g_list_model_get_item(G_LIST_MODEL(self->liststore_engines), j);
+			g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_engines_cb), g_engine);
+		}
+	}
+
+	/* liststore_solutions */
+	self->liststore_solutions = g_list_store_new(HKL_GUI_TYPE_GEOMETRY);
+	update_liststore_solutions(self);
+
+
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_FACTORY]);
+}
+
+static void
 hkl_gui_factory_set_property (GObject      *object,
 			      guint         prop_id,
 			      const GValue *value,
@@ -177,98 +257,14 @@ hkl_gui_factory_set_property (GObject      *object,
 		hkl_gui_factory_set_error(self, g_value_get_pointer(value));
 		break;
 	case PROP_FACTORY:
-	{
-		HklGuiParameter *g_axis;
-		HklGuiEngine *g_engine;
-		guint n_engines;
-
-		/* diffractometer */
-		HklFactory *new_factory = g_value_get_pointer (value);
-		self->diffractometer = create_diffractometer(new_factory);
-
-		/* liststore_axes */
-		self->liststore_axes = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
-		const darray_string *names;
-		const char **name;
-
-		names = hkl_geometry_axis_names_get(self->diffractometer->geometry);
-		darray_foreach(name, *names){
-			const HklParameter *parameter = hkl_geometry_axis_get(self->diffractometer->geometry, *name, NULL);
-			g_list_store_append (self->liststore_axes,
-					     hkl_gui_parameter_new(parameter));
-		}
-
-		/* liststore_engines and pseudo_axes */
-		self->liststore_engines = g_list_store_new(HKL_GUI_TYPE_ENGINE);
-		self->liststore_pseudo_axes = g_list_store_new(HKL_GUI_TYPE_PARAMETER);
-		const darray_engine *engines;
-		HklEngine **engine;
-
-		engines = hkl_engine_list_engines_get(self->diffractometer->engines);
-		n_engines = darray_size(*engines);
-		darray_foreach(engine, *engines){
-			g_engine = hkl_gui_engine_new(*engine);
-			g_list_store_append (self->liststore_engines, g_engine);
-
-			const darray_string *pseudo_axes = hkl_engine_pseudo_axis_names_get(*engine);
-
-			darray_foreach(name, *pseudo_axes){
-				const HklParameter *parameter = hkl_engine_pseudo_axis_get(*engine,
-											   *name, NULL);
-				g_list_store_append (self->liststore_pseudo_axes,
-						     hkl_gui_parameter_new(parameter));
-			}
-
-			g_signal_connect(g_engine, "changed", G_CALLBACK(engine_changed_cb), self);
-		}
-
-		/* connect pseudo axes and engines parameters to axes */
-		guint n_axes = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_axes));
-		guint n_pseudo_axes = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_pseudo_axes));
-		guint i;
-		guint j;
-
-		for(i=0; i<n_axes; ++i){
-			g_axis = g_list_model_get_item(G_LIST_MODEL(self->liststore_axes), i);
-
-			/* update the diffractometer */
-			g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_diffractometer_cb), self);
-
-			/* update the pseudo axes */
-			for(j=0; j<n_pseudo_axes; ++j){
-				HklGuiParameter *g_pseudo_axis =  g_list_model_get_item(G_LIST_MODEL(self->liststore_pseudo_axes), j);
-				g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_pseudo_axes_cb), g_pseudo_axis);
-			}
-
-			/* update the gui engines */
-			for(j=0; j<n_engines; ++j){
-				g_engine = g_list_model_get_item(G_LIST_MODEL(self->liststore_engines), j);
-				g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_engines_cb), g_engine);
-			}
-		}
-
-		/* liststore_solutions */
-		self->liststore_solutions = g_list_store_new(HKL_GUI_TYPE_GEOMETRY);
-		update_liststore_solutions(self);
-
-		g_object_notify_by_pspec (object, pspec);
-	}
+		hkl_gui_factory_set_factory(self, g_value_get_pointer(value));
 	break;
 	case PROP_WAVELENGTH:
-	{
-		gdouble wavelength = g_value_get_double (value);
-		diffractometer_set_wavelength(self->diffractometer, wavelength);
-
-		update_liststore_pseudo_axes(self);
-		update_liststore_engines(self);
-
-		g_object_notify_by_pspec (object, pspec);
-	}
+		hkl_gui_factory_set_wavelength(self, g_value_get_double (value));
 	break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
-
 	}
 }
 
@@ -286,11 +282,10 @@ hkl_gui_factory_get_property (GObject    *object,
 		g_value_set_pointer (value, hkl_gui_factory_get_error(self));
 		break;
 	case PROP_FACTORY:
-		g_value_set_pointer (value, self->diffractometer->factory);
+		g_value_set_pointer (value, hkl_gui_factory_get_factory(self));
 		break;
 	case PROP_WAVELENGTH:
-		g_value_set_double (value,
-				    diffractometer_get_wavelength(self->diffractometer));
+		g_value_set_double (value, hkl_gui_factory_get_wavelength(self));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -394,6 +389,18 @@ hkl_gui_factory_get_error(HklGuiFactory *self)
 	return self->error;
 }
 
+HklFactory *
+hkl_gui_factory_get_factory(HklGuiFactory *self)
+{
+	return self->diffractometer->factory;
+}
+
+gdouble
+hkl_gui_factory_get_wavelength(HklGuiFactory *self)
+{
+	return diffractometer_get_wavelength(self->diffractometer);
+}
+
 GListStore *
 hkl_gui_factory_get_liststore_axes(HklGuiFactory *self)
 {
@@ -437,6 +444,18 @@ hkl_gui_factory_set_geometry(HklGuiFactory *self,
         diffractometer_set_geometry(self->diffractometer,
                                     hkl_gui_geometry_get_geometry(geometry));
         update_liststore_axes(self);
+}
+
+void
+hkl_gui_factory_set_wavelength(HklGuiFactory *self,
+			       gdouble wavelength)
+{
+	diffractometer_set_wavelength(self->diffractometer, wavelength);
+
+	update_liststore_pseudo_axes(self);
+	update_liststore_engines(self);
+
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_WAVELENGTH]);
 }
 
 /**************************/

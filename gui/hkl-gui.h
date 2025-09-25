@@ -77,6 +77,10 @@ HKLAPI struct diffractometer_t* hkl_gui_factory_get_diffractometer(HklGuiFactory
 
 HKLAPI GError* hkl_gui_factory_get_error(HklGuiFactory *self);
 
+HKLAPI HklFactory* hkl_gui_factory_get_factory(HklGuiFactory *self);
+
+HKLAPI gdouble hkl_gui_factory_get_wavelength(HklGuiFactory *self);
+
 HKLAPI GListStore* hkl_gui_factory_get_liststore_axes(HklGuiFactory *self);
 
 HKLAPI GListStore* hkl_gui_factory_get_liststore_engines(HklGuiFactory *self);
@@ -90,6 +94,8 @@ HKLAPI GtkListItemFactory* hkl_gui_factory_name_factory_new(void);
 HKLAPI void hkl_gui_factory_set_error(HklGuiFactory *self, GError* error);
 
 HKLAPI void hkl_gui_factory_set_geometry(HklGuiFactory *self, HklGuiGeometry *ggeometry);
+
+HKLAPI void hkl_gui_factory_set_wavelength(HklGuiFactory *self, gdouble wavelength);
 
 HKLAPI void hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self, GtkColumnView *column_view);
 
