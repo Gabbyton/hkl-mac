@@ -404,8 +404,17 @@ hkl_gui_engine_set_engine (HklGuiEngine *self,
 	self->engine = engine;
 
 	/* engine name */
-	gtk_frame_set_label(GTK_FRAME(self->frame),
-			    hkl_engine_name_get(engine));
+	const char *engine_name = hkl_engine_name_get(engine);
+	char *buf;
+	guint capabilities = hkl_engine_capabilities_get(engine);
+	if (HKL_ENGINE_CAPABILITIES_WRITABLE & capabilities){
+		buf = g_strdup_printf ("%s", engine_name);
+	}else{
+		buf = g_strdup_printf ("%s (Read Only)", engine_name);
+	}
+
+	gtk_frame_set_label (GTK_FRAME (self->frame), buf);
+	g_free(buf);
 
 	/* pseudo axes only once */
 	darray_foreach(name, *hkl_engine_pseudo_axis_names_get(engine)){
