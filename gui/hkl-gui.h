@@ -107,7 +107,9 @@ HKLAPI HklGeometry* hkl_gui_geometry_get_geometry(HklGuiGeometry *geometry);
 
 HKLAPI GtkListItemFactory* hkl_gui_geometry_axis_value_factory_new(gint idx);
 
+/*************/
 /* parameter */
+/*************/
 
 HKLAPI HklGuiParameter* hkl_gui_parameter_new(const HklParameter *parameter);
 
@@ -120,6 +122,24 @@ HKLAPI void hkl_gui_parameter_set_minimum(HklGuiParameter *self, gdouble value);
 HKLAPI void hkl_gui_parameter_set_value(HklGuiParameter *self, gdouble value);
 
 HKLAPI void hkl_gui_parameter_update(HklGuiParameter *self);
+
+
+/* item factories */
+
+void hkl_gui_parameter_setup_factory_label_cb (GtkListItemFactory *factory,
+					       GtkListItem *list_item);
+
+void hkl_gui_parameter_bind_factory_label_name_cb (GtkListItemFactory *factory,
+						   GtkListItem *list_item);
+
+void hkl_gui_parameter_bind_factory_label_value_cb (GtkListItemFactory *factory,
+						    GtkListItem *list_item);
+
+void hkl_gui_parameter_setup_factory_spin_button_cb (GtkListItemFactory *factory,
+						     GtkListItem *list_item);
+
+void hkl_gui_parameter_bind_factory_spin_button_value_cb (GtkListItemFactory *factory,
+							  GtkListItem *list_item);
 
 HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_name_new(void);
 HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_value_new(void);

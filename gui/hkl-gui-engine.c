@@ -186,6 +186,47 @@ dropdown_notify_selected_item_cb(GtkDropDown *dropdown,
 }
 
 static void
+setup_factory_pseudo_axis_cb (GtkListItemFactory *factory,
+			      GtkListItem *list_item,
+			      gpointer user_data)
+{
+	HklGuiEngine *self = HKL_GUI_ENGINE(user_data);
+
+	guint capabilities = hkl_engine_capabilities_get(self->engine);
+	if (HKL_ENGINE_CAPABILITIES_WRITABLE & capabilities){
+		hkl_gui_parameter_setup_factory_spin_button_cb(factory, list_item);
+	} else {
+		hkl_gui_parameter_setup_factory_label_cb(factory, list_item);
+	}
+}
+
+static void
+bind_factory_pseudo_axis_cb (GtkListItemFactory *factory,
+			     GtkListItem *list_item,
+			     gpointer user_data)
+{
+	HklGuiEngine *self = HKL_GUI_ENGINE(user_data);
+
+	guint capabilities = hkl_engine_capabilities_get(self->engine);
+	if (HKL_ENGINE_CAPABILITIES_WRITABLE & capabilities){
+		hkl_gui_parameter_bind_factory_spin_button_value_cb(factory, list_item);
+	} else {
+		hkl_gui_parameter_bind_factory_label_value_cb(factory, list_item);
+	}
+}
+
+static GtkListItemFactory *
+hkl_gui_engine_factory_pseudo_axis_new(HklGuiEngine *self)
+{
+	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (factory, "setup", G_CALLBACK (setup_factory_pseudo_axis_cb), self);
+	g_signal_connect (factory, "bind", G_CALLBACK (bind_factory_pseudo_axis_cb), self);
+
+	return factory;
+}
+
+
+static void
 hkl_gui_engine_init (HklGuiEngine *self)
 {
 	GtkWidget *hbox;
@@ -230,7 +271,7 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	/* column_view pseudo_axes */
 	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
 	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
-	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_new());
+	column = gtk_column_view_column_new("value", hkl_gui_engine_factory_pseudo_axis_new(self));
 	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
 
 	/* dropdown */
