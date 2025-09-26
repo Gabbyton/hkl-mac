@@ -71,9 +71,9 @@ struct _HklGui3DPrivate {
 	GtkFrame *frame1;
 	GtkBox *vbox1;
 	GtkTreeView *treeview1;
-	GtkToolButton *toolbutton1;
-	GtkToolButton *toolbutton2;
-	GtkToolButton *toolbutton3;
+	/* GtkToolButton *toolbutton1; */
+	/* GtkToolButton *toolbutton2; */
+	/* GtkToolButton *toolbutton3; */
 	GtkFileChooserDialog *filechooserdialog1;
 	GtkButton *button1;
 	GtkButton *button2;
@@ -98,37 +98,37 @@ struct _HklGui3D {
 
 G_DEFINE_TYPE_WITH_PRIVATE (HklGui3D, hkl_gui_3d, G_TYPE_OBJECT);
 
-static void hkl_gui_3d_update_hkl3d_objects_TreeStore(HklGui3D *self)
-{
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
-	size_t i;
-	size_t j;
+/* static void hkl_gui_3d_update_hkl3d_objects_TreeStore(HklGui3D *self) */
+/* { */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self); */
+/* 	size_t i; */
+/* 	size_t j; */
 
-	gtk_tree_store_clear(priv->treestore1);
+/* 	gtk_tree_store_clear(priv->treestore1); */
 
-	for(i=0; i<priv->hkl3d->config->len; ++i){
-		GtkTreeIter iter = {0};
+/* 	for(i=0; i<priv->hkl3d->config->len; ++i){ */
+/* 		GtkTreeIter iter = {0}; */
 
-		gtk_tree_store_append(priv->treestore1, &iter, NULL);
-		gtk_tree_store_set(priv->treestore1, &iter,
-				   HKL_GUI_3D_COL_NAME, priv->hkl3d->config->models[i]->filename,
-				   HKL_GUI_3D_COL_MODEL, priv->hkl3d->config->models[i],
-				   HKL_GUI_3D_COL_OBJECT, NULL,
-				   -1);
+/* 		gtk_tree_store_append(priv->treestore1, &iter, NULL); */
+/* 		gtk_tree_store_set(priv->treestore1, &iter, */
+/* 				   HKL_GUI_3D_COL_NAME, priv->hkl3d->config->models[i]->filename, */
+/* 				   HKL_GUI_3D_COL_MODEL, priv->hkl3d->config->models[i], */
+/* 				   HKL_GUI_3D_COL_OBJECT, NULL, */
+/* 				   -1); */
 
-		for(j=0; j<priv->hkl3d->config->models[i]->len; ++j){
-			GtkTreeIter citer = {0};
+/* 		for(j=0; j<priv->hkl3d->config->models[i]->len; ++j){ */
+/* 			GtkTreeIter citer = {0}; */
 
-			gtk_tree_store_append(priv->treestore1, &citer, &iter);
-			gtk_tree_store_set(priv->treestore1, &citer,
-					   HKL_GUI_3D_COL_NAME, priv->hkl3d->config->models[i]->objects[j]->axis_name,
-					   HKL_GUI_3D_COL_HIDE, priv->hkl3d->config->models[i]->objects[j]->hide,
-					   HKL_GUI_3D_COL_MODEL, priv->hkl3d->config->models[i],
-					   HKL_GUI_3D_COL_OBJECT, priv->hkl3d->config->models[i]->objects[j],
-					   -1);
-		}
-	}
-}
+/* 			gtk_tree_store_append(priv->treestore1, &citer, &iter); */
+/* 			gtk_tree_store_set(priv->treestore1, &citer, */
+/* 					   HKL_GUI_3D_COL_NAME, priv->hkl3d->config->models[i]->objects[j]->axis_name, */
+/* 					   HKL_GUI_3D_COL_HIDE, priv->hkl3d->config->models[i]->objects[j]->hide, */
+/* 					   HKL_GUI_3D_COL_MODEL, priv->hkl3d->config->models[i], */
+/* 					   HKL_GUI_3D_COL_OBJECT, priv->hkl3d->config->models[i]->objects[j], */
+/* 					   -1); */
+/* 		} */
+/* 	} */
+/* } */
 
 /* properties */
 
@@ -158,7 +158,7 @@ void _filename_and_geometry(HklGui3D *self)
 		if(priv->hkl3d){
 			/* priv->scene = hkl_gui_3d_scene_new(priv->hkl3d, FALSE, FALSE, FALSE, FALSE); */
 
-			hkl_gui_3d_update_hkl3d_objects_TreeStore(self);
+			/* hkl_gui_3d_update_hkl3d_objects_TreeStore(self); */
 			/* gtk_box_pack_start(GTK_BOX(priv->vbox1), */
 			/*		   GTK_WIDGET(priv->scene), */
 			/*		   TRUE, TRUE, 0); */
@@ -280,133 +280,133 @@ void hkl_gui_3d_invalidate(HklGui3D *self)
 /* Callback */
 /************/
 
-void hkl_gui_3d_cellrenderertext2_toggled_cb(GtkCellRendererToggle* renderer,
-					     const gchar* path, gpointer user_data)
-{
-	HklGui3D *self = HKL_GUI_3D(user_data);
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
-	guint hide;
-	Hkl3DObject *object;
-	GtkTreeIter iter = {0};
+/* void hkl_gui_3d_cellrenderertext2_toggled_cb(GtkCellRendererToggle* renderer, */
+/* 					     const gchar* path, gpointer user_data) */
+/* { */
+/* 	HklGui3D *self = HKL_GUI_3D(user_data); */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
+/* 	guint hide; */
+/* 	Hkl3DObject *object; */
+/* 	GtkTreeIter iter = {0}; */
 
 
-	gtk_tree_model_get_iter_from_string (GTK_TREE_MODEL(priv->treestore1),
-					     &iter, path);
-	gtk_tree_model_get (GTK_TREE_MODEL(priv->treestore1),
-			    &iter,
-			    HKL_GUI_3D_COL_OBJECT, &object,
-			    -1);
+/* 	gtk_tree_model_get_iter_from_string (GTK_TREE_MODEL(priv->treestore1), */
+/* 					     &iter, path); */
+/* 	gtk_tree_model_get (GTK_TREE_MODEL(priv->treestore1), */
+/* 			    &iter, */
+/* 			    HKL_GUI_3D_COL_OBJECT, &object, */
+/* 			    -1); */
 
-	hide = !gtk_cell_renderer_toggle_get_active(renderer);
+/* 	hide = !gtk_cell_renderer_toggle_get_active(renderer); */
 
-	if(object){
-		hkl3d_hide_object(priv->hkl3d, object, hide);
-		gtk_tree_store_set (priv->treestore1,
-				    &iter,
-				    HKL_GUI_3D_COL_HIDE, hide,
-				    -1);
-		hkl_gui_3d_is_colliding(self);
-		hkl_gui_3d_invalidate(self);
-	}else{
-		Hkl3DModel *model;
+/* 	if(object){ */
+/* 		hkl3d_hide_object(priv->hkl3d, object, hide); */
+/* 		gtk_tree_store_set (priv->treestore1, */
+/* 				    &iter, */
+/* 				    HKL_GUI_3D_COL_HIDE, hide, */
+/* 				    -1); */
+/* 		hkl_gui_3d_is_colliding(self); */
+/* 		hkl_gui_3d_invalidate(self); */
+/* 	}else{ */
+/* 		Hkl3DModel *model; */
 
-		gtk_tree_model_get (GTK_TREE_MODEL(priv->treestore1),
-				    &iter,
-				    HKL_GUI_3D_COL_MODEL, &model,
-				    -1);
-		if(model){
-			GtkTreeIter children = {0};
-			gboolean valid;
-			size_t i = 0;
+/* 		gtk_tree_model_get (GTK_TREE_MODEL(priv->treestore1), */
+/* 				    &iter, */
+/* 				    HKL_GUI_3D_COL_MODEL, &model, */
+/* 				    -1); */
+/* 		if(model){ */
+/* 			GtkTreeIter children = {0}; */
+/* 			gboolean valid; */
+/* 			size_t i = 0; */
 
-			gtk_tree_store_set (priv->treestore1,
-					    &iter,
-					    HKL_GUI_3D_COL_HIDE, hide,
-					    -1);
+/* 			gtk_tree_store_set (priv->treestore1, */
+/* 					    &iter, */
+/* 					    HKL_GUI_3D_COL_HIDE, hide, */
+/* 					    -1); */
 
-			/* set all the children rows */
-			valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(priv->treestore1),
-							     &children, &iter);
-			while(valid){
-				hkl3d_hide_object(priv->hkl3d, model->objects[i++], hide);
-				gtk_tree_store_set (priv->treestore1,
-						    &children,
-						    HKL_GUI_3D_COL_HIDE, hide,
-						    -1);
+/* 			/\* set all the children rows *\/ */
+/* 			valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(priv->treestore1), */
+/* 							     &children, &iter); */
+/* 			while(valid){ */
+/* 				hkl3d_hide_object(priv->hkl3d, model->objects[i++], hide); */
+/* 				gtk_tree_store_set (priv->treestore1, */
+/* 						    &children, */
+/* 						    HKL_GUI_3D_COL_HIDE, hide, */
+/* 						    -1); */
 
-				valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(priv->treestore1), &children);
-			}
-			hkl_gui_3d_is_colliding(self);
-			hkl_gui_3d_invalidate(self);
-		}
-	}
-}
+/* 				valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(priv->treestore1), &children); */
+/* 			} */
+/* 			hkl_gui_3d_is_colliding(self); */
+/* 			hkl_gui_3d_invalidate(self); */
+/* 		} */
+/* 	} */
+/* } */
 
-void hkl_gui_3d_treeview1_cursor_changed_cb(GtkTreeView *tree_view,
-					    gpointer user_data)
-{
-	int i;
-	int j;
-	HklGui3D *self = user_data;
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
-	GtkTreeIter iter = {0};
-	Hkl3DObject *object;
-	GtkTreePath *path;
-	GtkTreeViewColumn * column;
+/* void hkl_gui_3d_treeview1_cursor_changed_cb(GtkTreeView *tree_view, */
+/* 					    gpointer user_data) */
+/* { */
+/* 	int i; */
+/* 	int j; */
+/* 	HklGui3D *self = user_data; */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
+/* 	GtkTreeIter iter = {0}; */
+/* 	Hkl3DObject *object; */
+/* 	GtkTreePath *path; */
+/* 	GtkTreeViewColumn * column; */
 
-	gtk_tree_view_get_cursor(priv->treeview1, &path, &column);
-	gtk_tree_model_get_iter(GTK_TREE_MODEL(priv->treestore1), &iter, path);
-	gtk_tree_path_free(path);
+/* 	gtk_tree_view_get_cursor(priv->treeview1, &path, &column); */
+/* 	gtk_tree_model_get_iter(GTK_TREE_MODEL(priv->treestore1), &iter, path); */
+/* 	gtk_tree_path_free(path); */
 
-	/* need to unselect of objects of all 3d models */
-	for(i=0; i<priv->hkl3d->config->len; ++i)
-		for(j=0; j<priv->hkl3d->config->models[i]->len; ++j)
-			priv->hkl3d->config->models[i]->objects[j]->selected = FALSE;
+/* 	/\* need to unselect of objects of all 3d models *\/ */
+/* 	for(i=0; i<priv->hkl3d->config->len; ++i) */
+/* 		for(j=0; j<priv->hkl3d->config->models[i]->len; ++j) */
+/* 			priv->hkl3d->config->models[i]->objects[j]->selected = FALSE; */
 
-	/* now select the right object */
-	gtk_tree_model_get (GTK_TREE_MODEL(priv->treestore1),
-			    &iter,
-			    HKL_GUI_3D_COL_OBJECT, &object,
-			    -1);
-	if(object)
-		object->selected = TRUE;
+/* 	/\* now select the right object *\/ */
+/* 	gtk_tree_model_get (GTK_TREE_MODEL(priv->treestore1), */
+/* 			    &iter, */
+/* 			    HKL_GUI_3D_COL_OBJECT, &object, */
+/* 			    -1); */
+/* 	if(object) */
+/* 		object->selected = TRUE; */
 
-	hkl_gui_3d_invalidate(self);
-}
+/* 	hkl_gui_3d_invalidate(self); */
+/* } */
 
-void hkl_gui_3d_toolbutton1_clicked_cb(GtkToolButton *toolbutton,
-				       gpointer user_data)
-{
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
+/* void hkl_gui_3d_toolbutton1_clicked_cb(GtkToolButton *toolbutton, */
+/* 				       gpointer user_data) */
+/* { */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
 
-	gtk_widget_show(GTK_WIDGET(priv->filechooserdialog1));
-}
+/* 	gtk_widget_show(GTK_WIDGET(priv->filechooserdialog1)); */
+/* } */
 
-/* remove an object from the model */
-void hkl_gui_3d_toolbutton2_clicked_cb(GtkToolButton *toolbutton,
-				       gpointer user_data)
-{
-	HklGui3D *self = user_data;
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
-	GtkTreeIter iter = {0};
-	GtkTreePath *path;
-	GtkTreeViewColumn * column;
-	Hkl3DObject *object;
+/* /\* remove an object from the model *\/ */
+/* void hkl_gui_3d_toolbutton2_clicked_cb(GtkToolButton *toolbutton, */
+/* 				       gpointer user_data) */
+/* { */
+/* 	HklGui3D *self = user_data; */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
+/* 	GtkTreeIter iter = {0}; */
+/* 	GtkTreePath *path; */
+/* 	GtkTreeViewColumn * column; */
+/* 	Hkl3DObject *object; */
 
-	gtk_tree_view_get_cursor(priv->treeview1, &path, &column);
-	gtk_tree_model_get_iter(GTK_TREE_MODEL(priv->treestore1), &iter, path);
-	gtk_tree_path_free(path);
+/* 	gtk_tree_view_get_cursor(priv->treeview1, &path, &column); */
+/* 	gtk_tree_model_get_iter(GTK_TREE_MODEL(priv->treestore1), &iter, path); */
+/* 	gtk_tree_path_free(path); */
 
-	gtk_tree_model_get (GTK_TREE_MODEL(priv->treestore1),
-			    &iter,
-			    HKL_GUI_3D_COL_OBJECT, &object,
-			    -1);
-	if(object){
-		hkl3d_remove_object(priv->hkl3d, object);
-		hkl_gui_3d_update_hkl3d_objects_TreeStore(self);
-		hkl_gui_3d_invalidate(self);
-	}
-}
+/* 	gtk_tree_model_get (GTK_TREE_MODEL(priv->treestore1), */
+/* 			    &iter, */
+/* 			    HKL_GUI_3D_COL_OBJECT, &object, */
+/* 			    -1); */
+/* 	if(object){ */
+/* 		hkl3d_remove_object(priv->hkl3d, object); */
+/* 		hkl_gui_3d_update_hkl3d_objects_TreeStore(self); */
+/* 		hkl_gui_3d_invalidate(self); */
+/* 	} */
+/* } */
 
 static void
 reset_3d(G3DGLRenderOptions *renderoptions)
@@ -439,64 +439,64 @@ reset_3d(G3DGLRenderOptions *renderoptions)
 }
 
 /* re-initialize the 3d view */
-void hkl_gui_3d_toolbutton3_clicked_cb(GtkToolButton *toolbutton,
-				       gpointer user_data)
-{
-	HklGui3D *self = user_data;
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
+/* void hkl_gui_3d_toolbutton3_clicked_cb(GtkToolButton *toolbutton, */
+/* 				       gpointer user_data) */
+/* { */
+/* 	HklGui3D *self = user_data; */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
 
-	reset_3d(&priv->renderoptions);
-	hkl_gui_3d_invalidate(self);
-}
+/* 	reset_3d(&priv->renderoptions); */
+/* 	hkl_gui_3d_invalidate(self); */
+/* } */
 
-void hkl_gui_3d_toolbutton4_toggled_cb(GtkToggleToolButton *toggle_tool_button,
-				       gpointer user_data)
-{
-	HklGui3D *self = user_data;
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
+/* void hkl_gui_3d_toolbutton4_toggled_cb(GtkToggleToolButton *toggle_tool_button, */
+/* 				       gpointer user_data) */
+/* { */
+/* 	HklGui3D *self = user_data; */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
 
-	priv->aabb = gtk_toggle_tool_button_get_active(toggle_tool_button);
-	hkl_gui_3d_invalidate(self);
-}
+/* 	priv->aabb = gtk_toggle_tool_button_get_active(toggle_tool_button); */
+/* 	hkl_gui_3d_invalidate(self); */
+/* } */
 
-void hkl_gui_3d_button1_clicked_cb(GtkButton *button,
-				   gpointer user_data)
-{
-	HklGui3D *self = user_data;
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
-	GSList *filenames;
-	GSList *filename;
+/* void hkl_gui_3d_button1_clicked_cb(GtkButton *button, */
+/* 				   gpointer user_data) */
+/* { */
+/* 	HklGui3D *self = user_data; */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
+/* 	GSList *filenames; */
+/* 	GSList *filename; */
 
-	filenames = gtk_file_chooser_get_files(GTK_FILE_CHOOSER(priv->filechooserdialog1));
-	filename = filenames;
-	while(filename){
-		GFile *file = filename->data;
-		GFile *directory = g_file_get_parent(file);
-		char *basename = g_file_get_basename(file);
-		char *path = g_file_get_path(directory);
+/* 	filenames = gtk_file_chooser_get_files(GTK_FILE_CHOOSER(priv->filechooserdialog1)); */
+/* 	filename = filenames; */
+/* 	while(filename){ */
+/* 		GFile *file = filename->data; */
+/* 		GFile *directory = g_file_get_parent(file); */
+/* 		char *basename = g_file_get_basename(file); */
+/* 		char *path = g_file_get_path(directory); */
 
-		hkl3d_add_model_from_file(priv->hkl3d, basename, path);
-		hkl3d_connect_all_axes(priv->hkl3d);
+/* 		hkl3d_add_model_from_file(priv->hkl3d, basename, path); */
+/* 		hkl3d_connect_all_axes(priv->hkl3d); */
 
-		g_free(path);
-		g_free(basename);
-		g_object_unref(G_OBJECT(directory));
-		g_object_unref(G_OBJECT(file));
-		filename = g_slist_next(filename);
-	};
+/* 		g_free(path); */
+/* 		g_free(basename); */
+/* 		g_object_unref(G_OBJECT(directory)); */
+/* 		g_object_unref(G_OBJECT(file)); */
+/* 		filename = g_slist_next(filename); */
+/* 	}; */
 
-	hkl_gui_3d_update_hkl3d_objects_TreeStore(self);
-	gtk_widget_hide(GTK_WIDGET(priv->filechooserdialog1));
-	g_slist_free(filenames);
-}
+/* 	hkl_gui_3d_update_hkl3d_objects_TreeStore(self); */
+/* 	gtk_widget_hide(GTK_WIDGET(priv->filechooserdialog1)); */
+/* 	g_slist_free(filenames); */
+/* } */
 
-void hkl_gui_3d_button2_clicked_cb(GtkButton *button,
-				   gpointer user_data)
-{
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
+/* void hkl_gui_3d_button2_clicked_cb(GtkButton *button, */
+/* 				   gpointer user_data) */
+/* { */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
 
-	gtk_widget_hide(GTK_WIDGET(priv->filechooserdialog1));
-}
+/* 	gtk_widget_hide(GTK_WIDGET(priv->filechooserdialog1)); */
+/* } */
 
 /***************/
 /* OpenGL part */
@@ -850,127 +850,127 @@ hkl_gui_3d_gl_area_resize_cb(GtkGLArea *area,
 	return TRUE;
 }
 
-gboolean
-hkl_gui_3d_gl_area_button_press_event_cb(GtkWidget *gl_area,
-					 GdkEventButton* event,
-					 gpointer user_data)
-{
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
+/* gboolean */
+/* hkl_gui_3d_gl_area_button_press_event_cb(GtkWidget *gl_area, */
+/* 					 GdkEventButton* event, */
+/* 					 gpointer user_data) */
+/* { */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
 
-	/* left mouse buttom: rotate object */
-	if(event->button == 1)
-	{
-		priv->mouse.beginx = event->x;
-		priv->mouse.beginy = event->y;
-		return TRUE;
-	}
+/* 	/\* left mouse buttom: rotate object *\/ */
+/* 	if(event->button == 1) */
+/* 	{ */
+/* 		priv->mouse.beginx = event->x; */
+/* 		priv->mouse.beginy = event->y; */
+/* 		return TRUE; */
+/* 	} */
 
-	// don't block
-	return FALSE;
-}
+/* 	// don't block */
+/* 	return FALSE; */
+/* } */
 
-gboolean
-hkl_gui_3d_gl_area_scroll_event_cb(GtkWidget *gl_area,
-				   GdkEventScroll *event,
-				   gpointer user_data)
-{
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
+/* gboolean */
+/* hkl_gui_3d_gl_area_scroll_event_cb(GtkWidget *gl_area, */
+/* 				   GdkEventScroll *event, */
+/* 				   gpointer user_data) */
+/* { */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
 
-#define ZOOM_BY 10
-	if(event->direction == GDK_SCROLL_DOWN)
-		priv->renderoptions.zoom += ZOOM_BY;
-	else
-		priv->renderoptions.zoom -= ZOOM_BY;
-#undef ZOOM_BY
+/* #define ZOOM_BY 10 */
+/* 	if(event->direction == GDK_SCROLL_DOWN) */
+/* 		priv->renderoptions.zoom += ZOOM_BY; */
+/* 	else */
+/* 		priv->renderoptions.zoom -= ZOOM_BY; */
+/* #undef ZOOM_BY */
 
-	if(priv->renderoptions.zoom < 1)
-		priv->renderoptions.zoom = 1;
-	if(priv->renderoptions.zoom > 120)
-		priv->renderoptions.zoom = 120;
+/* 	if(priv->renderoptions.zoom < 1) */
+/* 		priv->renderoptions.zoom = 1; */
+/* 	if(priv->renderoptions.zoom > 120) */
+/* 		priv->renderoptions.zoom = 120; */
 
-	/* queue a redraw on the GtkGLArea */
-	gtk_widget_queue_draw (gl_area);
+/* 	/\* queue a redraw on the GtkGLArea *\/ */
+/* 	gtk_widget_queue_draw (gl_area); */
 
-	return FALSE;
-}
+/* 	return FALSE; */
+/* } */
 
-gboolean
-hkl_gui_3d_gl_area_motion_notify_event_cb(GtkWidget *gl_area,
-					  GdkEventMotion* event,
-					  gpointer user_data)
-{
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
-	GtkAllocation alloc;
-	gint x, y;
-	GdkModifierType state;
+/* gboolean */
+/* hkl_gui_3d_gl_area_motion_notify_event_cb(GtkWidget *gl_area, */
+/* 					  GdkEventMotion* event, */
+/* 					  gpointer user_data) */
+/* { */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
+/* 	GtkAllocation alloc; */
+/* 	gint x, y; */
+/* 	GdkModifierType state; */
 
-	gtk_widget_get_allocation(gl_area, &alloc);
+/* 	gtk_widget_get_allocation(gl_area, &alloc); */
 
-	if(event->is_hint){
-		gdk_window_get_device_position(event->window,
-					       event->device,
-					       &x, &y, &state);
-	}else{
-		x = event->x;
-		y = event->y;
-		state = event->state;
-	}
+/* 	if(event->is_hint){ */
+/* 		gdk_window_get_device_position(event->window, */
+/* 					       event->device, */
+/* 					       &x, &y, &state); */
+/* 	}else{ */
+/* 		x = event->x; */
+/* 		y = event->y; */
+/* 		state = event->state; */
+/* 	} */
 
-	/* left button pressed */
-	if(state & GDK_BUTTON1_MASK)
-	{
-		if(state & GDK_SHIFT_MASK)
-		{
-			/* shift pressed, translate view */
-			priv->renderoptions.offx += (float)(x - priv->mouse.beginx) / alloc.width / priv->renderoptions.zoom;
-			priv->renderoptions.offy -= (float)(y - priv->mouse.beginy) / alloc.height / priv->renderoptions.zoom;
-		}
-		else
-		{
-			/* rotate view */
-			gfloat spin_quat[4];
-			g3d_quat_trackball(spin_quat,
-					   (2.0 * priv->mouse.beginx - alloc.width) / alloc.width,
-					   (alloc.height - 2.0 * priv->mouse.beginy) / alloc.height,
-					   (2.0 * x - alloc.width) / alloc.width,
-					   (alloc.height - 2.0 * y) / alloc.height,
-					   0.8 /* trackball radius */);
-			g3d_quat_add(priv->renderoptions.quat,
-				     spin_quat, priv->renderoptions.quat);
-			/* normalize quat some times */
-			priv->renderoptions.norm_count ++;
-			if(priv->renderoptions.norm_count > 97) {
-				priv->renderoptions.norm_count = 0;
-				g3d_quat_normalize(priv->renderoptions.quat);
-			}
+/* 	/\* left button pressed *\/ */
+/* 	if(state & GDK_BUTTON1_MASK) */
+/* 	{ */
+/* 		if(state & GDK_SHIFT_MASK) */
+/* 		{ */
+/* 			/\* shift pressed, translate view *\/ */
+/* 			priv->renderoptions.offx += (float)(x - priv->mouse.beginx) / alloc.width / priv->renderoptions.zoom; */
+/* 			priv->renderoptions.offy -= (float)(y - priv->mouse.beginy) / alloc.height / priv->renderoptions.zoom; */
+/* 		} */
+/* 		else */
+/* 		{ */
+/* 			/\* rotate view *\/ */
+/* 			gfloat spin_quat[4]; */
+/* 			g3d_quat_trackball(spin_quat, */
+/* 					   (2.0 * priv->mouse.beginx - alloc.width) / alloc.width, */
+/* 					   (alloc.height - 2.0 * priv->mouse.beginy) / alloc.height, */
+/* 					   (2.0 * x - alloc.width) / alloc.width, */
+/* 					   (alloc.height - 2.0 * y) / alloc.height, */
+/* 					   0.8 /\* trackball radius *\/); */
+/* 			g3d_quat_add(priv->renderoptions.quat, */
+/* 				     spin_quat, priv->renderoptions.quat); */
+/* 			/\* normalize quat some times *\/ */
+/* 			priv->renderoptions.norm_count ++; */
+/* 			if(priv->renderoptions.norm_count > 97) { */
+/* 				priv->renderoptions.norm_count = 0; */
+/* 				g3d_quat_normalize(priv->renderoptions.quat); */
+/* 			} */
 
-			/* g3d_quat_to_rotation_xyz(priv->renderoptions.quat, */
-			/*	&rx, &ry, &rz); */
-			/* text = g_strdup_printf("%-.2f°, %-.2f°, %-.2f°", */
-			/*	rx * 180.0 / G_PI, ry * 180.0 / G_PI, rz * 180.0 / G_PI); */
-			/* gui_glade_status(priv, text); */
-			/* g_free(text); */
-		}
-	}
+/* 			/\* g3d_quat_to_rotation_xyz(priv->renderoptions.quat, *\/ */
+/* 			/\*	&rx, &ry, &rz); *\/ */
+/* 			/\* text = g_strdup_printf("%-.2f°, %-.2f°, %-.2f°", *\/ */
+/* 			/\*	rx * 180.0 / G_PI, ry * 180.0 / G_PI, rz * 180.0 / G_PI); *\/ */
+/* 			/\* gui_glade_status(priv, text); *\/ */
+/* 			/\* g_free(text); *\/ */
+/* 		} */
+/* 	} */
 
-	/* middle mouse button */
-	if(state & GDK_BUTTON2_MASK)
-	{
-		priv->renderoptions.zoom +=
-			((y - priv->mouse.beginy) / (gfloat)alloc.height) * 40;
-		if(priv->renderoptions.zoom < 1)
-			priv->renderoptions.zoom = 1;
-		if(priv->renderoptions.zoom > 120)
-			priv->renderoptions.zoom = 120;
-	}
-	priv->mouse.beginx = x;
-	priv->mouse.beginy = y;
+/* 	/\* middle mouse button *\/ */
+/* 	if(state & GDK_BUTTON2_MASK) */
+/* 	{ */
+/* 		priv->renderoptions.zoom += */
+/* 			((y - priv->mouse.beginy) / (gfloat)alloc.height) * 40; */
+/* 		if(priv->renderoptions.zoom < 1) */
+/* 			priv->renderoptions.zoom = 1; */
+/* 		if(priv->renderoptions.zoom > 120) */
+/* 			priv->renderoptions.zoom = 120; */
+/* 	} */
+/* 	priv->mouse.beginx = x; */
+/* 	priv->mouse.beginy = y; */
 
-	/* queue a redraw on the GtkGLArea */
-	gtk_widget_queue_draw (gl_area);
+/* 	/\* queue a redraw on the GtkGLArea *\/ */
+/* 	gtk_widget_queue_draw (gl_area); */
 
-	return FALSE;
-}
+/* 	return FALSE; */
+/* } */
 
 /*********************************************/
 /* HklGui3D and HklGui3DClass initialization */
@@ -1021,21 +1021,21 @@ static void hkl_gui_3d_init (HklGui3D * self)
 
 	priv->builder = builder = gtk_builder_new ();
 
-	get_ui(builder, "3d-4.ui");
+	/* get_ui(builder, "3d-4.ui"); */
 
 	// widgets
-	get_object(builder, GTK_FRAME, priv, frame1);
-	get_object(builder, GTK_BOX, priv, vbox1);
-	get_object(builder, GTK_TREE_VIEW, priv, treeview1);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton1);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton2);
-	get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton3);
-	get_object(builder, GTK_FILE_CHOOSER_DIALOG, priv, filechooserdialog1);
-	get_object(builder, GTK_BUTTON, priv, button1);
-	get_object(builder, GTK_BUTTON, priv, button2);
-	get_object(builder, GTK_TREE_STORE, priv, treestore1);
+	/* get_object(builder, GTK_FRAME, priv, frame1); */
+	/* get_object(builder, GTK_BOX, priv, vbox1); */
+	/* get_object(builder, GTK_TREE_VIEW, priv, treeview1); */
+	/* get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton1); */
+	/* get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton2); */
+	/* get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton3); */
+	/* get_object(builder, GTK_FILE_CHOOSER_DIALOG, priv, filechooserdialog1); */
+	/* get_object(builder, GTK_BUTTON, priv, button1); */
+	/* get_object(builder, GTK_BUTTON, priv, button2); */
+	/* get_object(builder, GTK_TREE_STORE, priv, treestore1); */
 
-	gtk_builder_connect_signals (builder, self);
+	/* gtk_builder_connect_signals (builder, self); */
 
 	/* OPENGL */
 
@@ -1046,23 +1046,23 @@ static void hkl_gui_3d_init (HklGui3D * self)
 	/* attache the GtkGLArea widget */
 	priv->gl_area = GTK_GL_AREA(gtk_gl_area_new());
 	gtk_gl_area_set_has_depth_buffer(priv->gl_area, TRUE);
-	gtk_box_pack_end(priv->vbox1, GTK_WIDGET(priv->gl_area), TRUE, TRUE, 0);
+	/* gtk_box_pack_end(priv->vbox1, GTK_WIDGET(priv->gl_area), TRUE, TRUE, 0); */
 
 	/* add events to the GtkGLArea */
 	gtk_widget_set_can_focus(GTK_WIDGET(priv->gl_area), TRUE);
-	gtk_widget_add_events(GTK_WIDGET(priv->gl_area),
-			      GDK_BUTTON1_MOTION_MASK |
-			      GDK_BUTTON2_MOTION_MASK |
-			      GDK_BUTTON_PRESS_MASK |
-			      GDK_VISIBILITY_NOTIFY_MASK);
+	/* gtk_widget_add_events(GTK_WIDGET(priv->gl_area), */
+	/* 		      GDK_BUTTON1_MOTION_MASK | */
+	/* 		      GDK_BUTTON2_MOTION_MASK | */
+	/* 		      GDK_BUTTON_PRESS_MASK | */
+	/* 		      GDK_VISIBILITY_NOTIFY_MASK); */
 
 	/* connect the GL callbacks */
 	g_signal_connect(priv->gl_area, "render",
 			 G_CALLBACK(hkl_gui_3d_gl_area_render_cb), self);
 	g_signal_connect(priv->gl_area, "resize",
 			 G_CALLBACK(hkl_gui_3d_gl_area_resize_cb), self);
-	g_signal_connect(priv->gl_area, "button-press-event",
-			 G_CALLBACK(hkl_gui_3d_gl_area_button_press_event_cb), self);
-	g_signal_connect(priv->gl_area, "motion-notify-event",
-			 G_CALLBACK(hkl_gui_3d_gl_area_motion_notify_event_cb), self);
+	/* g_signal_connect(priv->gl_area, "button-press-event", */
+	/* 		 G_CALLBACK(hkl_gui_3d_gl_area_button_press_event_cb), self); */
+	/* g_signal_connect(priv->gl_area, "motion-notify-event", */
+	/* 		 G_CALLBACK(hkl_gui_3d_gl_area_motion_notify_event_cb), self); */
 }
