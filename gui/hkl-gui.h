@@ -39,6 +39,9 @@ G_DECLARE_FINAL_TYPE (HklGuiGeometry, hkl_gui_geometry, HKL_GUI, GEOMETRY, GObje
 #define HKL_GUI_TYPE_PARAMETER (hkl_gui_parameter_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiParameter, hkl_gui_parameter, HKL_GUI, PARAMETER, GObject)
 
+#define HKL_GUI_TYPE_SAMPLE (hkl_gui_sample_get_type ())
+G_DECLARE_FINAL_TYPE (HklGuiSample, hkl_gui_sample, HKL_GUI, SAMPLE, GObject)
+
 #define HKL_GUI_TYPE_WINDOW (hkl_gui_window_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplication)
 
