@@ -395,8 +395,10 @@ void
 hkl_gui_engine_set_engine (HklGuiEngine *self,
 			   HklEngine *engine)
 {
-	const char * *name;
-	const char *mode;
+	const char *current_mode;
+	const char **mode;
+	const darray_string *modes;
+	const char **name;
 
 	g_return_if_fail (self != NULL);
 	g_return_if_fail (engine != NULL);
@@ -424,15 +426,18 @@ hkl_gui_engine_set_engine (HklGuiEngine *self,
 	}
 
 	/* modes names only once */
-	darray_foreach(name, *hkl_engine_modes_names_get(engine)){
-		gtk_string_list_append(GTK_STRING_LIST(self->liststore_modes), *name);
+	modes = hkl_engine_modes_names_get(engine);
+	darray_foreach(mode, *modes){
+		gtk_string_list_append(GTK_STRING_LIST(self->liststore_modes), *mode);
 	}
 	gtk_drop_down_set_model(GTK_DROP_DOWN(self->dropdown),
 				G_LIST_MODEL(self->liststore_modes));
+	if(darray_size(*modes) == 1)
+		gtk_widget_set_sensitive(self->dropdown, false);
 
-	mode = hkl_engine_current_mode_get(self->engine);
+	current_mode = hkl_engine_current_mode_get(self->engine);
 
-	hkl_gui_engine_set_mode(self, mode);
+	hkl_gui_engine_set_mode(self, current_mode);
 
 	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ENGINE]);
 }
