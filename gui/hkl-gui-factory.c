@@ -446,6 +446,16 @@ hkl_gui_factory_set_geometry(HklGuiFactory *self,
         update_liststore_axes(self);
 }
 
+
+void
+hkl_gui_factory_set_sample(HklGuiFactory *self,
+			   HklSample *sample)
+{
+	g_return_if_fail(NULL != sample);
+
+	diffractometer_set_sample(self->diffractometer, sample);
+}
+
 void
 hkl_gui_factory_set_wavelength(HklGuiFactory *self,
 			       gdouble wavelength)

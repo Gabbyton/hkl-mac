@@ -95,6 +95,8 @@ HKLAPI void hkl_gui_factory_set_error(HklGuiFactory *self, GError* error);
 
 HKLAPI void hkl_gui_factory_set_geometry(HklGuiFactory *self, HklGuiGeometry *ggeometry);
 
+HKLAPI void hkl_gui_factory_set_sample(HklGuiFactory *self, HklSample *sample);
+
 HKLAPI void hkl_gui_factory_set_wavelength(HklGuiFactory *self, gdouble wavelength);
 
 HKLAPI void hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self, GtkColumnView *column_view);

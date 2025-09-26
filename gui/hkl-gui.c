@@ -153,7 +153,6 @@ struct _HklGuiWindow {
 	GtkWidget *window1;
 
 	HklGuiFactory *factory; /* not owned */
-	struct diffractometer_t *diffractometer; /* unowned */
 	HklSample *sample; /* unowned */
 };
 
@@ -465,18 +464,13 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 
 
 		self->factory = factory;
-
-		self->diffractometer = hkl_gui_factory_get_diffractometer(factory);
-
-		if (NULL != self->sample){
-			diffractometer_set_sample(self->diffractometer, self->sample);
-		}
+		hkl_gui_factory_set_sample(factory, self->sample);
 
 		/* setup spinbutton_wavelength */
 		if(self->adjustement_wavelength_binding)
 			g_binding_unbind(self->adjustement_wavelength_binding);
 		gtk_adjustment_set_value(self->adjustment_wavelength,
-					 diffractometer_get_wavelength(self->diffractometer));
+					 hkl_gui_factory_get_wavelength(factory));
 		gtk_widget_set_sensitive(self->spinbutton_wavelength, TRUE);
 		self->adjustement_wavelength_binding = g_object_bind_property(factory, "wavelength",
 									      self->adjustment_wavelength, "value",
@@ -1755,7 +1749,6 @@ static void hkl_gui_window_init (HklGuiWindow * self)
 	self->adjustment_wavelength = gtk_adjustment_new (0.0, 0.0, G_MAXDOUBLE,
 							  0.0001, 0.01, 0.0);
 	self->adjustement_wavelength_binding = NULL;
-	self->diffractometer = NULL;
 	self->sample = hkl_sample_new("sample"); /* TODO */
 }
 
