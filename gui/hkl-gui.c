@@ -1571,7 +1571,7 @@ new_window (GApplication *app,
 	GtkWidget *frame_axes;
 	GtkWidget *frame_pseudo_axes;
 	GtkWidget *frame_solutions;
-	GtkWidget *hpaned1;
+	GtkWidget *hbox1;
 	GtkWidget *notebook1;
 	GtkWidget *scrolledwindow1;
 	GtkWidget *vbox1;
@@ -1613,7 +1613,7 @@ new_window (GApplication *app,
 	frame_axes = gtk_frame_new("Axes");
 	frame_pseudo_axes = gtk_frame_new("Pseudo Axes");
 	frame_solutions = gtk_frame_new("Solutions");
-	hpaned1 = gtk_paned_new (GTK_ORIENTATION_HORIZONTAL);
+	hbox1 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	notebook1 = gtk_notebook_new();
 	scrolledwindow1 = gtk_scrolled_window_new();
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -1670,6 +1670,8 @@ new_window (GApplication *app,
 	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK(notebook1),
 					 scrolledwindow1,
 					 "Pseudo Axes");
+	gtk_widget_set_hexpand(notebook1, true);
+
 	/* scrolledwindow1 */
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow1),
 				       GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -1679,7 +1681,8 @@ new_window (GApplication *app,
 	gtk_widget_set_sensitive(self->spinbutton_wavelength, FALSE);
 
 	/* vbox1 */
-	gtk_box_append(GTK_BOX(vbox1), hpaned1);
+	gtk_box_append(GTK_BOX(vbox1), hbox1);
+	gtk_box_set_homogeneous(GTK_BOX (vbox1), true);
 
 	/* vbox2 */
 	gtk_box_append(GTK_BOX(vbox2), frame_diffractometer);
@@ -1687,15 +1690,18 @@ new_window (GApplication *app,
 	gtk_box_append(GTK_BOX(vbox2), frame_axes);
 	gtk_box_append(GTK_BOX(vbox2), frame_solutions);
 
-	/* vpaned1 */
-	gtk_paned_set_start_child (GTK_PANED (hpaned1), vbox2);
-	gtk_paned_set_shrink_start_child (GTK_PANED (hpaned1), false);
+	/* hbox1 */
+	gtk_box_append(GTK_BOX(hbox1), vbox2);
+	gtk_box_append(GTK_BOX(hbox1), notebook1);
 
-	gtk_paned_set_end_child (GTK_PANED (hpaned1), notebook1);
-	gtk_paned_set_shrink_end_child (GTK_PANED (hpaned1), false);
+	/* gtk_paned_set_start_child (GTK_PANED (hpaned1), vbox2); */
+	/* gtk_paned_set_shrink_start_child (GTK_PANED (hpaned1), false); */
+
+	/* gtk_paned_set_end_child (GTK_PANED (hpaned1), notebook1); */
+	/* gtk_paned_set_shrink_end_child (GTK_PANED (hpaned1), false); */
 
 	/*  window1 */
-	gtk_window_set_default_size (GTK_WINDOW(self->window1), 640, 480);
+	gtk_window_set_default_size (GTK_WINDOW(self->window1), 1024, 768);
 	/* g_action_map_add_action_entries (G_ACTION_MAP (window), win_entries, G_N_ELEMENTS (win_entries), window); */
 	gtk_window_set_title (GTK_WINDOW (self->window1), "hkl library GUI");
 	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (self->window1), TRUE);
