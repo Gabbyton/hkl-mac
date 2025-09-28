@@ -82,6 +82,8 @@ HKLAPI GError* hkl_gui_factory_get_error(HklGuiFactory *self);
 
 HKLAPI HklFactory* hkl_gui_factory_get_factory(HklGuiFactory *self);
 
+HKLAPI const char * hkl_gui_factory_get_name(HklGuiFactory *self);
+
 HKLAPI gdouble hkl_gui_factory_get_wavelength(HklGuiFactory *self);
 
 HKLAPI GListStore* hkl_gui_factory_get_liststore_axes(HklGuiFactory *self);
@@ -146,6 +148,10 @@ HKLAPI void hkl_gui_setup_item_factory_label_cb (GtkListItemFactory *factory,
 
 HKLAPI void hkl_gui_setup_item_factory_spin_button_cb (GtkListItemFactory *factory,
 						       GtkListItem *list_item);
+
+HKLAPI void hkl_gui_bind_item_factory_label_property_cb (GtkListItemFactory *factory,
+							 GtkListItem *list_item,
+							 const char *property);
 
 void hkl_gui_parameter_bind_factory_label_name_cb (GtkListItemFactory *factory,
 						   GtkListItem *list_item);

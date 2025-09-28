@@ -42,3 +42,20 @@ hkl_gui_setup_item_factory_spin_button_cb (GtkListItemFactory *factory,
 	spin_button = gtk_spin_button_new_with_range (-G_MAXDOUBLE, G_MAXDOUBLE, 0.0001);
 	gtk_list_item_set_child (list_item, spin_button);
 }
+
+void
+hkl_gui_bind_item_factory_label_property_cb (GtkListItemFactory *factory,
+					     GtkListItem *list_item,
+					     const char *property)
+{
+	GtkWidget *label;
+	GObject *self;
+
+
+	label = gtk_list_item_get_child (list_item);
+	self = gtk_list_item_get_item (list_item);
+
+	g_return_if_fail(NULL != self);
+
+	g_object_bind_property(self, property, label, "label", G_BINDING_SYNC_CREATE);
+}

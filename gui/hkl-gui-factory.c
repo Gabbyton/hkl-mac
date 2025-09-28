@@ -44,6 +44,7 @@ enum {
 
 	PROP_ERROR,
 	PROP_FACTORY,
+	PROP_NAME,
 	PROP_WAVELENGTH,
 
 	NUM_PROPERTIES,
@@ -66,7 +67,6 @@ struct _HklGuiFactory {
 };
 
 G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
-
 
 static void
 update_diffractometer_cb(HklGuiParameter *parameter,
@@ -258,10 +258,10 @@ hkl_gui_factory_set_property (GObject      *object,
 		break;
 	case PROP_FACTORY:
 		hkl_gui_factory_set_factory(self, g_value_get_pointer(value));
-	break;
+		break;
 	case PROP_WAVELENGTH:
 		hkl_gui_factory_set_wavelength(self, g_value_get_double (value));
-	break;
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -283,6 +283,9 @@ hkl_gui_factory_get_property (GObject    *object,
 		break;
 	case PROP_FACTORY:
 		g_value_set_pointer (value, hkl_gui_factory_get_factory(self));
+		break;
+	case PROP_NAME:
+		g_value_set_string (value, hkl_gui_factory_get_name(self));
 		break;
 	case PROP_WAVELENGTH:
 		g_value_set_double (value, hkl_gui_factory_get_wavelength(self));
@@ -353,20 +356,27 @@ hkl_gui_factory_class_init (HklGuiFactoryClass *klass)
 		g_param_spec_pointer ("error",
 				      "Error",
 				      "the last GError",
-				      G_PARAM_READWRITE);
+				      G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
 
 	props[PROP_FACTORY] =
 		g_param_spec_pointer ("factory",
 				      "Factory",
 				      "the embeded HklFactory.",
-				      G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+				      G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
+	props[PROP_NAME] =
+		g_param_spec_string ("name",
+				     "Name",
+				     "the HklFactory name.",
+				     "",
+				     G_PARAM_STATIC_NAME | G_PARAM_READABLE);
 
 	props[PROP_WAVELENGTH] =
 		g_param_spec_double ("wavelength",
 				     "Wavelength",
 				     "the diffractometer wavelength",
 				     0.0, 100.0, 1.54,
-				     G_PARAM_READWRITE);
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
 
 	g_object_class_install_properties (object_class,
 					   NUM_PROPERTIES,
@@ -393,6 +403,12 @@ HklFactory *
 hkl_gui_factory_get_factory(HklGuiFactory *self)
 {
 	return self->diffractometer->factory;
+}
+
+const char *
+hkl_gui_factory_get_name(HklGuiFactory *self)
+{
+	return hkl_factory_name_get(self->diffractometer->factory);
 }
 
 gdouble
@@ -472,28 +488,12 @@ hkl_gui_factory_set_wavelength(HklGuiFactory *self,
 /* Gui ListItem factories */
 /**************************/
 
-static void
-bind_factory_name_cb (GtkListItemFactory *factory,
-		      GtkListItem        *list_item)
-{
-	GtkWidget *label;
-	HklGuiFactory *self;
-
-
-	label = gtk_list_item_get_child (list_item);
-	self = gtk_list_item_get_item (list_item);
-
-	g_return_if_fail(NULL != self->diffractometer);
-
-	gtk_label_set_label (GTK_LABEL (label), hkl_factory_name_get(self->diffractometer->factory));
-}
-
 GtkListItemFactory *
 hkl_gui_factory_name_factory_new(void)
 {
 	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
 	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
-	g_signal_connect (factory, "bind", G_CALLBACK (bind_factory_name_cb), NULL);
+	g_signal_connect (factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), "name");
 
 	return factory;
 }

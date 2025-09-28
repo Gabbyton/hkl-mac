@@ -1548,19 +1548,6 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* *\/ */
 
 static void
-bind_dropdown_samples_label_name_cb (GtkListItemFactory *factory,
-				     GtkListItem        *list_item)
-{
-	GtkWidget *label;
-	HklGuiSample *self;
-
-	label = gtk_list_item_get_child (list_item);
-	self = gtk_list_item_get_item (list_item);
-
-	g_object_bind_property(self, "name", label, "label", G_BINDING_SYNC_CREATE);
-}
-
-static void
 new_window (GApplication *app,
             GFile        *file)
 {
@@ -1620,7 +1607,7 @@ new_window (GApplication *app,
 	g_signal_connect (item_factory_drop_down_samples,
 			  "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
 	g_signal_connect (item_factory_drop_down_samples,
-			  "bind", G_CALLBACK (bind_dropdown_samples_label_name_cb), NULL);
+			  "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), "name");
 
 	/***********/
 	/* widgets */

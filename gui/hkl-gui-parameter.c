@@ -282,28 +282,12 @@ void hkl_gui_parameter_update(HklGuiParameter *self)
 /* GtkListItemFactory */
 /**********************/
 
-void
-hkl_gui_parameter_bind_factory_label_name_cb (GtkListItemFactory *factory,
-					      GtkListItem *list_item)
-{
-	GtkWidget *label;
-	HklGuiParameter *self;
-
-
-	label = gtk_list_item_get_child (list_item);
-	self = gtk_list_item_get_item (list_item);
-
-	g_assert(NULL != self->parameter);
-
-	g_object_bind_property(self, "name", label, "label", G_BINDING_SYNC_CREATE);
-}
-
 GtkListItemFactory *
 hkl_gui_parameter_factory_name_new(void)
 {
 	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
 	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
-	g_signal_connect (factory, "bind", G_CALLBACK (hkl_gui_parameter_bind_factory_label_name_cb), NULL);
+	g_signal_connect (factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), "name");
 
 	return factory;
 }
