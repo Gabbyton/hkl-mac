@@ -488,16 +488,6 @@ hkl_gui_factory_set_wavelength(HklGuiFactory *self,
 /* Gui ListItem factories */
 /**************************/
 
-GtkListItemFactory *
-hkl_gui_factory_name_factory_new(void)
-{
-	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
-	g_signal_connect (factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), "name");
-
-	return factory;
-}
-
 struct diffractometer_t *
 hkl_gui_factory_get_diffractometer(HklGuiFactory *self)
 {

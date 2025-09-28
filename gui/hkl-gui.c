@@ -1557,7 +1557,7 @@ new_window (GApplication *app,
 	GListStore *liststore1;
 
 	GtkColumnViewColumn *column;
-	GtkListItemFactory *item_factory1;
+	GtkListItemFactory *item_factory_drop_down_factories;
 	GtkListItemFactory *item_factory_drop_down_samples;
 
 	GtkWidget *dropdown1;
@@ -1590,8 +1590,6 @@ new_window (GApplication *app,
 		g_list_store_append (liststore1, factory);
 	}
 
-	item_factory1 = hkl_gui_factory_name_factory_new();
-
 	/* liststore samples */
 	self->liststore_samples = g_list_store_new (HKL_GUI_TYPE_SAMPLE);
 	g_list_store_append(self->liststore_samples,
@@ -1600,6 +1598,12 @@ new_window (GApplication *app,
 	/*********************/
 	/* ListItemFactories */
 	/*********************/
+
+	/* drop down factories */
+
+	item_factory_drop_down_factories = gtk_signal_list_item_factory_new ();
+	g_signal_connect (item_factory_drop_down_factories, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
+	g_signal_connect (item_factory_drop_down_factories, "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), "name");
 
 	/* drop down samples */
 
@@ -1655,7 +1659,7 @@ new_window (GApplication *app,
 	g_signal_connect (self->column_view_solutions, "activate", G_CALLBACK (column_view_solutions_activate_cb), self);
 
 	/* dropdown1 */
-	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory1);
+	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory_drop_down_factories);
 	g_signal_connect (dropdown1, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), self);
 
 	/* drop_down_samples */

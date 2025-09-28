@@ -94,8 +94,6 @@ HKLAPI GListStore* hkl_gui_factory_get_liststore_pseudo_axes(HklGuiFactory *self
 
 HKLAPI GListStore* hkl_gui_factory_get_liststore_solutions(HklGuiFactory *self);
 
-HKLAPI GtkListItemFactory* hkl_gui_factory_name_factory_new(void);
-
 HKLAPI void hkl_gui_factory_set_error(HklGuiFactory *self, GError* error);
 
 HKLAPI void hkl_gui_factory_set_geometry(HklGuiFactory *self, HklGuiGeometry *ggeometry);
