@@ -182,6 +182,12 @@ hkl_gui_sample_get_name(HklGuiSample *self)
 	return hkl_sample_name_get(self->sample);
 }
 
+HklSample *
+hkl_gui_sample_get_sample(HklGuiSample *self)
+{
+	return self->sample;
+}
+
 /* setters */
 
 void

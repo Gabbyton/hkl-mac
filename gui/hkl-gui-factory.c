@@ -45,6 +45,7 @@ enum {
 	PROP_ERROR,
 	PROP_FACTORY,
 	PROP_NAME,
+	PROP_SAMPLE,
 	PROP_WAVELENGTH,
 
 	NUM_PROPERTIES,
@@ -58,12 +59,14 @@ struct _HklGuiFactory {
 	GObject parent_instance;
 
 	/* instance members */
-	struct diffractometer_t *diffractometer;
 	GError *error;
 	GListStore *liststore_axes;
 	GListStore *liststore_engines;
 	GListStore *liststore_pseudo_axes;
 	GListStore *liststore_solutions;
+
+	HklGuiSample *gsample; /* not owned */
+	struct diffractometer_t *diffractometer;
 };
 
 G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
@@ -259,6 +262,9 @@ hkl_gui_factory_set_property (GObject      *object,
 	case PROP_FACTORY:
 		hkl_gui_factory_set_factory(self, g_value_get_pointer(value));
 		break;
+	case PROP_SAMPLE:
+		hkl_gui_factory_set_sample(self, g_value_get_object (value));
+		break;
 	case PROP_WAVELENGTH:
 		hkl_gui_factory_set_wavelength(self, g_value_get_double (value));
 		break;
@@ -286,6 +292,9 @@ hkl_gui_factory_get_property (GObject    *object,
 		break;
 	case PROP_NAME:
 		g_value_set_string (value, hkl_gui_factory_get_name(self));
+		break;
+	case PROP_SAMPLE:
+		g_value_set_object (value, hkl_gui_factory_get_sample(self));
 		break;
 	case PROP_WAVELENGTH:
 		g_value_set_double (value, hkl_gui_factory_get_wavelength(self));
@@ -371,6 +380,13 @@ hkl_gui_factory_class_init (HklGuiFactoryClass *klass)
 				     "",
 				     G_PARAM_STATIC_NAME | G_PARAM_READABLE);
 
+	props[PROP_SAMPLE] =
+		g_param_spec_object ("sample",
+				     "Sample",
+				     "the embeded HklGuiSample.",
+				     HKL_GUI_TYPE_SAMPLE,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
 	props[PROP_WAVELENGTH] =
 		g_param_spec_double ("wavelength",
 				     "Wavelength",
@@ -409,6 +425,12 @@ const char *
 hkl_gui_factory_get_name(HklGuiFactory *self)
 {
 	return hkl_factory_name_get(self->diffractometer->factory);
+}
+
+HklGuiSample *
+hkl_gui_factory_get_sample(HklGuiFactory *self)
+{
+	return self->gsample;
 }
 
 gdouble
@@ -465,11 +487,19 @@ hkl_gui_factory_set_geometry(HklGuiFactory *self,
 
 void
 hkl_gui_factory_set_sample(HklGuiFactory *self,
-			   HklSample *sample)
+			   HklGuiSample *gsample)
 {
-	g_return_if_fail(NULL != sample);
+	g_return_if_fail (HKL_GUI_IS_FACTORY (self));
+	g_return_if_fail (HKL_GUI_IS_SAMPLE (gsample));
 
-	diffractometer_set_sample(self->diffractometer, sample);
+	self->gsample = gsample;
+	diffractometer_set_sample(self->diffractometer,
+				  hkl_gui_sample_get_sample (gsample));
+
+	update_liststore_pseudo_axes(self);
+	update_liststore_engines(self);
+
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_SAMPLE]);
 }
 
 void

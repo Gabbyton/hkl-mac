@@ -150,6 +150,7 @@ struct _HklGuiWindow {
 	GtkWidget *column_view_axes;
 	GtkWidget *column_view_pseudo_axes;
 	GtkWidget *column_view_solutions;
+	GtkWidget *drop_down_samples;
 	GtkWidget *flowbox_engines;
 	GtkWidget *spinbutton_wavelength;
 	GtkWidget *window1;
@@ -475,6 +476,9 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		self->adjustement_wavelength_binding = g_object_bind_property(factory, "wavelength",
 									      self->adjustment_wavelength, "value",
 									      G_BINDING_BIDIRECTIONAL);
+
+		/* sample */
+		g_object_bind_property(self->drop_down_samples, "selected-item", factory, "sample", G_BINDING_SYNC_CREATE);
 
 		/* set column view axes model */
 		single_selection = GTK_SINGLE_SELECTION(gtk_column_view_get_model(GTK_COLUMN_VIEW(self->column_view_axes)));
@@ -1561,7 +1565,6 @@ new_window (GApplication *app,
 	GtkListItemFactory *item_factory_drop_down_samples;
 
 	GtkWidget *dropdown1;
-	GtkWidget *drop_down_samples;
 	GtkWidget *frame_diffractometer;
 	GtkWidget *frame_wavelength;
 	GtkWidget *frame_axes;
@@ -1621,12 +1624,12 @@ new_window (GApplication *app,
 	self->column_view_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->column_view_pseudo_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->column_view_solutions = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
+	self->drop_down_samples = gtk_drop_down_new(G_LIST_MODEL(self->liststore_samples), NULL);
 	self->flowbox_engines = gtk_flow_box_new();
 	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
 	self->window1 = gtk_application_window_new (GTK_APPLICATION (app));
 
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
-	drop_down_samples = gtk_drop_down_new(G_LIST_MODEL(self->liststore_samples), NULL);
 	frame_diffractometer = gtk_frame_new("Diffractometer");
 	frame_wavelength = gtk_frame_new("Wavelength");
 	frame_axes = gtk_frame_new("Axes");
@@ -1663,7 +1666,7 @@ new_window (GApplication *app,
 	g_signal_connect (dropdown1, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), self);
 
 	/* drop_down_samples */
-	gtk_drop_down_set_factory(GTK_DROP_DOWN(drop_down_samples), item_factory_drop_down_samples);
+	gtk_drop_down_set_factory(GTK_DROP_DOWN(self->drop_down_samples), item_factory_drop_down_samples);
 	// g_signal_connect (drop_down_samples, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), self);
 
 	/* flowbox engines */
@@ -1685,7 +1688,7 @@ new_window (GApplication *app,
 	gtk_frame_set_child(GTK_FRAME(frame_pseudo_axes), self->column_view_pseudo_axes);
 
 	/* frame samples */
-	gtk_frame_set_child(GTK_FRAME(frame_samples), drop_down_samples);
+	gtk_frame_set_child(GTK_FRAME(frame_samples), self->drop_down_samples);
 
 	/* frame solutions*/
 	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);

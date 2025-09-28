@@ -84,6 +84,8 @@ HKLAPI HklFactory* hkl_gui_factory_get_factory(HklGuiFactory *self);
 
 HKLAPI const char * hkl_gui_factory_get_name(HklGuiFactory *self);
 
+HKLAPI HklGuiSample * hkl_gui_factory_get_sample(HklGuiFactory *self);
+
 HKLAPI gdouble hkl_gui_factory_get_wavelength(HklGuiFactory *self);
 
 HKLAPI GListStore* hkl_gui_factory_get_liststore_axes(HklGuiFactory *self);
@@ -98,7 +100,7 @@ HKLAPI void hkl_gui_factory_set_error(HklGuiFactory *self, GError* error);
 
 HKLAPI void hkl_gui_factory_set_geometry(HklGuiFactory *self, HklGuiGeometry *ggeometry);
 
-HKLAPI void hkl_gui_factory_set_sample(HklGuiFactory *self, HklSample *sample);
+HKLAPI void hkl_gui_factory_set_sample(HklGuiFactory *self, HklGuiSample *sample);
 
 HKLAPI void hkl_gui_factory_set_wavelength(HklGuiFactory *self, gdouble wavelength);
 
@@ -136,6 +138,8 @@ HKLAPI void hkl_gui_parameter_update(HklGuiParameter *self);
 HKLAPI HklGuiSample* hkl_gui_sample_new(const char *name);
 
 HKLAPI const char *hkl_gui_sample_get_name(HklGuiSample *self);
+
+HKLAPI HklSample *hkl_gui_sample_get_sample(HklGuiSample *self);
 
 HKLAPI void hkl_gui_sample_set_name(HklGuiSample *self, const char *name);
 
