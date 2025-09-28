@@ -13,23 +13,32 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2025 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2024, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
  * Authors: Picca Frédéric-Emmanuel <picca@synchrotron-soleil.fr>
  */
 
-#ifndef __HKL_GUI_MACROS_H__
-#define __HKL_GUI_MACROS_H__
-
 #include <gtk/gtk.h>
 
-#include "hkl.h"
+void
+hkl_gui_setup_item_factory_label_cb (GtkListItemFactory *factory,
+				     GtkListItem        *list_item)
+{
+	GtkWidget *label;
 
-#define get_model(filename)						\
-	(0 == access(filename, R_OK)) ? filename :			\
-	((0 == access("../data/" filename, R_OK)) ? "../data/" filename : \
-	 ((0 == access(PKGDATA "/hkl3d/" filename, R_OK)) ? PKGDATA "/hkl3d/" filename : NULL))
+	label = gtk_label_new ("");
+	gtk_list_item_set_child (list_item, label);
+}
 
-#endif /* __HKL_GUI_MACROS_H__ */
+
+void
+hkl_gui_setup_item_factory_spin_button_cb (GtkListItemFactory *factory,
+					   GtkListItem *list_item)
+{
+	GtkWidget *spin_button;
+
+	spin_button = gtk_spin_button_new_with_range (-G_MAXDOUBLE, G_MAXDOUBLE, 0.0001);
+	gtk_list_item_set_child (list_item, spin_button);
+}

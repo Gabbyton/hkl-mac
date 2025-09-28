@@ -29,6 +29,7 @@
 
 #include "hkl.h"
 #include "hkl-gui.h"
+#include "hkl-gui-macros.h"
 
 enum {
 	PROP_0,
@@ -194,9 +195,9 @@ setup_factory_pseudo_axis_cb (GtkListItemFactory *factory,
 
 	guint capabilities = hkl_engine_capabilities_get(self->engine);
 	if (HKL_ENGINE_CAPABILITIES_WRITABLE & capabilities){
-		hkl_gui_parameter_setup_factory_spin_button_cb(factory, list_item);
+		hkl_gui_setup_item_factory_spin_button_cb(factory, list_item);
 	} else {
-		hkl_gui_parameter_setup_factory_label_cb(factory, list_item);
+		hkl_gui_setup_item_factory_label_cb(factory, list_item);
 	}
 }
 

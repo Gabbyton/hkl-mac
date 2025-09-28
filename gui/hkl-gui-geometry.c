@@ -183,17 +183,6 @@ hkl_gui_geometry_get_geometry(HklGuiGeometry *self)
 /****************/
 
 static void
-setup_factory_axis_value_cb (GtkListItemFactory *factory,
-			     GtkListItem *list_item,
-			     gpointer user_data)
-{
-	GtkWidget *label;
-
-	label = gtk_label_new ("");
-	gtk_list_item_set_child (list_item, label);
-}
-
-static void
 bind_factory_axis_value_cb (GtkListItemFactory *factory,
 			    GtkListItem *list_item,
 			    gpointer user_data)
@@ -222,7 +211,7 @@ GtkListItemFactory *
 hkl_gui_geometry_axis_value_factory_new(gint idx)
 {
 		GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
-		g_signal_connect (factory, "setup", G_CALLBACK (setup_factory_axis_value_cb), GINT_TO_POINTER(idx));
+		g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), GINT_TO_POINTER(idx));
 		g_signal_connect (factory, "bind", G_CALLBACK (bind_factory_axis_value_cb), GINT_TO_POINTER(idx));
 
 		return factory;

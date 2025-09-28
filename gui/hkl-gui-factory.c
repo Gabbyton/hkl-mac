@@ -473,16 +473,6 @@ hkl_gui_factory_set_wavelength(HklGuiFactory *self,
 /**************************/
 
 static void
-setup_factory_name_cb (GtkListItemFactory *factory,
-		       GtkListItem        *list_item)
-{
-	GtkWidget *label;
-
-	label = gtk_label_new ("");
-	gtk_list_item_set_child (list_item, label);
-}
-
-static void
 bind_factory_name_cb (GtkListItemFactory *factory,
 		      GtkListItem        *list_item)
 {
@@ -502,7 +492,7 @@ GtkListItemFactory *
 hkl_gui_factory_name_factory_new(void)
 {
 	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (factory, "setup", G_CALLBACK (setup_factory_name_cb), NULL);
+	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
 	g_signal_connect (factory, "bind", G_CALLBACK (bind_factory_name_cb), NULL);
 
 	return factory;

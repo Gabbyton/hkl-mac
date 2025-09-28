@@ -31,6 +31,7 @@ ghkl_SOURCES = \
 	hkl-gui-engine.c \
 	hkl-gui-factory.c \
 	hkl-gui-geometry.c \
+	hkl-gui-item-factories.c \
 	hkl-gui-macros.h \
 	hkl-gui-parameter.c \
 	hkl-gui-sample.c \
