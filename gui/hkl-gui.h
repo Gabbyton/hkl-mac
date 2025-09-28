@@ -120,6 +120,7 @@ HKLAPI HklGuiParameter* hkl_gui_parameter_new(const HklParameter *parameter);
 
 HKLAPI gdouble hkl_gui_parameter_get_maximum(HklGuiParameter *self);
 HKLAPI gdouble hkl_gui_parameter_get_minimum(HklGuiParameter *self);
+HKLAPI const char * hkl_gui_parameter_get_name(HklGuiParameter *self);
 HKLAPI gdouble hkl_gui_parameter_get_value(HklGuiParameter *self);
 
 HKLAPI void hkl_gui_parameter_set_maximum(HklGuiParameter *self, gdouble value);

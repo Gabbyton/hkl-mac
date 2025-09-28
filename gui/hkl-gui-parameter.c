@@ -39,10 +39,11 @@
 enum {
 	PROP_0,
 
+	PROP_MAXIMUM,
+	PROP_MINIMUM,
+	PROP_NAME,
 	PROP_PARAMETER,
 	PROP_VALUE,
-	PROP_MINIMUM,
-	PROP_MAXIMUM,
 
 	NUM_PROPERTIES,
 };
@@ -60,6 +61,10 @@ struct _HklGuiParameter {
 
 G_DEFINE_FINAL_TYPE(HklGuiParameter, hkl_gui_parameter, G_TYPE_OBJECT);
 
+
+void hkl_gui_parameter_set_parameter (HklGuiParameter *self, HklParameter *parameter);
+HklParameter *hkl_gui_parameter_get_parameter (HklGuiParameter *self);
+
 static void
 hkl_gui_parameter_set_property (GObject      *object,
 				guint         prop_id,
@@ -71,21 +76,17 @@ hkl_gui_parameter_set_property (GObject      *object,
 
 	switch (prop_id)
 	{
-	case PROP_PARAMETER:
-	{
-		HklParameter *new_parameter = g_value_get_pointer (value);
-		self->parameter = new_parameter;
-		g_object_notify_by_pspec (object, pspec);
-	}
-	break;
-	case PROP_VALUE:
-		hkl_gui_parameter_set_value(self, g_value_get_double (value));
+	case PROP_MAXIMUM:
+		hkl_gui_parameter_set_maximum(self, g_value_get_double (value));
 		break;
 	case PROP_MINIMUM:
 		hkl_gui_parameter_set_minimum(self, g_value_get_double (value));
 		break;
-	case PROP_MAXIMUM:
-		hkl_gui_parameter_set_maximum(self, g_value_get_double (value));
+	case PROP_PARAMETER:
+		hkl_gui_parameter_set_parameter(self, g_value_get_pointer (value));
+		break;
+	case PROP_VALUE:
+		hkl_gui_parameter_set_value(self, g_value_get_double (value));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -104,17 +105,20 @@ hkl_gui_parameter_get_property (GObject    *object,
 
 	switch (prop_id)
 	{
-	case PROP_PARAMETER:
-		g_value_set_pointer (value, self->parameter);
-		break;
-	case PROP_VALUE:
-		g_value_set_double (value, hkl_gui_parameter_get_value(self));
+	case PROP_MAXIMUM:
+		g_value_set_double (value, hkl_gui_parameter_get_maximum(self));
 		break;
 	case PROP_MINIMUM:
 		g_value_set_double (value, hkl_gui_parameter_get_minimum(self));
 		break;
-	case PROP_MAXIMUM:
-		g_value_set_double (value, hkl_gui_parameter_get_maximum(self));
+	case PROP_NAME:
+		g_value_set_string (value, hkl_gui_parameter_get_name(self));
+		break;
+	case PROP_PARAMETER:
+		g_value_set_pointer (value, hkl_gui_parameter_get_parameter(self));
+		break;
+	case PROP_VALUE:
+		g_value_set_double (value, hkl_gui_parameter_get_value(self));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -136,32 +140,39 @@ hkl_gui_parameter_class_init (HklGuiParameterClass *klass)
 	object_class->set_property = hkl_gui_parameter_set_property;
 	object_class->get_property = hkl_gui_parameter_get_property;
 
-	props[PROP_PARAMETER] =
-		g_param_spec_pointer ("parameter",
-				      "Parameter",
-				      "the embeded HklParameter.",
-				      G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	props[PROP_MAXIMUM] =
+		g_param_spec_double ("maximum",
+				     "Maximum",
+				     "the parameter maximum value",
+				     -361, 361, 0,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
 
 	props[PROP_MINIMUM] =
 		g_param_spec_double ("minimum",
 				     "Minimum",
 				     "the parameter minimum value",
 				     -361, 361, 0,
-				     G_PARAM_READWRITE);
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
 
-	props[PROP_MAXIMUM] =
-		g_param_spec_double ("maximum",
-				     "Maximum",
-				     "the parameter maximum value",
-				     -361, 361, 0,
-				     G_PARAM_READWRITE);
+	props[PROP_NAME] =
+		g_param_spec_string ("name",
+				      "Name",
+				      "the HklParameter name.",
+				     "",
+				      G_PARAM_STATIC_NAME | G_PARAM_READABLE);
+
+	props[PROP_PARAMETER] =
+		g_param_spec_pointer ("parameter",
+				      "Parameter",
+				      "the embeded HklParameter.",
+				      G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
 
 	props[PROP_VALUE] =
 		g_param_spec_double ("value",
 				     "Value",
 				     "the parameter value",
 				     -361, 361, 0,
-				     G_PARAM_READWRITE);
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
 
 	g_object_class_install_properties (object_class,
 					   NUM_PROPERTIES,
@@ -193,21 +204,40 @@ gdouble hkl_gui_parameter_get_minimum(HklGuiParameter *self)
 	return min;
 }
 
-gdouble hkl_gui_parameter_get_value(HklGuiParameter *self)
+const char *
+hkl_gui_parameter_get_name (HklGuiParameter *self)
+{
+	return hkl_parameter_name_get(self->parameter);
+}
+
+HklParameter *
+hkl_gui_parameter_get_parameter (HklGuiParameter *self)
+{
+	return self->parameter;
+}
+
+gdouble
+hkl_gui_parameter_get_value (HklGuiParameter *self)
 {
 	return hkl_parameter_value_get(self->parameter, HKL_UNIT_USER);
 }
 
 /* setters */
 
-void hkl_gui_parameter_set_value(HklGuiParameter *self, gdouble value)
+void
+hkl_gui_parameter_set_maximum (HklGuiParameter *self, gdouble value)
 {
-	if (TRUE == hkl_parameter_value_set(self->parameter, value, HKL_UNIT_USER, NULL)){
-		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_VALUE]);
+	gdouble min;
+	gdouble max;
+
+	hkl_parameter_min_max_get(self->parameter, &min, &max, HKL_UNIT_USER);
+	if (TRUE == hkl_parameter_min_max_set(self->parameter, min, value, HKL_UNIT_USER, NULL)){
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_MAXIMUM]);
 	}
 }
 
-void hkl_gui_parameter_set_minimum(HklGuiParameter *self, gdouble value)
+void
+hkl_gui_parameter_set_minimum (HklGuiParameter *self, gdouble value)
 {
 	gdouble min;
 	gdouble max;
@@ -218,14 +248,19 @@ void hkl_gui_parameter_set_minimum(HklGuiParameter *self, gdouble value)
 	}
 }
 
-void hkl_gui_parameter_set_maximum(HklGuiParameter *self, gdouble value)
+void
+hkl_gui_parameter_set_parameter (HklGuiParameter *self, HklParameter *parameter)
 {
-	gdouble min;
-	gdouble max;
+	self->parameter = parameter;
 
-	hkl_parameter_min_max_get(self->parameter, &min, &max, HKL_UNIT_USER);
-	if (TRUE == hkl_parameter_min_max_set(self->parameter, min, value, HKL_UNIT_USER, NULL)){
-		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_MAXIMUM]);
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_PARAMETER]);
+}
+
+void
+hkl_gui_parameter_set_value (HklGuiParameter *self, gdouble value)
+{
+	if (TRUE == hkl_parameter_value_set(self->parameter, value, HKL_UNIT_USER, NULL)){
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_VALUE]);
 	}
 }
 
@@ -260,7 +295,7 @@ hkl_gui_parameter_bind_factory_label_name_cb (GtkListItemFactory *factory,
 
 	g_assert(NULL != self->parameter);
 
-	gtk_label_set_label (GTK_LABEL (label), hkl_parameter_name_get(self->parameter));
+	g_object_bind_property(self, "name", label, "label", G_BINDING_SYNC_CREATE);
 }
 
 GtkListItemFactory *
