@@ -32,4 +32,16 @@
 	((0 == access("../data/" filename, R_OK)) ? "../data/" filename : \
 	 ((0 == access(PKGDATA "/hkl3d/" filename, R_OK)) ? PKGDATA "/hkl3d/" filename : NULL))
 
+
+static void
+hkl_gui_setup_item_factory_label_cb (GtkListItemFactory *factory,
+				     GtkListItem        *list_item)
+{
+	GtkWidget *label;
+
+	label = gtk_label_new ("");
+	gtk_list_item_set_child (list_item, label);
+}
+
+
 #endif /* __HKL_GUI_MACROS_H__ */

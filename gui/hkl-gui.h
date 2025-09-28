@@ -128,6 +128,15 @@ HKLAPI void hkl_gui_parameter_set_value(HklGuiParameter *self, gdouble value);
 
 HKLAPI void hkl_gui_parameter_update(HklGuiParameter *self);
 
+/**********/
+/* Sample */
+/**********/
+
+HKLAPI HklGuiSample* hkl_gui_sample_new(const char *name);
+
+HKLAPI const char *hkl_gui_sample_get_name(HklGuiSample *self);
+
+HKLAPI void hkl_gui_sample_set_name(HklGuiSample *self, const char *name);
 
 /* item factories */
 

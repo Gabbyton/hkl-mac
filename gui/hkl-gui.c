@@ -141,6 +141,8 @@
 struct _HklGuiWindow {
 	GtkApplication parent_instance;
 
+	GListStore *liststore_samples;
+
 	GtkAdjustment *adjustment_wavelength;
 	GtkAlertDialog *alert_dialog_solutions;
 	GBinding *adjustement_wavelength_binding;
@@ -153,7 +155,6 @@ struct _HklGuiWindow {
 	GtkWidget *window1;
 
 	HklGuiFactory *factory; /* not owned */
-	HklSample *sample; /* unowned */
 };
 
 G_DEFINE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, GTK_TYPE_APPLICATION);
@@ -464,7 +465,6 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 
 
 		self->factory = factory;
-		hkl_gui_factory_set_sample(factory, self->sample);
 
 		/* setup spinbutton_wavelength */
 		if(self->adjustement_wavelength_binding)
@@ -1548,6 +1548,19 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* *\/ */
 
 static void
+bind_dropdown_samples_label_name_cb (GtkListItemFactory *factory,
+				     GtkListItem        *list_item)
+{
+	GtkWidget *label;
+	HklGuiSample *self;
+
+	label = gtk_list_item_get_child (list_item);
+	self = gtk_list_item_get_item (list_item);
+
+	g_object_bind_property(self, "name", label, "label", G_BINDING_SYNC_CREATE);
+}
+
+static void
 new_window (GApplication *app,
             GFile        *file)
 {
@@ -1558,12 +1571,15 @@ new_window (GApplication *app,
 
 	GtkColumnViewColumn *column;
 	GtkListItemFactory *item_factory1;
+	GtkListItemFactory *item_factory_drop_down_samples;
 
 	GtkWidget *dropdown1;
+	GtkWidget *drop_down_samples;
 	GtkWidget *frame_diffractometer;
 	GtkWidget *frame_wavelength;
 	GtkWidget *frame_axes;
 	GtkWidget *frame_pseudo_axes;
+	GtkWidget *frame_samples;
 	GtkWidget *frame_solutions;
 	GtkWidget *hbox1;
 	GtkWidget *notebook1;
@@ -1589,6 +1605,23 @@ new_window (GApplication *app,
 
 	item_factory1 = hkl_gui_factory_name_factory_new();
 
+	/* liststore samples */
+	self->liststore_samples = g_list_store_new (HKL_GUI_TYPE_SAMPLE);
+	g_list_store_append(self->liststore_samples,
+			    hkl_gui_sample_new("default"));
+
+	/*********************/
+	/* ListItemFactories */
+	/*********************/
+
+	/* drop down samples */
+
+	item_factory_drop_down_samples = gtk_signal_list_item_factory_new ();
+	g_signal_connect (item_factory_drop_down_samples,
+			  "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
+	g_signal_connect (item_factory_drop_down_samples,
+			  "bind", G_CALLBACK (bind_dropdown_samples_label_name_cb), NULL);
+
 	/***********/
 	/* widgets */
 	/***********/
@@ -1602,10 +1635,12 @@ new_window (GApplication *app,
 	self->window1 = gtk_application_window_new (GTK_APPLICATION (app));
 
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
+	drop_down_samples = gtk_drop_down_new(G_LIST_MODEL(self->liststore_samples), NULL);
 	frame_diffractometer = gtk_frame_new("Diffractometer");
 	frame_wavelength = gtk_frame_new("Wavelength");
 	frame_axes = gtk_frame_new("Axes");
 	frame_pseudo_axes = gtk_frame_new("Pseudo Axes");
+	frame_samples = gtk_frame_new("Samples");
 	frame_solutions = gtk_frame_new("Solutions");
 	hbox1 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	notebook1 = gtk_notebook_new();
@@ -1636,6 +1671,10 @@ new_window (GApplication *app,
 	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory1);
 	g_signal_connect (dropdown1, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), self);
 
+	/* drop_down_samples */
+	gtk_drop_down_set_factory(GTK_DROP_DOWN(drop_down_samples), item_factory_drop_down_samples);
+	// g_signal_connect (drop_down_samples, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), self);
+
 	/* flowbox engines */
 	gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(self->flowbox_engines), FALSE);
 	gtk_flow_box_set_selection_mode(GTK_FLOW_BOX(self->flowbox_engines),
@@ -1653,6 +1692,9 @@ new_window (GApplication *app,
         /* frame pseudo axes */
 	// gtk_frame_set_child(GTK_FRAME(frame_pseudo_axes), scrolledwindow1);
 	gtk_frame_set_child(GTK_FRAME(frame_pseudo_axes), self->column_view_pseudo_axes);
+
+	/* frame samples */
+	gtk_frame_set_child(GTK_FRAME(frame_samples), drop_down_samples);
 
 	/* frame solutions*/
 	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);
@@ -1681,12 +1723,17 @@ new_window (GApplication *app,
 	/* vbox2 */
 	gtk_box_append(GTK_BOX(vbox2), frame_diffractometer);
 	gtk_box_append(GTK_BOX(vbox2), frame_wavelength);
+	gtk_box_append(GTK_BOX(vbox2), frame_samples);
 	gtk_box_append(GTK_BOX(vbox2), frame_axes);
 	gtk_box_append(GTK_BOX(vbox2), frame_solutions);
 
 	/* hbox1 */
 	gtk_box_append(GTK_BOX(hbox1), vbox2);
 	gtk_box_append(GTK_BOX(hbox1), notebook1);
+
+
+	g_list_store_append(self->liststore_samples,
+			    hkl_gui_sample_new("tutu"));
 
 	/* gtk_paned_set_start_child (GTK_PANED (hpaned1), vbox2); */
 	/* gtk_paned_set_shrink_start_child (GTK_PANED (hpaned1), false); */
@@ -1749,7 +1796,6 @@ static void hkl_gui_window_init (HklGuiWindow * self)
 	self->adjustment_wavelength = gtk_adjustment_new (0.0, 0.0, G_MAXDOUBLE,
 							  0.0001, 0.01, 0.0);
 	self->adjustement_wavelength_binding = NULL;
-	self->sample = hkl_sample_new("sample"); /* TODO */
 }
 
 static void hkl_gui_window_class_init (HklGuiWindowClass *class)

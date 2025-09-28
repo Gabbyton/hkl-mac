@@ -41,7 +41,7 @@
 enum {
 	PROP_0,
 
-	PROP_SAMPLE,
+	PROP_NAME,
 
 	NUM_PROPERTIES,
 };
@@ -54,7 +54,7 @@ struct _HklGuiSample {
 	GObject parent_instance;
 
 	/* instance members */
-	HklSample *sample; /* not owned */
+	HklSample *sample;
 };
 
 G_DEFINE_FINAL_TYPE(HklGuiSample, hkl_gui_sample, G_TYPE_OBJECT);
@@ -62,20 +62,17 @@ G_DEFINE_FINAL_TYPE(HklGuiSample, hkl_gui_sample, G_TYPE_OBJECT);
 
 static void
 hkl_gui_sample_set_property (GObject      *object,
-			      guint         prop_id,
-			      const GValue *value,
-			      GParamSpec   *pspec)
+			     guint         prop_id,
+			     const GValue *value,
+			     GParamSpec   *pspec)
 {
 	HklGuiSample *self = HKL_GUI_SAMPLE (object);
 
-
 	switch (prop_id)
 	{
-	case PROP_SAMPLE:
+	case PROP_NAME:
 	{
-		self->sample = g_value_get_pointer (value);
-
-		g_object_notify_by_pspec (object, pspec);
+		hkl_gui_sample_set_name(self, g_value_get_string (value));
 	}
 	break;
 	default:
@@ -95,8 +92,8 @@ hkl_gui_sample_get_property (GObject    *object,
 
 	switch (prop_id)
 	{
-	case PROP_SAMPLE:
-		g_value_set_pointer (value, self->sample);
+	case PROP_NAME:
+		g_value_set_string (value, hkl_gui_sample_get_name (self));;
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -130,7 +127,9 @@ hkl_gui_sample_dispose (GObject *gobject)
 static void
 hkl_gui_sample_finalize (GObject *gobject)
 {
-	/* HklGuiSample *self = HKL_GUI_SAMPLE(gobject); */
+	HklGuiSample *self = HKL_GUI_SAMPLE(gobject);
+
+	hkl_sample_free(self->sample);
 
 	/* Always chain up to the parent class; as with dispose(), finalize()
 	 * is guaranteed to exist on the parent's class virtual function table
@@ -139,9 +138,9 @@ hkl_gui_sample_finalize (GObject *gobject)
 }
 
 static void
-hkl_gui_sample_init(HklGuiSample *geometry)
+hkl_gui_sample_init(HklGuiSample *self)
 {
-	geometry->sample = NULL;
+	self->sample = hkl_sample_new("toto");
 }
 
 static void
@@ -154,11 +153,12 @@ hkl_gui_sample_class_init (HklGuiSampleClass *klass)
 	object_class->get_property = hkl_gui_sample_get_property;
 	object_class->set_property = hkl_gui_sample_set_property;
 
-	props[PROP_SAMPLE] =
-		g_param_spec_pointer ("sample",
-				      "Sample",
-				      "the embeded HklSample.",
-				      G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	props[PROP_NAME] =
+		g_param_spec_string ("name",
+				     "Name",
+				     "the name of the sample",
+				     "toto",
+				      G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE);
 
 	g_object_class_install_properties (object_class,
 					   NUM_PROPERTIES,
@@ -166,18 +166,30 @@ hkl_gui_sample_class_init (HklGuiSampleClass *klass)
 }
 
 HklGuiSample *
-hkl_gui_sample_new(const HklGeometry *geometry)
+hkl_gui_sample_new(const char *name)
 {
-	return g_object_new (HKL_GUI_TYPE_GEOMETRY,
-			     "geometry", geometry,
+	return g_object_new (HKL_GUI_TYPE_SAMPLE,
+			     "name", name,
 			     NULL);
 }
 
 
-HklSample *
-hkl_gui_sample_get_sample(HklGuiSample *self)
+/* getters */
+
+const char *
+hkl_gui_sample_get_name(HklGuiSample *self)
 {
-	return self->sample;
+	return hkl_sample_name_get(self->sample);
+}
+
+/* setters */
+
+void
+hkl_gui_sample_set_name(HklGuiSample *self, const char *name)
+{
+	hkl_sample_name_set(self->sample, name);
+
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_NAME]);
 }
 
 /****************/
