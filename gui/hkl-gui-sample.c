@@ -54,6 +54,8 @@ struct _HklGuiSample {
 	GObject parent_instance;
 
 	/* instance members */
+	GtkWidget *frame;
+
 	HklSample *sample;
 };
 
@@ -141,6 +143,8 @@ static void
 hkl_gui_sample_init(HklGuiSample *self)
 {
 	self->sample = hkl_sample_new("toto");
+
+	self->frame = g_object_ref(gtk_frame_new("Sample configuration"));
 }
 
 static void
@@ -175,6 +179,11 @@ hkl_gui_sample_new(const char *name)
 
 
 /* getters */
+
+GtkWidget* hkl_gui_sample_get_frame(HklGuiSample *self)
+{
+	return self->frame;
+}
 
 const char *
 hkl_gui_sample_get_name(HklGuiSample *self)

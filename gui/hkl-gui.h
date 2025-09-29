@@ -139,6 +139,8 @@ HKLAPI HklGuiSample* hkl_gui_sample_new(const char *name);
 
 HKLAPI const char *hkl_gui_sample_get_name(HklGuiSample *self);
 
+HKLAPI GtkWidget* hkl_gui_sample_get_frame(HklGuiSample *self);
+
 HKLAPI HklSample *hkl_gui_sample_get_sample(HklGuiSample *self);
 
 HKLAPI void hkl_gui_sample_set_name(HklGuiSample *self, const char *name);

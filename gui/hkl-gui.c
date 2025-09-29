@@ -141,6 +141,8 @@
 struct _HklGuiWindow {
 	GtkApplication parent_instance;
 
+	gint page_sample;
+
 	GListStore *liststore_samples;
 
 	GtkAdjustment *adjustment_wavelength;
@@ -152,6 +154,7 @@ struct _HklGuiWindow {
 	GtkWidget *column_view_solutions;
 	GtkWidget *drop_down_samples;
 	GtkWidget *flowbox_engines;
+	GtkWidget *notebook1;
 	GtkWidget *spinbutton_wavelength;
 	GtkWidget *window1;
 
@@ -511,6 +514,35 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		/* set_up_3D(self); */
 	}
 
+}
+
+/* select sample */
+static void
+drop_down_samples_notify_selected_item_cb(GtkDropDown *dropdown,
+					  GParamSpec* pspec,
+					  gpointer *user_data)
+{
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+	HklGuiSample *gsample;
+	GtkWidget *frame;
+
+	gsample = gtk_drop_down_get_selected_item(dropdown);
+	frame = hkl_gui_sample_get_frame(gsample);
+
+	if (self->page_sample == -1){
+		self->page_sample = gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
+							      frame,
+							      NULL);
+	}else{
+		gtk_notebook_remove_page (GTK_NOTEBOOK (self->notebook1), self->page_sample);
+		gtk_notebook_insert_page (GTK_NOTEBOOK (self->notebook1),
+					  frame,
+					  NULL, self->page_sample);
+	}
+
+	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK (self->notebook1),
+					 frame,
+					 "Crystal Configuration");
 }
 
 void
@@ -1572,7 +1604,6 @@ new_window (GApplication *app,
 	GtkWidget *frame_samples;
 	GtkWidget *frame_solutions;
 	GtkWidget *hbox1;
-	GtkWidget *notebook1;
 	GtkWidget *scrolledwindow1;
 	GtkWidget *vbox1;
 	GtkWidget *vbox2;
@@ -1626,6 +1657,7 @@ new_window (GApplication *app,
 	self->column_view_solutions = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->drop_down_samples = gtk_drop_down_new(G_LIST_MODEL(self->liststore_samples), NULL);
 	self->flowbox_engines = gtk_flow_box_new();
+	self->notebook1 = gtk_notebook_new();
 	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
 	self->window1 = gtk_application_window_new (GTK_APPLICATION (app));
 
@@ -1637,7 +1669,6 @@ new_window (GApplication *app,
 	frame_samples = gtk_frame_new("Samples");
 	frame_solutions = gtk_frame_new("Solutions");
 	hbox1 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-	notebook1 = gtk_notebook_new();
 	scrolledwindow1 = gtk_scrolled_window_new();
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -1667,7 +1698,8 @@ new_window (GApplication *app,
 
 	/* drop_down_samples */
 	gtk_drop_down_set_factory(GTK_DROP_DOWN(self->drop_down_samples), item_factory_drop_down_samples);
-	// g_signal_connect (drop_down_samples, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), self);
+	g_signal_connect (self->drop_down_samples, "notify::selected-item",
+			  G_CALLBACK (drop_down_samples_notify_selected_item_cb), self);
 
 	/* flowbox engines */
 	gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(self->flowbox_engines), FALSE);
@@ -1694,13 +1726,13 @@ new_window (GApplication *app,
 	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);
 
 	/* notebook1 */
-	gtk_notebook_append_page(GTK_NOTEBOOK(notebook1),
-				 scrolledwindow1,
-				 NULL);
-	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK(notebook1),
+	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
+				  scrolledwindow1,
+				  NULL);
+	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK (self->notebook1),
 					 scrolledwindow1,
 					 "Pseudo Axes");
-	gtk_widget_set_hexpand(notebook1, true);
+	gtk_widget_set_hexpand(self->notebook1, true);
 
 	/* scrolledwindow1 */
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow1),
@@ -1723,7 +1755,7 @@ new_window (GApplication *app,
 
 	/* hbox1 */
 	gtk_box_append(GTK_BOX(hbox1), vbox2);
-	gtk_box_append(GTK_BOX(hbox1), notebook1);
+	gtk_box_append(GTK_BOX(hbox1), self->notebook1);
 
 
 	g_list_store_append(self->liststore_samples,
@@ -1790,6 +1822,8 @@ static void hkl_gui_window_init (HklGuiWindow * self)
 	self->adjustment_wavelength = gtk_adjustment_new (0.0, 0.0, G_MAXDOUBLE,
 							  0.0001, 0.01, 0.0);
 	self->adjustement_wavelength_binding = NULL;
+
+	self->page_sample = -1;
 }
 
 static void hkl_gui_window_class_init (HklGuiWindowClass *class)
