@@ -55,25 +55,46 @@ hkl_gui_setup_item_factory_spin_button_cb (GtkListItemFactory *factory,
 }
 
 void
+hkl_gui_setup_item_factory_spin_button_vertical_cb (GtkListItemFactory *factory,
+						    GtkListItem *list_item)
+{
+	GtkWidget *spin_button;
+
+	spin_button = gtk_spin_button_new_with_range (-G_MAXDOUBLE, G_MAXDOUBLE, 0.0001);
+	gtk_orientable_set_orientation (GTK_ORIENTABLE (spin_button), GTK_ORIENTATION_VERTICAL);
+	gtk_list_item_set_child (list_item, spin_button);
+}
+
+
+void
 hkl_gui_bind_item_factory_entry_property_cb (GtkListItemFactory *factory,
 					     GtkListItem *list_item,
-					     const char *property)
+					     const char *source_property)
 {
 	GtkWidget *entry;
 	GtkEntryBuffer *buffer;
 	GObject *self;
 	GValue value = G_VALUE_INIT;
 
+	g_return_if_fail (GTK_IS_LIST_ITEM_FACTORY (factory));
+	g_return_if_fail (GTK_IS_LIST_ITEM (list_item));
+	g_return_if_fail (source_property != NULL);
+	g_return_if_fail (g_param_spec_is_valid_name (source_property));
+
 	entry = gtk_list_item_get_child (list_item);
+
+	g_return_if_fail (GTK_IS_ENTRY (entry));
+
 	buffer = gtk_entry_get_buffer (GTK_ENTRY (entry));
+
 	self = gtk_list_item_get_item (list_item);
 
-	g_return_if_fail(NULL != self);
+	g_return_if_fail (G_IS_OBJECT (self));
 
-	g_object_get_property(self, property, &value);
+	g_object_get_property(self, source_property, &value);
 	g_object_set_property (G_OBJECT (buffer), "text", &value);
 
-	g_object_bind_property(self, property, G_OBJECT (buffer), "text", G_BINDING_BIDIRECTIONAL);
+	g_object_bind_property(self, source_property, G_OBJECT (buffer), "text", G_BINDING_BIDIRECTIONAL);
 }
 
 void
@@ -91,4 +112,32 @@ hkl_gui_bind_item_factory_label_property_cb (GtkListItemFactory *factory,
 	g_return_if_fail(NULL != self);
 
 	g_object_bind_property(self, property, label, "label", G_BINDING_SYNC_CREATE);
+}
+
+void
+hkl_gui_bind_item_factory_spin_button_property_cb (GtkListItemFactory *factory,
+						   GtkListItem *list_item,
+						   const char *source_property)
+{
+	GtkWidget *spin_button;
+	GObject *self;
+	GValue value = G_VALUE_INIT;
+
+	g_return_if_fail (GTK_IS_LIST_ITEM_FACTORY (factory));
+	g_return_if_fail (GTK_IS_LIST_ITEM (list_item));
+	g_return_if_fail (source_property != NULL);
+	g_return_if_fail (g_param_spec_is_valid_name (source_property));
+
+	spin_button = gtk_list_item_get_child (list_item);
+
+	g_return_if_fail (GTK_IS_SPIN_BUTTON (spin_button));
+
+	self = gtk_list_item_get_item (list_item);
+
+	g_return_if_fail (G_IS_OBJECT (self));
+
+	g_object_get_property(self, source_property, &value);
+	g_object_set_property (G_OBJECT (spin_button), "value", &value);
+
+	g_object_bind_property(self, source_property, G_OBJECT (spin_button), "value", G_BINDING_BIDIRECTIONAL);
 }

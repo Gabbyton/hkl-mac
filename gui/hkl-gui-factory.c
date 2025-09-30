@@ -166,6 +166,18 @@ engine_changed_cb(HklGuiEngine *engine,
 }
 
 static void
+update_sample_cb(HklGuiSample *gsample,
+		 GParamSpec* pspec,
+		 gpointer *user_data)
+{
+	HklGuiFactory *self = HKL_GUI_FACTORY (user_data);
+	diffractometer_update(self->diffractometer);
+	update_liststore_pseudo_axes(self);
+	update_liststore_engines(self);
+}
+
+
+static void
 hkl_gui_factory_set_factory(HklGuiFactory *self,
 			    HklFactory *factory)
 {
@@ -492,9 +504,21 @@ hkl_gui_factory_set_sample(HklGuiFactory *self,
 	g_return_if_fail (HKL_GUI_IS_FACTORY (self));
 	g_return_if_fail (HKL_GUI_IS_SAMPLE (gsample));
 
+
 	self->gsample = gsample;
+
 	diffractometer_set_sample(self->diffractometer,
 				  hkl_gui_sample_get_sample (gsample));
+
+	g_signal_connect(gsample, "notify::a", G_CALLBACK(update_sample_cb), self);
+	g_signal_connect(gsample, "notify::b", G_CALLBACK(update_sample_cb), self);
+	g_signal_connect(gsample, "notify::c", G_CALLBACK(update_sample_cb), self);
+	g_signal_connect(gsample, "notify::alpha", G_CALLBACK(update_sample_cb), self);
+	g_signal_connect(gsample, "notify::beta", G_CALLBACK(update_sample_cb), self);
+	g_signal_connect(gsample, "notify::gamma", G_CALLBACK(update_sample_cb), self);
+	g_signal_connect(gsample, "notify::ux", G_CALLBACK(update_sample_cb), self);
+	g_signal_connect(gsample, "notify::ux", G_CALLBACK(update_sample_cb), self);
+	g_signal_connect(gsample, "notify::uz", G_CALLBACK(update_sample_cb), self);
 
 	update_liststore_pseudo_axes(self);
 	update_liststore_engines(self);

@@ -176,6 +176,9 @@ HKLAPI void hkl_gui_setup_item_factory_label_cb (GtkListItemFactory *factory,
 HKLAPI void hkl_gui_setup_item_factory_spin_button_cb (GtkListItemFactory *factory,
 						       GtkListItem *list_item);
 
+HKLAPI void hkl_gui_setup_item_factory_spin_button_vertical_cb (GtkListItemFactory *factory,
+								GtkListItem *list_item);
+
 HKLAPI void hkl_gui_bind_item_factory_entry_property_cb (GtkListItemFactory *factory,
 							 GtkListItem *list_item,
 							 const char *property);
@@ -183,6 +186,10 @@ HKLAPI void hkl_gui_bind_item_factory_entry_property_cb (GtkListItemFactory *fac
 HKLAPI void hkl_gui_bind_item_factory_label_property_cb (GtkListItemFactory *factory,
 							 GtkListItem *list_item,
 							 const char *property);
+
+HKLAPI void hkl_gui_bind_item_factory_spin_button_property_cb (GtkListItemFactory *factory,
+							       GtkListItem *list_item,
+							       const char *property);
 
 void hkl_gui_parameter_bind_factory_label_name_cb (GtkListItemFactory *factory,
 						   GtkListItem *list_item);
