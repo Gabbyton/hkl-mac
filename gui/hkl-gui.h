@@ -139,11 +139,31 @@ HKLAPI HklGuiSample* hkl_gui_sample_new(const char *name);
 
 HKLAPI const char *hkl_gui_sample_get_name(HklGuiSample *self);
 
+HKLAPI gdouble hkl_gui_sample_get_a(HklGuiSample *self);
+HKLAPI gdouble hkl_gui_sample_get_b(HklGuiSample *self);
+HKLAPI gdouble hkl_gui_sample_get_c(HklGuiSample *self);
+HKLAPI gdouble hkl_gui_sample_get_alpha(HklGuiSample *self);
+HKLAPI gdouble hkl_gui_sample_get_beta(HklGuiSample *self);
+HKLAPI gdouble hkl_gui_sample_get_gamma(HklGuiSample *self);
+HKLAPI gdouble hkl_gui_sample_get_ux(HklGuiSample *self);
+HKLAPI gdouble hkl_gui_sample_get_uy(HklGuiSample *self);
+HKLAPI gdouble hkl_gui_sample_get_uz(HklGuiSample *self);
+
 HKLAPI GtkWidget* hkl_gui_sample_get_frame(HklGuiSample *self);
 
 HKLAPI HklSample *hkl_gui_sample_get_sample(HklGuiSample *self);
 
 HKLAPI void hkl_gui_sample_set_name(HklGuiSample *self, const char *name);
+
+HKLAPI void hkl_gui_sample_set_a(HklGuiSample *self, gdouble value);
+HKLAPI void hkl_gui_sample_set_b(HklGuiSample *self, gdouble value);
+HKLAPI void hkl_gui_sample_set_c(HklGuiSample *self, gdouble value);
+HKLAPI void hkl_gui_sample_set_alpha(HklGuiSample *self, gdouble value);
+HKLAPI void hkl_gui_sample_set_beta(HklGuiSample *self, gdouble value);
+HKLAPI void hkl_gui_sample_set_gamma(HklGuiSample *self, gdouble value);
+HKLAPI void hkl_gui_sample_set_ux(HklGuiSample *self, gdouble value);
+HKLAPI void hkl_gui_sample_set_uy(HklGuiSample *self, gdouble value);
+HKLAPI void hkl_gui_sample_set_uz(HklGuiSample *self, gdouble value);
 
 /* item factories */
 

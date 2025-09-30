@@ -42,6 +42,15 @@ enum {
 	PROP_0,
 
 	PROP_NAME,
+	PROP_A,
+	PROP_B,
+	PROP_C,
+	PROP_ALPHA,
+	PROP_BETA,
+	PROP_GAMMA,
+	PROP_UX,
+	PROP_UY,
+	PROP_UZ,
 
 	NUM_PROPERTIES,
 };
@@ -54,6 +63,8 @@ struct _HklGuiSample {
 	GObject parent_instance;
 
 	/* instance members */
+	GError *error;
+
 	GtkWidget *frame;
 
 	HklSample *sample;
@@ -73,22 +84,46 @@ hkl_gui_sample_set_property (GObject      *object,
 	switch (prop_id)
 	{
 	case PROP_NAME:
-	{
 		hkl_gui_sample_set_name(self, g_value_get_string (value));
-	}
-	break;
+		break;
+	case PROP_A:
+		hkl_gui_sample_set_a(self, g_value_get_double (value));
+		break;
+	case PROP_B:
+		hkl_gui_sample_set_b(self, g_value_get_double (value));
+		break;
+	case PROP_C:
+		hkl_gui_sample_set_c(self, g_value_get_double (value));
+		break;
+	case PROP_ALPHA:
+		hkl_gui_sample_set_alpha(self, g_value_get_double (value));
+		break;
+	case PROP_BETA:
+		hkl_gui_sample_set_beta(self, g_value_get_double (value));
+		break;
+	case PROP_GAMMA:
+		hkl_gui_sample_set_gamma(self, g_value_get_double (value));
+		break;
+	case PROP_UX:
+		hkl_gui_sample_set_ux(self, g_value_get_double (value));
+		break;
+	case PROP_UY:
+		hkl_gui_sample_set_uy(self, g_value_get_double (value));
+		break;
+	case PROP_UZ:
+		hkl_gui_sample_set_uz(self, g_value_get_double (value));
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
-
 	}
 }
 
 static void
 hkl_gui_sample_get_property (GObject    *object,
-			      guint       prop_id,
-			      GValue     *value,
-			      GParamSpec *pspec)
+			     guint       prop_id,
+			     GValue     *value,
+			     GParamSpec *pspec)
 {
 	HklGuiSample *self = HKL_GUI_SAMPLE (object);
 
@@ -96,6 +131,33 @@ hkl_gui_sample_get_property (GObject    *object,
 	{
 	case PROP_NAME:
 		g_value_set_string (value, hkl_gui_sample_get_name (self));;
+		break;
+	case PROP_A:
+		g_value_set_double (value, hkl_gui_sample_get_a (self));;
+		break;
+	case PROP_B:
+		g_value_set_double (value, hkl_gui_sample_get_b (self));;
+		break;
+	case PROP_C:
+		g_value_set_double (value, hkl_gui_sample_get_c (self));;
+		break;
+	case PROP_ALPHA:
+		g_value_set_double (value, hkl_gui_sample_get_alpha (self));;
+		break;
+	case PROP_BETA:
+		g_value_set_double (value, hkl_gui_sample_get_beta (self));;
+		break;
+	case PROP_GAMMA:
+		g_value_set_double (value, hkl_gui_sample_get_gamma (self));;
+		break;
+	case PROP_UX:
+		g_value_set_double (value, hkl_gui_sample_get_ux (self));;
+		break;
+	case PROP_UY:
+		g_value_set_double (value, hkl_gui_sample_get_uy (self));;
+		break;
+	case PROP_UZ:
+		g_value_set_double (value, hkl_gui_sample_get_uz (self));;
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -142,6 +204,7 @@ hkl_gui_sample_finalize (GObject *gobject)
 static void
 hkl_gui_sample_init(HklGuiSample *self)
 {
+	self->error = NULL;
 	self->sample = hkl_sample_new("toto");
 
 	self->frame = g_object_ref(gtk_frame_new("Sample configuration"));
@@ -163,6 +226,69 @@ hkl_gui_sample_class_init (HklGuiSampleClass *klass)
 				     "the name of the sample",
 				     "toto",
 				      G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE);
+
+	props[PROP_A] =
+		g_param_spec_double ("a",
+				     "A",
+				     "the a sample parameter",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
+	props[PROP_B] =
+		g_param_spec_double ("b",
+				     "B",
+				     "the b sample parameter",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
+	props[PROP_C] =
+		g_param_spec_double ("c",
+				     "C",
+				     "the c sample parameter",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
+	props[PROP_ALPHA] =
+		g_param_spec_double ("alpha",
+				     "Alpha",
+				     "the alpha sample parameter",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
+	props[PROP_BETA] =
+		g_param_spec_double ("beta",
+				     "Beta",
+				     "the beta sample parameter",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
+	props[PROP_GAMMA] =
+		g_param_spec_double ("gamma",
+				     "Gamma",
+				     "the gamma sample parameter",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
+	props[PROP_UX] =
+		g_param_spec_double ("ux",
+				     "Ux",
+				     "the ux sample parameter",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
+	props[PROP_UY] =
+		g_param_spec_double ("uy",
+				     "Uy",
+				     "the uy sample parameter",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
+	props[PROP_UZ] =
+		g_param_spec_double ("uz",
+				     "Uz",
+				     "the uz sample parameter",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
 
 	g_object_class_install_properties (object_class,
 					   NUM_PROPERTIES,
@@ -191,6 +317,60 @@ hkl_gui_sample_get_name(HklGuiSample *self)
 	return hkl_sample_name_get(self->sample);
 }
 
+gdouble
+hkl_gui_sample_get_a(HklGuiSample *self)
+{
+	return hkl_parameter_value_get (hkl_lattice_a_get (hkl_sample_lattice_get (self->sample)), HKL_UNIT_USER);
+}
+
+gdouble
+hkl_gui_sample_get_b(HklGuiSample *self)
+{
+	return hkl_parameter_value_get (hkl_lattice_b_get (hkl_sample_lattice_get (self->sample)), HKL_UNIT_USER);
+}
+
+gdouble
+hkl_gui_sample_get_c(HklGuiSample *self)
+{
+	return hkl_parameter_value_get (hkl_lattice_c_get (hkl_sample_lattice_get (self->sample)), HKL_UNIT_USER);
+}
+
+gdouble
+hkl_gui_sample_get_alpha(HklGuiSample *self)
+{
+	return hkl_parameter_value_get (hkl_lattice_alpha_get (hkl_sample_lattice_get (self->sample)), HKL_UNIT_USER);
+}
+
+gdouble
+hkl_gui_sample_get_beta(HklGuiSample *self)
+{
+	return hkl_parameter_value_get (hkl_lattice_beta_get (hkl_sample_lattice_get (self->sample)), HKL_UNIT_USER);
+}
+
+gdouble
+hkl_gui_sample_get_gamma(HklGuiSample *self)
+{
+	return hkl_parameter_value_get (hkl_lattice_gamma_get (hkl_sample_lattice_get (self->sample)), HKL_UNIT_USER);
+}
+
+gdouble
+hkl_gui_sample_get_ux(HklGuiSample *self)
+{
+	return hkl_parameter_value_get ( (hkl_sample_ux_get (self->sample)), HKL_UNIT_USER);
+}
+
+gdouble
+hkl_gui_sample_get_uy(HklGuiSample *self)
+{
+	return hkl_parameter_value_get ( (hkl_sample_uy_get (self->sample)), HKL_UNIT_USER);
+}
+
+gdouble
+hkl_gui_sample_get_uz(HklGuiSample *self)
+{
+	return hkl_parameter_value_get ( (hkl_sample_uz_get (self->sample)), HKL_UNIT_USER);
+}
+
 HklSample *
 hkl_gui_sample_get_sample(HklGuiSample *self)
 {
@@ -205,6 +385,189 @@ hkl_gui_sample_set_name(HklGuiSample *self, const char *name)
 	hkl_sample_name_set(self->sample, name);
 
 	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_NAME]);
+}
+
+void
+hkl_gui_sample_set_a(HklGuiSample *self, gdouble new_a)
+{
+	double a, b, c, alpha, beta, gamma;
+	HklLattice *lattice;
+
+	g_clear_error(&self->error);
+
+	lattice = hkl_lattice_new_copy (hkl_sample_lattice_get (self->sample));
+
+	g_return_if_fail (NULL != lattice);
+
+	hkl_lattice_get(lattice, &a, &b, &c, &alpha, &beta, &gamma, HKL_UNIT_USER);
+	if (TRUE == hkl_lattice_set(lattice, new_a, b, c, alpha, beta, gamma, HKL_UNIT_USER, &self->error)){
+		hkl_sample_lattice_set(self->sample, lattice);
+
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_A]);
+	}
+	hkl_lattice_free(lattice);
+}
+
+void
+hkl_gui_sample_set_b(HklGuiSample *self, gdouble new_b)
+{
+	double a, b, c, alpha, beta, gamma;
+	HklLattice *lattice;
+
+	g_clear_error(&self->error);
+
+	lattice = hkl_lattice_new_copy (hkl_sample_lattice_get (self->sample));
+
+	g_return_if_fail (NULL != lattice);
+
+	hkl_lattice_get(lattice, &a, &b, &c, &alpha, &beta, &gamma, HKL_UNIT_USER);
+	if (TRUE == hkl_lattice_set(lattice, a, new_b, c, alpha, beta, gamma, HKL_UNIT_USER, &self->error)){
+		hkl_sample_lattice_set(self->sample, lattice);
+
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_B]);
+	}
+	hkl_lattice_free(lattice);
+}
+
+void
+hkl_gui_sample_set_c(HklGuiSample *self, gdouble new_c)
+{
+	double a, b, c, alpha, beta, gamma;
+	HklLattice *lattice;
+
+	g_clear_error(&self->error);
+
+	lattice = hkl_lattice_new_copy (hkl_sample_lattice_get (self->sample));
+
+	g_return_if_fail (NULL != lattice);
+
+	hkl_lattice_get(lattice, &a, &b, &c, &alpha, &beta, &gamma, HKL_UNIT_USER);
+	if (TRUE == hkl_lattice_set(lattice, a, b, new_c, alpha, beta, gamma, HKL_UNIT_USER, &self->error)){
+		hkl_sample_lattice_set(self->sample, lattice);
+
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_C]);
+	}
+	hkl_lattice_free(lattice);
+}
+
+void
+hkl_gui_sample_set_alpha(HklGuiSample *self, gdouble new_alpha)
+{
+	double a, b, c, alpha, beta, gamma;
+	HklLattice *lattice;
+
+	g_clear_error(&self->error);
+
+	lattice = hkl_lattice_new_copy (hkl_sample_lattice_get (self->sample));
+
+	g_return_if_fail (NULL != lattice);
+
+	hkl_lattice_get(lattice, &a, &b, &c, &alpha, &beta, &gamma, HKL_UNIT_USER);
+	if (TRUE == hkl_lattice_set(lattice, a, b, c, new_alpha, beta, gamma, HKL_UNIT_USER, &self->error)){
+		hkl_sample_lattice_set(self->sample, lattice);
+
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ALPHA]);
+	}
+	hkl_lattice_free(lattice);
+}
+
+void
+hkl_gui_sample_set_beta(HklGuiSample *self, gdouble new_beta)
+{
+	double a, b, c, alpha, beta, gamma;
+	HklLattice *lattice;
+
+	g_clear_error(&self->error);
+
+	lattice = hkl_lattice_new_copy (hkl_sample_lattice_get (self->sample));
+
+	g_return_if_fail (NULL != lattice);
+
+	hkl_lattice_get(lattice, &a, &b, &c, &alpha, &beta, &gamma, HKL_UNIT_USER);
+	if (TRUE == hkl_lattice_set(lattice, a, b, c, alpha, new_beta, gamma, HKL_UNIT_USER, &self->error)){
+		hkl_sample_lattice_set(self->sample, lattice);
+
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_BETA]);
+	}
+	hkl_lattice_free(lattice);
+}
+
+void
+hkl_gui_sample_set_gamma(HklGuiSample *self, gdouble new_gamma)
+{
+	double a, b, c, alpha, beta, gamma;
+	HklLattice *lattice;
+
+	g_clear_error(&self->error);
+
+	lattice = hkl_lattice_new_copy (hkl_sample_lattice_get (self->sample));
+
+	g_return_if_fail (NULL != lattice);
+
+	hkl_lattice_get(lattice, &a, &b, &c, &alpha, &beta, &gamma, HKL_UNIT_USER);
+	if (TRUE == hkl_lattice_set(lattice, a, b, c, alpha, beta, new_gamma, HKL_UNIT_USER, &self->error)){
+		hkl_sample_lattice_set(self->sample, lattice);
+
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_GAMMA]);
+	}
+	hkl_lattice_free(lattice);
+}
+
+void
+hkl_gui_sample_set_ux(HklGuiSample *self, gdouble new_value)
+{
+	HklParameter *parameter;
+
+	g_clear_error(&self->error);
+
+	parameter = hkl_parameter_new_copy (hkl_sample_ux_get (self->sample));
+
+	g_return_if_fail (NULL != parameter);
+
+	if (TRUE == hkl_parameter_value_set(parameter, new_value, HKL_UNIT_USER, &self->error)){
+		if (TRUE == hkl_sample_ux_set(self->sample, parameter, &self->error)){
+			g_object_notify_by_pspec (G_OBJECT (self), props[PROP_UX]);
+		}
+	}
+	hkl_parameter_free(parameter);
+}
+
+void
+hkl_gui_sample_set_uy(HklGuiSample *self, gdouble new_value)
+{
+	HklParameter *parameter;
+
+	g_clear_error(&self->error);
+
+	parameter = hkl_parameter_new_copy (hkl_sample_uy_get (self->sample));
+
+	g_return_if_fail (NULL != parameter);
+
+	if (TRUE == hkl_parameter_value_set(parameter, new_value, HKL_UNIT_USER, &self->error)){
+		if (TRUE == hkl_sample_uy_set(self->sample, parameter, &self->error)){
+			g_object_notify_by_pspec (G_OBJECT (self), props[PROP_UY]);
+		}
+	}
+	hkl_parameter_free(parameter);
+}
+
+void
+hkl_gui_sample_set_uz(HklGuiSample *self, gdouble new_value)
+{
+	HklParameter *parameter;
+
+	g_clear_error(&self->error);
+
+	parameter = hkl_parameter_new_copy (hkl_sample_uz_get (self->sample));
+
+	g_return_if_fail (NULL != parameter);
+
+	if (TRUE == hkl_parameter_value_set(parameter, new_value, HKL_UNIT_USER, &self->error)){
+		if (TRUE == hkl_sample_uz_set(self->sample, parameter, &self->error)){
+			g_object_notify_by_pspec (G_OBJECT (self), props[PROP_UZ]);
+		}
+	}
+	hkl_parameter_free(parameter);
 }
 
 /****************/

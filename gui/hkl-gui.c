@@ -151,6 +151,7 @@ struct _HklGuiWindow {
 
 	GtkWidget *column_view_axes;
 	GtkWidget *column_view_pseudo_axes;
+	GtkWidget *column_view_samples;
 	GtkWidget *column_view_solutions;
 	GtkWidget *drop_down_samples;
 	GtkWidget *flowbox_engines;
@@ -928,29 +929,6 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* 	} */
 /* } */
 
-/* #define set_ux_uy_uz(sample, parameter) do {				\ */
-/* 		const HklParameter *p;					\ */
-/* 		p = hkl_sample_## parameter ##_get((sample));		\ */
-/* 		gboolean fit = hkl_parameter_fit_get(p);		\ */
-/* 		gtk_spin_button_set_value(priv->spinbutton_## parameter, \ */
-/* 					  hkl_parameter_value_get(p, HKL_UNIT_USER)); \ */
-/* 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(priv->checkbutton_## parameter), fit); \ */
-/* 	}while(0) */
-
-/* static void */
-/* update_ux_uy_uz (HklGuiWindow* self) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-
-/* 	g_return_if_fail (self != NULL); */
-
-/* 	if (priv->sample != NULL) { */
-/* 		set_ux_uy_uz(priv->sample, ux); */
-/* 		set_ux_uy_uz(priv->sample, uy); */
-/* 		set_ux_uy_uz(priv->sample, uz); */
-/* 	} */
-/* } */
-
 /* #define set_UB(i, j) do{						\ */
 /* 		gdouble	value = hkl_matrix_get(UB, i - 1, j - 1);	\ */
 /* 		const char *format = "<tt> %+.4f </tt>";		\ */
@@ -1583,6 +1561,28 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 
 /* *\/ */
 
+
+static GtkListItemFactory *
+hkl_gui_item_factory_new_label_property(char *property)
+{
+	GtkListItemFactory *item_factory;
+
+	item_factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
+	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), property);
+
+	return item_factory;
+}
+
+static void
+hkl_gui_column_view_add_column_property(GtkColumnView *column_view, char *property)
+{
+	GtkListItemFactory *item_factory = hkl_gui_item_factory_new_label_property(property);
+	GtkColumnViewColumn *column = gtk_column_view_column_new(property, item_factory);
+
+	gtk_column_view_append_column(column_view, column);
+}
+
 static void
 new_window (GApplication *app,
             GFile        *file)
@@ -1626,8 +1626,8 @@ new_window (GApplication *app,
 
 	/* liststore samples */
 	self->liststore_samples = g_list_store_new (HKL_GUI_TYPE_SAMPLE);
-	g_list_store_append(self->liststore_samples,
-			    hkl_gui_sample_new("default"));
+	g_list_store_append(self->liststore_samples, hkl_gui_sample_new("default"));
+	g_list_store_append(self->liststore_samples, hkl_gui_sample_new("tutu"));
 
 	/*********************/
 	/* ListItemFactories */
@@ -1654,6 +1654,7 @@ new_window (GApplication *app,
 	self->alert_dialog_solutions = gtk_alert_dialog_new("Solutions");
 	self->column_view_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->column_view_pseudo_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
+	self->column_view_samples = gtk_column_view_new (GTK_SELECTION_MODEL (gtk_single_selection_new( G_LIST_MODEL (self->liststore_samples))));
 	self->column_view_solutions = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->drop_down_samples = gtk_drop_down_new(G_LIST_MODEL(self->liststore_samples), NULL);
 	self->flowbox_engines = gtk_flow_box_new();
@@ -1688,6 +1689,18 @@ new_window (GApplication *app,
 	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
 	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_label_new());
 	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
+
+	/* column view samples */
+	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "name");
+	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "a");
+	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "b");
+	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "c");
+	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "alpha");
+	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "beta");
+	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "gamma");
+	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "ux");
+	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "uy");
+	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "uz");
 
 	/* column view solutions */
 	g_signal_connect (self->column_view_solutions, "activate", G_CALLBACK (column_view_solutions_activate_cb), self);
@@ -1732,6 +1745,9 @@ new_window (GApplication *app,
 	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK (self->notebook1),
 					 scrolledwindow1,
 					 "Pseudo Axes");
+	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
+				  self->column_view_samples,
+				  NULL);
 	gtk_widget_set_hexpand(self->notebook1, true);
 
 	/* scrolledwindow1 */
@@ -1757,9 +1773,6 @@ new_window (GApplication *app,
 	gtk_box_append(GTK_BOX(hbox1), vbox2);
 	gtk_box_append(GTK_BOX(hbox1), self->notebook1);
 
-
-	g_list_store_append(self->liststore_samples,
-			    hkl_gui_sample_new("tutu"));
 
 	/* gtk_paned_set_start_child (GTK_PANED (hpaned1), vbox2); */
 	/* gtk_paned_set_shrink_start_child (GTK_PANED (hpaned1), false); */
