@@ -1095,39 +1095,6 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* *\/ */
 
 
-static GtkListItemFactory *
-hkl_gui_item_factory_new_entry_property(char *property)
-{
-	GtkListItemFactory *item_factory;
-
-	item_factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_entry_cb), NULL);
-	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_entry_property_cb), property);
-
-	return item_factory;
-}
-
-static GtkListItemFactory *
-hkl_gui_item_factory_new_spin_button_vertical_property(char *property)
-{
-	GtkListItemFactory *item_factory;
-
-	item_factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_spin_button_vertical_cb), NULL);
-	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_spin_button_property_cb), property);
-
-	return item_factory;
-}
-
-#define add_column(column_view, item_factory, property) do {		\
-		GtkListItemFactory *factory;				\
-		GtkColumnViewColumn *column;				\
-									\
-		factory = hkl_gui_item_factory_new_ ## item_factory (property); \
-		column = gtk_column_view_column_new(property, factory); \
-		gtk_column_view_append_column ( GTK_COLUMN_VIEW (column_view), column); \
-	} while (0)
-
 static void
 new_window (GApplication *app,
             GFile        *file)
@@ -1137,7 +1104,6 @@ new_window (GApplication *app,
 
 	GListStore *liststore1;
 
-	GtkColumnViewColumn *column;
 	GtkListItemFactory *item_factory_drop_down_factories;
 	GtkListItemFactory *item_factory_drop_down_samples;
 
@@ -1222,32 +1188,26 @@ new_window (GApplication *app,
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
 	/* column view axes */
-	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_axes), column);
-	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_axes), column);
-	column = gtk_column_view_column_new("min", hkl_gui_parameter_factory_min_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_axes), column);
-	column = gtk_column_view_column_new("max", hkl_gui_parameter_factory_max_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_axes), column);
+	add_column(self->column_view_axes, "name", label_property, "name");
+	add_column(self->column_view_axes, "value", spin_button_parameter_value);
+	add_column(self->column_view_axes, "min", spin_button_parameter_min);
+	add_column(self->column_view_axes, "max", spin_button_parameter_max);
 
 	/* column view pseudo axes */
-	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
-	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_label_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
+	add_column(self->column_view_pseudo_axes, "name", label_property, "name");
+	add_column(self->column_view_pseudo_axes, "value", label_property, "value");
 
 	/* column view samples */
-	add_column(self->column_view_samples, entry_property, "name");
-	add_column(self->column_view_samples, spin_button_vertical_property, "a");
-	add_column(self->column_view_samples, spin_button_vertical_property, "b");
-	add_column(self->column_view_samples, spin_button_vertical_property, "c");
-	add_column(self->column_view_samples, spin_button_vertical_property, "alpha");
-	add_column(self->column_view_samples, spin_button_vertical_property, "beta");
-	add_column(self->column_view_samples, spin_button_vertical_property, "gamma");
-	add_column(self->column_view_samples, spin_button_vertical_property, "ux");
-	add_column(self->column_view_samples, spin_button_vertical_property, "uy");
-	add_column(self->column_view_samples, spin_button_vertical_property, "uz");
+	add_column(self->column_view_samples, "name", entry_property, "name");
+	add_column(self->column_view_samples, "a", spin_button_vertical_property, "a");
+	add_column(self->column_view_samples, "b", spin_button_vertical_property, "b");
+	add_column(self->column_view_samples, "c", spin_button_vertical_property, "c");
+	add_column(self->column_view_samples, "alpha", spin_button_vertical_property, "alpha");
+	add_column(self->column_view_samples, "beta", spin_button_vertical_property, "beta");
+	add_column(self->column_view_samples, "gamma", spin_button_vertical_property, "gamma");
+	add_column(self->column_view_samples, "ux", spin_button_vertical_property, "ux");
+	add_column(self->column_view_samples, "uy", spin_button_vertical_property, "uy");
+	add_column(self->column_view_samples, "uz", spin_button_vertical_property, "uz");
 
 	/* column view solutions */
 	g_signal_connect (self->column_view_solutions, "activate", G_CALLBACK (column_view_solutions_activate_cb), self);

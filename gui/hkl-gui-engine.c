@@ -212,12 +212,12 @@ bind_factory_pseudo_axis_cb (GtkListItemFactory *factory,
 	if (HKL_ENGINE_CAPABILITIES_WRITABLE & capabilities){
 		hkl_gui_parameter_bind_factory_spin_button_value_cb(factory, list_item);
 	} else {
-		hkl_gui_parameter_bind_factory_label_value_cb(factory, list_item);
+		hkl_gui_bind_item_factory_label_property_cb(factory, list_item, "value");
 	}
 }
 
 static GtkListItemFactory *
-hkl_gui_engine_factory_pseudo_axis_new(HklGuiEngine *self)
+hkl_gui_item_factory_new_engine_pseudo_axis(HklGuiEngine *self)
 {
 	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
 	g_signal_connect (factory, "setup", G_CALLBACK (setup_factory_pseudo_axis_cb), self);
@@ -233,7 +233,6 @@ hkl_gui_engine_init (HklGuiEngine *self)
 	GtkWidget *hbox;
 	GtkWidget *label_mode;
 	GtkWidget *vbox;
-	GtkColumnViewColumn *column;
 
 	self->engine = NULL;
 	self->error = NULL;
@@ -264,16 +263,12 @@ hkl_gui_engine_init (HklGuiEngine *self)
 			  G_CALLBACK (button_init_clicked_cb), self);
 
 	/* column_view parameters */
-	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_parameters), column);
-	column = gtk_column_view_column_new("value", hkl_gui_parameter_factory_value_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_parameters), column);
+	add_column(self->column_view_parameters, "name", label_property, "name");
+	add_column(self->column_view_parameters, "value", spin_button_parameter_value);
 
 	/* column_view pseudo_axes */
-	column = gtk_column_view_column_new("name", hkl_gui_parameter_factory_name_new());
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
-	column = gtk_column_view_column_new("value", hkl_gui_engine_factory_pseudo_axis_new(self));
-	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
+	add_column(self->column_view_pseudo_axes, "name", label_property, "name");
+	add_column(self->column_view_pseudo_axes, "value", engine_pseudo_axis, self);
 
 	/* dropdown */
 	gtk_drop_down_set_model(GTK_DROP_DOWN(self->dropdown),

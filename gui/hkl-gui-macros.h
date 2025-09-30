@@ -27,6 +27,16 @@
 
 #include "hkl.h"
 
+#define add_column(column_view, name, item_factory, ...) do {	\
+		GtkListItemFactory *factory;				\
+		GtkColumnViewColumn *column;				\
+									\
+		factory = hkl_gui_item_factory_new_ ## item_factory (__VA_ARGS__); \
+		column = gtk_column_view_column_new((name), factory);	\
+		gtk_column_view_append_column ( GTK_COLUMN_VIEW (column_view), column); \
+	} while (0)
+
+
 #define get_model(filename)						\
 	(0 == access(filename, R_OK)) ? filename :			\
 	((0 == access("../data/" filename, R_OK)) ? "../data/" filename : \

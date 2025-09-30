@@ -45,7 +45,9 @@ G_DECLARE_FINAL_TYPE (HklGuiSample, hkl_gui_sample, HKL_GUI, SAMPLE, GObject)
 #define HKL_GUI_TYPE_WINDOW (hkl_gui_window_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplication)
 
+/**********/
 /* engine */
+/**********/
 
 HKLAPI HklGuiEngine* hkl_gui_engine_new (HklEngine* engine);
 
@@ -165,7 +167,18 @@ HKLAPI void hkl_gui_sample_set_ux(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_uy(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_uz(HklGuiSample *self, gdouble value);
 
+/******************/
 /* item factories */
+/******************/
+
+
+/* gobject */
+HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_entry_property(char *property);
+HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_label_property(char *property);
+HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_vertical_property(char *property);
+HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_parameter_value(void);
+HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_parameter_min(void);
+HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_parameter_max(void);
 
 HKLAPI void hkl_gui_setup_item_factory_entry_cb (GtkListItemFactory *factory,
 						 GtkListItem *list_item);
@@ -191,6 +204,8 @@ HKLAPI void hkl_gui_bind_item_factory_spin_button_property_cb (GtkListItemFactor
 							       GtkListItem *list_item,
 							       const char *property);
 
+/* GuiParameter */
+
 void hkl_gui_parameter_bind_factory_label_name_cb (GtkListItemFactory *factory,
 						   GtkListItem *list_item);
 
@@ -199,9 +214,3 @@ void hkl_gui_parameter_bind_factory_label_value_cb (GtkListItemFactory *factory,
 
 void hkl_gui_parameter_bind_factory_spin_button_value_cb (GtkListItemFactory *factory,
 							  GtkListItem *list_item);
-
-HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_name_new(void);
-HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_value_new(void);
-HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_value_label_new(void);
-HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_min_new(void);
-HKLAPI GtkListItemFactory *hkl_gui_parameter_factory_max_new(void);

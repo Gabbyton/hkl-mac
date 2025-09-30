@@ -141,3 +141,40 @@ hkl_gui_bind_item_factory_spin_button_property_cb (GtkListItemFactory *factory,
 
 	g_object_bind_property(self, source_property, G_OBJECT (spin_button), "value", G_BINDING_BIDIRECTIONAL);
 }
+
+
+GtkListItemFactory *
+hkl_gui_item_factory_new_entry_property(char *property)
+{
+	GtkListItemFactory *item_factory;
+
+	item_factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_entry_cb), NULL);
+	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_entry_property_cb), property);
+
+	return item_factory;
+}
+
+GtkListItemFactory *
+hkl_gui_item_factory_new_label_property(char *property)
+{
+	GtkListItemFactory *item_factory;
+
+	item_factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
+	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), property);
+
+	return item_factory;
+}
+
+GtkListItemFactory *
+hkl_gui_item_factory_new_spin_button_vertical_property(char *property)
+{
+	GtkListItemFactory *item_factory;
+
+	item_factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_spin_button_vertical_cb), NULL);
+	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_spin_button_property_cb), property);
+
+	return item_factory;
+}

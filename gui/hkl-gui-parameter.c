@@ -282,16 +282,6 @@ void hkl_gui_parameter_update(HklGuiParameter *self)
 /* GtkListItemFactory */
 /**********************/
 
-GtkListItemFactory *
-hkl_gui_parameter_factory_name_new(void)
-{
-	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
-	g_signal_connect (factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), "name");
-
-	return factory;
-}
-
 void
 hkl_gui_parameter_bind_factory_spin_button_value_cb (GtkListItemFactory *factory,
 						     GtkListItem *list_item)
@@ -321,46 +311,11 @@ hkl_gui_parameter_bind_factory_spin_button_value_cb (GtkListItemFactory *factory
 }
 
 GtkListItemFactory *
-hkl_gui_parameter_factory_value_new(void)
+hkl_gui_item_factory_new_spin_button_parameter_value(void)
 {
 	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
 	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_spin_button_cb), NULL);
 	g_signal_connect (factory, "bind", G_CALLBACK (hkl_gui_parameter_bind_factory_spin_button_value_cb), NULL);
-
-	return factory;
-}
-
-void
-hkl_gui_parameter_bind_factory_label_value_cb (GtkListItemFactory *factory,
-					       GtkListItem *list_item)
-{
-	gdouble value;
-	GtkWidget *label;
-	HklGuiParameter *self;
-
-	label = gtk_list_item_get_child (list_item);
-
-	g_return_if_fail(GTK_IS_LABEL(label));
-
-	self = gtk_list_item_get_item (list_item);
-
-	g_return_if_fail(HKL_GUI_IS_PARAMETER(self));
-
-	value = hkl_parameter_value_get(self->parameter, HKL_UNIT_USER);
-
-	char *buf = g_strdup_printf ("%0.*f", 6, value);
-	gtk_label_set_label (GTK_LABEL (label), buf);
-	g_free(buf);
-
-	g_object_bind_property(self, "value", label, "label", G_BINDING_BIDIRECTIONAL);
-}
-
-GtkListItemFactory *
-hkl_gui_parameter_factory_value_label_new(void)
-{
-	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
-	g_signal_connect (factory, "bind", G_CALLBACK (hkl_gui_parameter_bind_factory_label_value_cb), NULL);
 
 	return factory;
 }
@@ -387,7 +342,7 @@ bind_factory_axis_min_cb (GtkListItemFactory *factory,
 }
 
 GtkListItemFactory *
-hkl_gui_parameter_factory_min_new(void)
+hkl_gui_item_factory_new_spin_button_parameter_min(void)
 {
 	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
 	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_spin_button_cb), NULL);
@@ -418,7 +373,7 @@ bind_factory_axis_max_cb (GtkListItemFactory *factory,
 }
 
 GtkListItemFactory *
-hkl_gui_parameter_factory_max_new(void)
+hkl_gui_item_factory_new_spin_button_parameter_max(void)
 {
 	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
 	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_spin_button_cb), NULL);
