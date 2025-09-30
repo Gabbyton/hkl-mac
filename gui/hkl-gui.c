@@ -1096,21 +1096,21 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 
 
 static GtkListItemFactory *
-hkl_gui_item_factory_new_label_property(char *property)
+hkl_gui_item_factory_new_entry_property(char *property)
 {
 	GtkListItemFactory *item_factory;
 
 	item_factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
-	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), property);
+	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_entry_cb), NULL);
+	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_entry_property_cb), property);
 
 	return item_factory;
 }
 
 static void
-hkl_gui_column_view_add_column_property(GtkColumnView *column_view, char *property)
+hkl_gui_column_view_add_column_entry_property(GtkColumnView *column_view, char *property)
 {
-	GtkListItemFactory *item_factory = hkl_gui_item_factory_new_label_property(property);
+	GtkListItemFactory *item_factory = hkl_gui_item_factory_new_entry_property(property);
 	GtkColumnViewColumn *column = gtk_column_view_column_new(property, item_factory);
 
 	gtk_column_view_append_column(column_view, column);
@@ -1224,16 +1224,16 @@ new_window (GApplication *app,
 	gtk_column_view_append_column(GTK_COLUMN_VIEW(self->column_view_pseudo_axes), column);
 
 	/* column view samples */
-	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "name");
-	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "a");
-	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "b");
-	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "c");
-	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "alpha");
-	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "beta");
-	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "gamma");
-	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "ux");
-	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "uy");
-	hkl_gui_column_view_add_column_property (GTK_COLUMN_VIEW (self->column_view_samples), "uz");
+	hkl_gui_column_view_add_column_entry_property (GTK_COLUMN_VIEW (self->column_view_samples), "name");
+	hkl_gui_column_view_add_column_entry_property (GTK_COLUMN_VIEW (self->column_view_samples), "a");
+	hkl_gui_column_view_add_column_entry_property (GTK_COLUMN_VIEW (self->column_view_samples), "b");
+	hkl_gui_column_view_add_column_entry_property (GTK_COLUMN_VIEW (self->column_view_samples), "c");
+	hkl_gui_column_view_add_column_entry_property (GTK_COLUMN_VIEW (self->column_view_samples), "alpha");
+	hkl_gui_column_view_add_column_entry_property (GTK_COLUMN_VIEW (self->column_view_samples), "beta");
+	hkl_gui_column_view_add_column_entry_property (GTK_COLUMN_VIEW (self->column_view_samples), "gamma");
+	hkl_gui_column_view_add_column_entry_property (GTK_COLUMN_VIEW (self->column_view_samples), "ux");
+	hkl_gui_column_view_add_column_entry_property (GTK_COLUMN_VIEW (self->column_view_samples), "uy");
+	hkl_gui_column_view_add_column_entry_property (GTK_COLUMN_VIEW (self->column_view_samples), "uz");
 
 	/* column view solutions */
 	g_signal_connect (self->column_view_solutions, "activate", G_CALLBACK (column_view_solutions_activate_cb), self);

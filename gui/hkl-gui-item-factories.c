@@ -23,6 +23,17 @@
 #include <gtk/gtk.h>
 
 void
+hkl_gui_setup_item_factory_entry_cb (GtkListItemFactory *factory,
+				     GtkListItem *list_item)
+{
+	GtkWidget *entry;
+
+	entry = gtk_entry_new ();
+	gtk_list_item_set_child (list_item, entry);
+}
+
+
+void
 hkl_gui_setup_item_factory_label_cb (GtkListItemFactory *factory,
 				     GtkListItem        *list_item)
 {
@@ -41,6 +52,28 @@ hkl_gui_setup_item_factory_spin_button_cb (GtkListItemFactory *factory,
 
 	spin_button = gtk_spin_button_new_with_range (-G_MAXDOUBLE, G_MAXDOUBLE, 0.0001);
 	gtk_list_item_set_child (list_item, spin_button);
+}
+
+void
+hkl_gui_bind_item_factory_entry_property_cb (GtkListItemFactory *factory,
+					     GtkListItem *list_item,
+					     const char *property)
+{
+	GtkWidget *entry;
+	GtkEntryBuffer *buffer;
+	GObject *self;
+	GValue value = G_VALUE_INIT;
+
+	entry = gtk_list_item_get_child (list_item);
+	buffer = gtk_entry_get_buffer (GTK_ENTRY (entry));
+	self = gtk_list_item_get_item (list_item);
+
+	g_return_if_fail(NULL != self);
+
+	g_object_get_property(self, property, &value);
+	g_object_set_property (G_OBJECT (buffer), "text", &value);
+
+	g_object_bind_property(self, property, G_OBJECT (buffer), "text", G_BINDING_BIDIRECTIONAL);
 }
 
 void
