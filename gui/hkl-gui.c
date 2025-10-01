@@ -498,76 +498,6 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* 	} */
 /* } */
 
-/* static void */
-/* _del_reflection(gpointer data, gpointer user_data) */
-/* { */
-/* 	HklSampleReflection *reflection; */
-/* 	GtkTreeIter iter = {0}; */
-/* 	GtkTreePath *treepath = data; */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-
-/* 	gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_reflections), */
-/* 				 &iter, treepath); */
-
-/* 	gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_reflections), */
-/* 			    &iter, */
-/* 			    REFLECTION_COL_REFLECTION, &reflection, */
-/* 			    -1); */
-/* 	hkl_sample_del_reflection(priv->sample, reflection); */
-/* } */
-
-/* void */
-/* hkl_gui_window_toolbutton_del_reflection_clicked_cb (GtkButton* _sender, gpointer user_data) */
-/* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-
-/* 	g_return_if_fail (self != NULL); */
-
-/* 	if (priv->sample) { */
-/* 		GtkTreeSelection* selection = NULL; */
-/* 		guint nb_rows = 0U; */
-
-/* 		selection = gtk_tree_view_get_selection (priv->treeview_reflections); */
-/* 		nb_rows = gtk_tree_selection_count_selected_rows (selection); */
-/* 		if (nb_rows > 0) { */
-/* 			GtkTreeModel* model = NULL; */
-/* 			GList* list; */
-/* 			GtkMessageDialog* dialog; */
-
-/* 			model = GTK_TREE_MODEL(priv->liststore_reflections); */
-/* 			list = gtk_tree_selection_get_selected_rows (selection, &model); */
-
-
-/* 			dialog = GTK_MESSAGE_DIALOG( */
-/* 				gtk_message_dialog_new (NULL, */
-/* 							GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL, */
-/* 							GTK_MESSAGE_WARNING, */
-/* 							GTK_BUTTONS_YES_NO, */
-/* 							"Are you sure that you want to delete reflections")); */
-
-/* 			g_signal_connect (dialog, "response", */
-/* 					  G_CALLBACK (gtk_window_destroy), */
-/* 					  NULL); */
-
-/* 			/\* switch (gtk_dialog_run (GTK_DIALOG(dialog))) { *\/ */
-/* 			/\* case GTK_RESPONSE_YES: *\/ */
-/* 			/\* { *\/ */
-/* 			/\* 	g_list_foreach(list, _del_reflection, self); *\/ */
-/* 			/\* 	update_reflections (self); *\/ */
-/* 			/\* 	break; *\/ */
-/* 			/\* } *\/ */
-/* 			/\* default: *\/ */
-/* 			/\* 	break; *\/ */
-/* 			/\* } *\/ */
-/* 			/\* gtk_widget_destroy (GTK_WIDGET(dialog)); *\/ */
-/* 			g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free); */
-/* 		} else { */
-/* 			gtk_statusbar_push (priv->statusbar, 0, */
-/* 					    "Please select at least one reflection."); */
-/* 		} */
-/* 	} */
-/* } */
 
 /* static void */
 /* set_up_tree_view_reflections(HklGuiWindow *self) */
@@ -718,184 +648,6 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* } */
 
 
-
-/* static GtkTreeIter */
-/* _add_sample(HklGuiWindow *self, HklSample *sample) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-/* 	GtkTreeIter iter = {0}; */
-/* 	const HklLattice *lattice; */
-/* 	gdouble a, b, c, alpha, beta, gamma; */
-
-/* 	g_return_val_if_fail (self != NULL, iter); */
-
-/* 	lattice = hkl_sample_lattice_get(sample); */
-/* 	a = hkl_parameter_value_get(hkl_lattice_a_get(lattice), HKL_UNIT_USER); */
-/* 	b = hkl_parameter_value_get(hkl_lattice_b_get(lattice), HKL_UNIT_USER); */
-/* 	c = hkl_parameter_value_get(hkl_lattice_c_get(lattice), HKL_UNIT_USER); */
-/* 	alpha = hkl_parameter_value_get(hkl_lattice_alpha_get(lattice), */
-/* 					HKL_UNIT_USER); */
-/* 	beta = hkl_parameter_value_get(hkl_lattice_beta_get(lattice), */
-/* 				       HKL_UNIT_USER); */
-/* 	gamma = hkl_parameter_value_get(hkl_lattice_gamma_get(lattice), */
-/* 					HKL_UNIT_USER); */
-
-/* 	gtk_list_store_insert_with_values(priv->liststore_crystals, */
-/* 					  &iter, -1, */
-/* 					  SAMPLE_COL_SAMPLE, sample, */
-/* 					  SAMPLE_COL_NAME, hkl_sample_name_get(sample), */
-/* 					  SAMPLE_COL_A, a, */
-/* 					  SAMPLE_COL_B, b, */
-/* 					  SAMPLE_COL_C, c, */
-/* 					  SAMPLE_COL_ALPHA, alpha, */
-/* 					  SAMPLE_COL_BETA, beta, */
-/* 					  SAMPLE_COL_GAMMA, gamma, */
-/* 					  -1); */
-/* 	return iter; */
-/* } */
-
-/* static void */
-/* _add_sample_and_edit_name(HklGuiWindow *self, HklSample *sample) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-/* 	GtkTreeIter iter = {0}; */
-/* 	GtkTreePath* path = NULL; */
-/* 	GtkTreeViewColumn* column = NULL; */
-
-/* 	iter = _add_sample(self, sample); */
-
-/* 	path = gtk_tree_model_get_path(GTK_TREE_MODEL(priv->liststore_crystals), */
-/* 				       &iter); */
-/* 	column = gtk_tree_view_get_column (priv->treeview_crystals, 0); */
-/* 	gtk_tree_view_set_cursor (priv->treeview_crystals, path, column, TRUE); */
-
-/* 	gtk_tree_path_free(path); */
-/* } */
-
-/* void */
-/* hkl_gui_window_toolbutton_add_crystal_clicked_cb (GtkButton* _sender, gpointer user_data) */
-/* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklSample *sample; */
-
-/* 	g_return_if_fail (user_data != NULL); */
-
-/* 	sample = hkl_sample_new ("new"); */
-/* 	if(sample) */
-/* 		_add_sample_and_edit_name(self, sample); */
-/* } */
-
-/* void */
-/* hkl_gui_window_toolbutton_copy_crystal_clicked_cb (GtkButton* _sender, gpointer user_data) */
-/* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-/* 	HklSample *copy = NULL; */
-
-/* 	g_return_if_fail (self != NULL); */
-
-/* 	if(priv->sample) { */
-/* 		copy = hkl_sample_new_copy(priv->sample); */
-/* 		if (copy) */
-/* 			_add_sample_and_edit_name(self, copy); */
-/* 	}else */
-/* 		gtk_statusbar_push (priv->statusbar, (guint) 0, "Please select a crystal to copy."); */
-/* } */
-
-/* void */
-/* hkl_gui_window_toolbutton_del_crystal_clicked_cb (GtkButton* _sender, gpointer user_data) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-
-/* 	g_return_if_fail (user_data != NULL); */
-
-/* 	if (priv->sample != NULL) { */
-/* 		guint n_rows; */
-
-/* 		n_rows = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(priv->liststore_crystals), */
-/* 							NULL ); */
-/* 		if (n_rows == 1) */
-/* 			return; */
-/* 		else { */
-/* 			GtkTreeIter iter = {0}; */
-/* 			GtkTreePath *path = NULL; */
-/* 			GtkTreeViewColumn *column = NULL; */
-
-/* 			gtk_tree_view_get_cursor(priv->treeview_crystals, */
-/* 						 &path, &column); */
-/* 			if (path){ */
-/* 				if (gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_crystals), */
-/* 							     &iter, path) == TRUE) { */
-/* 					gtk_tree_path_free(path); */
-
-/* 					hkl_sample_free(priv->sample); */
-/* 					if (gtk_list_store_remove(priv->liststore_crystals, */
-/* 								  &iter) == TRUE){ */
-/* 						path = gtk_tree_model_get_path(GTK_TREE_MODEL(priv->liststore_crystals), */
-/* 									       &iter); */
-/* 						gtk_tree_view_set_cursor(priv->treeview_crystals, */
-/* 									 path, NULL, FALSE); */
-/* 					} */
-/* 				} */
-/* 			} */
-/* 		} */
-/* 	} */
-/* } */
-
-
-/* void */
-/* hkl_gui_window_spinbutton_ux_value_changed_cb (GtkSpinButton *_senser, gpointer user_data) */
-/* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-/* 	GError *error = NULL; */
-
-/* 	get_ux_uy_uz(priv->sample, ux, &error); */
-
-/* 	if(priv->diffractometer) */
-/* 		diffractometer_set_sample(priv->diffractometer, */
-/* 					  priv->sample); */
-
-/* 	update_UB (self); */
-/* 	update_pseudo_axes (self); */
-/* 	update_pseudo_axes_frames (self); */
-/* } */
-
-/* void */
-/* hkl_gui_window_spinbutton_uy_value_changed_cb (GtkSpinButton *_senser, gpointer user_data) */
-/* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-/* 	GError *error = NULL; */
-
-/* 	get_ux_uy_uz(priv->sample, uy, &error); */
-
-/* 	if(priv->diffractometer) */
-/* 		diffractometer_set_sample(priv->diffractometer, */
-/* 					  priv->sample); */
-
-/* 	update_UB (self); */
-/* 	update_pseudo_axes (self); */
-/* 	update_pseudo_axes_frames (self); */
-/* } */
-
-/* void */
-/* hkl_gui_window_spinbutton_uz_value_changed_cb (GtkSpinButton *_senser, gpointer user_data) */
-/* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-/* 	GError *error = NULL; */
-
-/* 	get_ux_uy_uz(priv->sample, uz, &error); */
-
-/* 	if(priv->diffractometer) */
-/* 		diffractometer_set_sample(priv->diffractometer, */
-/* 					  priv->sample); */
-
-/* 	update_UB (self); */
-/* 	update_pseudo_axes (self); */
-/* 	update_pseudo_axes_frames (self); */
-/* } */
 
 /* void */
 /* hkl_gui_window_toolbutton_setUB_clicked_cb(GtkButton* _sender, gpointer user_data) */
@@ -1094,6 +846,58 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 
 /* *\/ */
 
+static void
+add_sample_activated (GSimpleAction *action,
+		      GVariant *parameter,
+		      gpointer user_data)
+{
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+
+	g_list_store_append(self->liststore_samples,
+			    hkl_gui_sample_new("<edit name>"));
+
+	/* TODO go to the sample name in edit mode */
+}
+
+static void
+copy_sample_activated (GSimpleAction *action,
+		      GVariant *parameter,
+		      gpointer user_data)
+{
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+	GtkSelectionModel *model;
+	HklGuiSample *gsample;
+
+	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples));
+	gsample = gtk_single_selection_get_selected_item(GTK_SINGLE_SELECTION(model));
+
+	g_list_store_append(self->liststore_samples,
+			    hkl_gui_sample_new_copy(gsample));
+
+	/* TODO go to the edit name */
+}
+
+
+static void
+delete_sample_activated (GSimpleAction *action,
+			 GVariant *parameter,
+			 gpointer user_data)
+{
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+	GtkSelectionModel *model;
+	gint position;
+
+	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples));
+	position = gtk_single_selection_get_selected(GTK_SINGLE_SELECTION(model));
+
+	g_list_store_remove(self->liststore_samples, position);
+}
+
+static GActionEntry win_entries[] = {
+	{ "add-sample", add_sample_activated, NULL, NULL, NULL },
+	{ "copy-sample", copy_sample_activated, NULL, NULL, NULL },
+	{ "delete-sample", delete_sample_activated, NULL, NULL, NULL },
+};
 
 static void
 new_window (GApplication *app,
@@ -1107,6 +911,9 @@ new_window (GApplication *app,
 	GtkListItemFactory *item_factory_drop_down_factories;
 	GtkListItemFactory *item_factory_drop_down_samples;
 
+	GtkWidget *button_add_sample;
+	GtkWidget *button_copy_sample;
+	GtkWidget *button_delete_sample;
 	GtkWidget *dropdown1;
 	GtkWidget *frame_diffractometer;
 	GtkWidget *frame_wavelength;
@@ -1115,9 +922,11 @@ new_window (GApplication *app,
 	GtkWidget *frame_samples;
 	GtkWidget *frame_solutions;
 	GtkWidget *hbox1;
+	GtkWidget *hbox2;
 	GtkWidget *scrolledwindow1;
 	GtkWidget *vbox1;
 	GtkWidget *vbox2;
+	GtkWidget *vbox3;
 
 	HklFactory **factories;
 
@@ -1175,6 +984,9 @@ new_window (GApplication *app,
 	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
 	self->window1 = gtk_application_window_new (GTK_APPLICATION (app));
 
+	button_add_sample = gtk_button_new();
+	button_copy_sample = gtk_button_new();
+	button_delete_sample = gtk_button_new();
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
 	frame_diffractometer = gtk_frame_new("Diffractometer");
 	frame_wavelength = gtk_frame_new("Wavelength");
@@ -1183,9 +995,23 @@ new_window (GApplication *app,
 	frame_samples = gtk_frame_new("Samples");
 	frame_solutions = gtk_frame_new("Solutions");
 	hbox1 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+	hbox2 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	scrolledwindow1 = gtk_scrolled_window_new();
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	vbox3 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+
+	/* button_add_sample */
+	gtk_button_set_icon_name (GTK_BUTTON (button_add_sample), "list-add-symbolic");
+	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_add_sample), "win.add-sample");
+
+	/* button_copy_sample */
+	gtk_button_set_icon_name (GTK_BUTTON (button_copy_sample), "edit-copy-symbolic");
+	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_copy_sample), "win.copy-sample");
+
+	/* button_add_sample */
+	gtk_button_set_icon_name (GTK_BUTTON (button_delete_sample), "list-remove-symbolic");
+	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_delete_sample), "win.delete-sample");
 
 	/* column view axes */
 	add_column(self->column_view_axes, "name", label_property, "name");
@@ -1245,6 +1071,11 @@ new_window (GApplication *app,
 	/* frame solutions*/
 	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);
 
+	/* hbox2 */
+	gtk_box_append(GTK_BOX(hbox2), button_add_sample);
+	gtk_box_append(GTK_BOX(hbox2), button_copy_sample);
+	gtk_box_append(GTK_BOX(hbox2), button_delete_sample);
+
 	/* notebook1 */
 	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
 				  scrolledwindow1,
@@ -1253,7 +1084,7 @@ new_window (GApplication *app,
 					 scrolledwindow1,
 					 "Pseudo Axes");
 	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
-				  self->column_view_samples,
+				  vbox3,
 				  NULL);
 	gtk_widget_set_hexpand(self->notebook1, true);
 
@@ -1276,6 +1107,10 @@ new_window (GApplication *app,
 	gtk_box_append(GTK_BOX(vbox2), frame_axes);
 	gtk_box_append(GTK_BOX(vbox2), frame_solutions);
 
+	/* vbox3 */
+	gtk_box_append(GTK_BOX(vbox3), self->column_view_samples);
+	gtk_box_append(GTK_BOX(vbox3), hbox2);
+
 	/* hbox1 */
 	gtk_box_append(GTK_BOX(hbox1), vbox2);
 	gtk_box_append(GTK_BOX(hbox1), self->notebook1);
@@ -1289,7 +1124,8 @@ new_window (GApplication *app,
 
 	/*  window1 */
 	gtk_window_set_default_size (GTK_WINDOW(self->window1), 1024, 768);
-	/* g_action_map_add_action_entries (G_ACTION_MAP (window), win_entries, G_N_ELEMENTS (win_entries), window); */
+
+	g_action_map_add_action_entries (G_ACTION_MAP (self->window1), win_entries, G_N_ELEMENTS (win_entries), self);
 	gtk_window_set_title (GTK_WINDOW (self->window1), "hkl library GUI");
 	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (self->window1), TRUE);
 	gtk_window_set_child (GTK_WINDOW (self->window1), vbox1);

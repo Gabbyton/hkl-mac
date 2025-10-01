@@ -138,6 +138,7 @@ HKLAPI void hkl_gui_parameter_update(HklGuiParameter *self);
 /**********/
 
 HKLAPI HklGuiSample* hkl_gui_sample_new(const char *name);
+HKLAPI HklGuiSample* hkl_gui_sample_new_copy(const HklGuiSample *gsample);
 
 HKLAPI const char *hkl_gui_sample_get_name(HklGuiSample *self);
 

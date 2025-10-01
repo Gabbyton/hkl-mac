@@ -211,6 +211,13 @@ hkl_gui_sample_init(HklGuiSample *self)
 }
 
 static void
+hkl_gui_sample_set_sample(HklGuiSample *self, HklSample *sample)
+{
+	hkl_sample_free(self->sample);
+	self->sample = hkl_sample_new_copy(sample);
+}
+
+static void
 hkl_gui_sample_class_init (HklGuiSampleClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -301,6 +308,17 @@ hkl_gui_sample_new(const char *name)
 	return g_object_new (HKL_GUI_TYPE_SAMPLE,
 			     "name", name,
 			     NULL);
+}
+
+HklGuiSample *
+hkl_gui_sample_new_copy(const HklGuiSample *gsample)
+{
+	HklGuiSample *self;
+
+	self = hkl_gui_sample_new("toto");
+	hkl_gui_sample_set_sample(self, gsample->sample);
+
+	return self;
 }
 
 
