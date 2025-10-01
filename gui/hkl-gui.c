@@ -852,9 +852,14 @@ add_sample_activated (GSimpleAction *action,
 		      gpointer user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+	GtkSelectionModel *model;
+	gint position;
 
+	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples));
 	g_list_store_append(self->liststore_samples,
 			    hkl_gui_sample_new("<edit name>"));
+	position = g_list_model_get_n_items(G_LIST_MODEL(model));
+	gtk_single_selection_set_selected(GTK_SINGLE_SELECTION(model), position -1);
 
 	/* TODO go to the sample name in edit mode */
 }
@@ -1086,6 +1091,9 @@ new_window (GApplication *app,
 	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
 				  vbox3,
 				  NULL);
+	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK (self->notebook1),
+					 vbox3,
+					 "Samples configuration");
 	gtk_widget_set_hexpand(self->notebook1, true);
 
 	/* scrolledwindow1 */
