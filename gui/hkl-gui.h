@@ -42,6 +42,9 @@ G_DECLARE_FINAL_TYPE (HklGuiParameter, hkl_gui_parameter, HKL_GUI, PARAMETER, GO
 #define HKL_GUI_TYPE_SAMPLE (hkl_gui_sample_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiSample, hkl_gui_sample, HKL_GUI, SAMPLE, GObject)
 
+#define HKL_GUI_TYPE_SAMPLE_REFLECTION (hkl_gui_sample_reflection_get_type ())
+G_DECLARE_FINAL_TYPE (HklGuiSampleReflection, hkl_gui_sample_reflection, HKL_GUI, SAMPLE_REFLECTION, GObject)
+
 #define HKL_GUI_TYPE_WINDOW (hkl_gui_window_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, HKL_GUI, WINDOW, GtkApplication)
 
@@ -152,8 +155,6 @@ HKLAPI gdouble hkl_gui_sample_get_ux(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_uy(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_uz(HklGuiSample *self);
 
-HKLAPI GtkWidget* hkl_gui_sample_get_frame(HklGuiSample *self);
-
 HKLAPI HklSample *hkl_gui_sample_get_sample(HklGuiSample *self);
 
 HKLAPI void hkl_gui_sample_set_name(HklGuiSample *self, const char *name);
@@ -167,6 +168,16 @@ HKLAPI void hkl_gui_sample_set_gamma(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_ux(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_uy(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_uz(HklGuiSample *self, gdouble value);
+
+/*********************/
+/* Sample Reflection */
+/*********************/
+
+HKLAPI HklGuiSampleReflection* hkl_gui_sample_reflection_new(HklSampleReflection *reflection);
+
+HklSampleReflection *hkl_gui_sample_reflection_get_reflection(HklGuiSampleReflection* self);
+
+void hkl_gui_sample_reflection_set_reflection(HklGuiSampleReflection* self, HklSampleReflection *reflection);
 
 /******************/
 /* item factories */

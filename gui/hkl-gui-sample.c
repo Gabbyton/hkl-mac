@@ -65,8 +65,7 @@ struct _HklGuiSample {
 	/* instance members */
 	GError *error;
 
-	GtkWidget *frame;
-
+	GListStore *liststore_reflections;
 	HklSample *sample;
 };
 
@@ -206,8 +205,7 @@ hkl_gui_sample_init(HklGuiSample *self)
 {
 	self->error = NULL;
 	self->sample = hkl_sample_new("toto");
-
-	self->frame = g_object_ref(gtk_frame_new("Sample configuration"));
+	self->liststore_reflections = g_list_store_new(HKL_GUI_TYPE_SAMPLE_REFLECTION);
 }
 
 static void
@@ -323,11 +321,6 @@ hkl_gui_sample_new_copy(const HklGuiSample *gsample)
 
 
 /* getters */
-
-GtkWidget* hkl_gui_sample_get_frame(HklGuiSample *self)
-{
-	return self->frame;
-}
 
 const char *
 hkl_gui_sample_get_name(HklGuiSample *self)
