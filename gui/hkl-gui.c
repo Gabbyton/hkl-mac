@@ -918,10 +918,13 @@ new_window (GApplication *app,
 	GtkWidget *frame_axes;
 	GtkWidget *frame_pseudo_axes;
 	GtkWidget *frame_sample;
+	GtkWidget *frame_samples;
 	GtkWidget *frame_solutions;
 	GtkWidget *hbox1;
 	GtkWidget *hbox2;
+	GtkWidget *label;
 	GtkWidget *scrolledwindow1;
+	GtkWidget *scrolledwindow2;
 	GtkWidget *vbox1;
 	GtkWidget *vbox2;
 	GtkWidget *vbox3;
@@ -991,10 +994,12 @@ new_window (GApplication *app,
 	frame_axes = gtk_frame_new("Axes");
 	frame_pseudo_axes = gtk_frame_new("Pseudo Axes");
 	frame_sample = gtk_frame_new("Sample");
+	frame_samples = gtk_frame_new("Samples");
 	frame_solutions = gtk_frame_new("Solutions");
 	hbox1 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	hbox2 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	scrolledwindow1 = gtk_scrolled_window_new();
+	scrolledwindow2 = gtk_scrolled_window_new();
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox3 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -1025,6 +1030,7 @@ new_window (GApplication *app,
 	add_column(self->column_view_pseudo_axes, "value", label_property, "value");
 
 	/* column view samples */
+	gtk_widget_set_vexpand(self->column_view_samples, true);
 	add_column(self->column_view_samples, "name", entry_property, "name");
 	add_column(self->column_view_samples, "a", spin_button_vertical_property, "a");
 	add_column(self->column_view_samples, "b", spin_button_vertical_property, "b");
@@ -1070,8 +1076,11 @@ new_window (GApplication *app,
 	// gtk_frame_set_child(GTK_FRAME(frame_pseudo_axes), scrolledwindow1);
 	gtk_frame_set_child(GTK_FRAME(frame_pseudo_axes), self->column_view_pseudo_axes);
 
-	/* frame samples */
+	/* frame sample */
 	gtk_frame_set_child(GTK_FRAME(frame_sample), self->drop_down_samples);
+
+	/* frame samples */
+	gtk_frame_set_child(GTK_FRAME(frame_samples), vbox3);
 
 	/* frame solutions*/
 	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);
@@ -1082,24 +1091,25 @@ new_window (GApplication *app,
 	gtk_box_append(GTK_BOX(hbox2), self->button_delete_sample);
 
 	/* notebook1 */
+	gtk_widget_set_hexpand(self->notebook1, true);
+	label = gtk_label_new("Pseudo Axes");
 	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
 				  scrolledwindow1,
-				  NULL);
-	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK (self->notebook1),
-					 scrolledwindow1,
-					 "Pseudo Axes");
+				  label);
+	label =  gtk_label_new("Samples Configuration");
 	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
-				  vbox3,
-				  NULL);
-	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK (self->notebook1),
-					 vbox3,
-					 "Samples configuration");
-	gtk_widget_set_hexpand(self->notebook1, true);
+				  frame_samples,
+				  label);
 
 	/* scrolledwindow1 */
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow1),
 				       GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledwindow1), self->flowbox_engines);
+
+	/* scrolledwindow2 */
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow2),
+				       GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledwindow2), self->column_view_samples);
 
 	/* spinbutton_wavelength */
 	gtk_widget_set_sensitive(self->spinbutton_wavelength, FALSE);
@@ -1117,7 +1127,7 @@ new_window (GApplication *app,
 
 	/* vbox3 */
 	gtk_box_append(GTK_BOX(vbox3), hbox2);
-	gtk_box_append(GTK_BOX(vbox3), self->column_view_samples);
+	gtk_box_append(GTK_BOX(vbox3), scrolledwindow2);
 
 	/* hbox1 */
 	gtk_box_append(GTK_BOX(hbox1), vbox2);
