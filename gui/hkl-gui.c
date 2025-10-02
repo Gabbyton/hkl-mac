@@ -209,6 +209,7 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		guint n_items;
 		GListStore *liststore;
 		GtkSingleSelection *single_selection;
+		HklGuiSample *gsample;
 
 
 		self->factory = factory;
@@ -253,6 +254,15 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 			gtk_flow_box_append(GTK_FLOW_BOX(self->flowbox_engines),
 					    hkl_gui_engine_get_frame(gengine));
 		}
+
+		/* set column view sample reflections */
+		hkl_gui_factory_setup_column_view_sample_reflections(factory,
+								     GTK_COLUMN_VIEW(self->column_view_sample_reflections));
+
+		single_selection = GTK_SINGLE_SELECTION(gtk_column_view_get_model(GTK_COLUMN_VIEW(self->column_view_sample_reflections)));
+		gsample = hkl_gui_factory_get_sample(factory);
+		liststore = hkl_gui_sample_get_reflections(gsample);
+		gtk_single_selection_set_model(single_selection, G_LIST_MODEL(liststore));
 
 		/* set_up_3D(self); */
 	}

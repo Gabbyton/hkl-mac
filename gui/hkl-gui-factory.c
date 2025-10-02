@@ -34,6 +34,7 @@
 #include "hkl.h"
 #include "hkl-gui.h"
 #include "hkl-gui-diffractometer-private.h"
+#include "hkl-gui-macros.h"
 
 /***********/
 /* Factory */
@@ -585,6 +586,37 @@ hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self,
 		column = gtk_column_view_column_new(*name, hkl_gui_geometry_axis_value_factory_new(idx));
 		gtk_column_view_column_set_header_menu(column, G_MENU_MODEL(menu));
 		gtk_column_view_append_column(column_view, column);
+		++idx;
+	}
+}
+
+void
+hkl_gui_factory_setup_column_view_sample_reflections(HklGuiFactory *self,
+						     GtkColumnView *column_view)
+{
+	g_return_if_fail(HKL_GUI_IS_FACTORY(self));
+	g_return_if_fail(GTK_IS_COLUMN_VIEW(column_view));
+
+	gint idx, n_columns;
+	GListModel *columns;
+	const darray_string *names = hkl_geometry_axis_names_get(self->diffractometer->geometry);
+	const char **name;
+
+	/* remove all columns */
+	columns = gtk_column_view_get_columns(column_view);
+	n_columns = g_list_model_get_n_items(columns);
+	for(idx=n_columns-1; idx>=0; --idx){
+		gtk_column_view_remove_column(column_view,
+					      g_list_model_get_item(columns, idx));
+	}
+
+	/* Add the right columns */
+	add_column(column_view, "h", spin_button_vertical_property, "h");
+	add_column(column_view, "k", spin_button_vertical_property, "k");
+	add_column(column_view, "l", spin_button_vertical_property, "l");
+	idx=0;
+	darray_foreach(name, *names){
+		add_column(column_view, *name, spin_button_sample_reflection_geometry_axis, idx);
 		++idx;
 	}
 }

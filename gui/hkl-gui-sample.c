@@ -51,6 +51,7 @@ enum {
 	PROP_UX,
 	PROP_UY,
 	PROP_UZ,
+	PROP_REFLECTIONS,
 
 	NUM_PROPERTIES,
 };
@@ -157,6 +158,9 @@ hkl_gui_sample_get_property (GObject    *object,
 		break;
 	case PROP_UZ:
 		g_value_set_double (value, hkl_gui_sample_get_uz (self));;
+		break;
+	case PROP_REFLECTIONS:
+		g_value_set_object (value, hkl_gui_sample_get_reflections (self));;
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -295,6 +299,13 @@ hkl_gui_sample_class_init (HklGuiSampleClass *klass)
 				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
 				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
 
+	props[PROP_REFLECTIONS] =
+		g_param_spec_object ("reflections",
+				     "Reflections",
+				     "the sample reflections model",
+				     G_TYPE_LIST_STORE,
+				     G_PARAM_STATIC_NAME | G_PARAM_READABLE);
+
 	g_object_class_install_properties (object_class,
 					   NUM_PROPERTIES,
 					   props);
@@ -386,6 +397,12 @@ HklSample *
 hkl_gui_sample_get_sample(HklGuiSample *self)
 {
 	return self->sample;
+}
+
+GListStore *
+hkl_gui_sample_get_reflections(HklGuiSample *self)
+{
+	return self->liststore_reflections;
 }
 
 /* setters */

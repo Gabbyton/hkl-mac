@@ -55,6 +55,7 @@ struct _HklGuiSampleReflection {
 
 	/* instance members */
 	HklSampleReflection *reflection;
+	HklGuiGeometry *geometry;
 };
 
 G_DEFINE_FINAL_TYPE(HklGuiSampleReflection, hkl_gui_sample_reflection, G_TYPE_OBJECT);
@@ -135,6 +136,7 @@ static void
 hkl_gui_sample_reflection_init(HklGuiSampleReflection *self)
 {
 	self->reflection = NULL;
+	self->geometry = NULL;
 }
 
 static void
@@ -180,6 +182,50 @@ void
 hkl_gui_sample_reflection_set_reflection(HklGuiSampleReflection *self, HklSampleReflection *reflection)
 {
 	self->reflection = reflection;
+	self->geometry = hkl_gui_geometry_new(hkl_sample_reflection_geometry_get(reflection));
 
 	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_REFLECTION]);
+}
+
+
+/*********************/
+/* List item factory */
+/*********************/
+
+
+static void
+bind_spin_button__sample_reflection_geometry_axis_value_cb (GtkListItemFactory *factory,
+							    GtkListItem *list_item,
+							    gpointer user_data)
+{
+	GtkWidget *spin_button;
+	HklGuiSampleReflection *self;
+	gint idx = GPOINTER_TO_INT(user_data);
+	gint n_values;
+	HklGeometry *geometry;
+
+	spin_button = gtk_list_item_get_child (list_item);
+	self = gtk_list_item_get_item (list_item);
+
+	g_return_if_fail(NULL != self->geometry);
+
+	geometry = hkl_gui_geometry_get_geometry(self->geometry);
+
+	n_values = darray_size(*hkl_geometry_axis_names_get(geometry));
+	double values[n_values];
+
+	hkl_geometry_axis_values_get(geometry, values, n_values, HKL_UNIT_USER);
+
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (spin_button), values[idx]);
+}
+
+
+GtkListItemFactory *
+hkl_gui_item_factory_new_spin_button_sample_reflection_geometry_axis(gint idx)
+{
+	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_spin_button_cb), NULL);
+	g_signal_connect (factory, "bind", G_CALLBACK (bind_spin_button__sample_reflection_geometry_axis_value_cb), GINT_TO_POINTER(idx));
+
+	return factory;
 }

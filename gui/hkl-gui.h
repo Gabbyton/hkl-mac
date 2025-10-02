@@ -109,6 +109,8 @@ HKLAPI void hkl_gui_factory_set_sample(HklGuiFactory *self, HklGuiSample *sample
 
 HKLAPI void hkl_gui_factory_set_wavelength(HklGuiFactory *self, gdouble wavelength);
 
+HKLAPI void hkl_gui_factory_setup_column_view_sample_reflections(HklGuiFactory *self, GtkColumnView *column_view);
+
 HKLAPI void hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self, GtkColumnView *column_view);
 
 /* geometry */
@@ -155,6 +157,7 @@ HKLAPI gdouble hkl_gui_sample_get_ux(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_uy(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_uz(HklGuiSample *self);
 
+HKLAPI GListStore *hkl_gui_sample_get_reflections(HklGuiSample *self);
 HKLAPI HklSample *hkl_gui_sample_get_sample(HklGuiSample *self);
 
 HKLAPI void hkl_gui_sample_set_name(HklGuiSample *self, const char *name);
@@ -188,9 +191,14 @@ void hkl_gui_sample_reflection_set_reflection(HklGuiSampleReflection* self, HklS
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_entry_property(char *property);
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_label_property(char *property);
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_vertical_property(char *property);
+
+/* parameter */
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_parameter_value(void);
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_parameter_min(void);
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_parameter_max(void);
+
+/* sample reflection */
+HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_sample_reflection_geometry_axis(int idx);
 
 HKLAPI void hkl_gui_setup_item_factory_entry_cb (GtkListItemFactory *factory,
 						 GtkListItem *list_item);
