@@ -77,9 +77,13 @@ HKLAPI void hkl_gui_engine_set_mode (HklGuiEngine *gui_engine,
 
 HKLAPI void hkl_gui_engine_update (HklGuiEngine* self);
 
+/***********/
 /* factory */
+/***********/
 
 HKLAPI HklGuiFactory* hkl_gui_factory_new(const HklFactory *factory);
+
+HKLAPI void hkl_gui_factory_add_reflection(HklGuiFactory *self);
 
 HKLAPI struct diffractometer_t* hkl_gui_factory_get_diffractometer(HklGuiFactory *self);
 
@@ -145,8 +149,8 @@ HKLAPI void hkl_gui_parameter_update(HklGuiParameter *self);
 HKLAPI HklGuiSample* hkl_gui_sample_new(const char *name);
 HKLAPI HklGuiSample* hkl_gui_sample_new_copy(const HklGuiSample *gsample);
 
+/* get */
 HKLAPI const char *hkl_gui_sample_get_name(HklGuiSample *self);
-
 HKLAPI gdouble hkl_gui_sample_get_a(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_b(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_c(HklGuiSample *self);
@@ -156,12 +160,11 @@ HKLAPI gdouble hkl_gui_sample_get_gamma(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_ux(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_uy(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_uz(HklGuiSample *self);
-
 HKLAPI GListStore *hkl_gui_sample_get_reflections(HklGuiSample *self);
 HKLAPI HklSample *hkl_gui_sample_get_sample(HklGuiSample *self);
 
+/* set */
 HKLAPI void hkl_gui_sample_set_name(HklGuiSample *self, const char *name);
-
 HKLAPI void hkl_gui_sample_set_a(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_b(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_c(HklGuiSample *self, gdouble value);
@@ -171,6 +174,11 @@ HKLAPI void hkl_gui_sample_set_gamma(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_ux(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_uy(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_uz(HklGuiSample *self, gdouble value);
+
+/* methods */
+HKLAPI void hkl_gui_sample_add_reflection(HklGuiSample *self,
+					  HklGeometry *goemetry, HklDetector *detector,
+					  gdouble h, gdouble k, gdouble l);
 
 /*********************/
 /* Sample Reflection */

@@ -311,6 +311,8 @@ hkl_gui_sample_class_init (HklGuiSampleClass *klass)
 					   props);
 }
 
+/* constructors */
+
 HklGuiSample *
 hkl_gui_sample_new(const char *name)
 {
@@ -597,6 +599,26 @@ hkl_gui_sample_set_uz(HklGuiSample *self, gdouble new_value)
 	}
 	hkl_parameter_free(parameter);
 }
+
+
+/* methodes */
+
+void hkl_gui_sample_add_reflection(HklGuiSample *self,
+				   HklGeometry *geometry, HklDetector *detector,
+				   gdouble h, gdouble k, gdouble l)
+{
+	HklSampleReflection *reflection;
+
+	/* TODO error */
+
+	reflection = hkl_sample_reflection_new(geometry,
+					       detector,
+					       h,k, l, NULL);
+
+	g_list_store_append(self->liststore_reflections,
+			    hkl_gui_sample_reflection_new(reflection));
+}
+
 
 /****************/
 /* The Gui Part */

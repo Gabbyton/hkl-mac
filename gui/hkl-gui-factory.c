@@ -412,6 +412,8 @@ hkl_gui_factory_class_init (HklGuiFactoryClass *klass)
 					   props);
 }
 
+/* constructors */
+
 HklGuiFactory *
 hkl_gui_factory_new(const HklFactory *factory)
 {
@@ -538,6 +540,18 @@ hkl_gui_factory_set_wavelength(HklGuiFactory *self,
 
 	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_WAVELENGTH]);
 }
+
+/* methods */
+
+void
+hkl_gui_factory_add_reflection(HklGuiFactory *self)
+{
+	hkl_gui_sample_add_reflection(self->gsample,
+				      self->diffractometer->geometry,
+				      self->diffractometer->detector,
+				      0, 0, 0);
+}
+
 
 /**************************/
 /* Gui ListItem factories */

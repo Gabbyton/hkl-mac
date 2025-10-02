@@ -395,49 +395,6 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* } */
 
 /* void */
-/* hkl_gui_window_toolbutton_add_reflection_clicked_cb(GtkButton* _sender, */
-/* 						    gpointer self) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-
-/* 	if (priv->diffractometer == NULL){ */
-/* 		gtk_statusbar_push (priv->statusbar, 0, */
-/* 				    "Please select a diffractometer before adding reflections"); */
-/* 		return; */
-/* 	} */
-
-/* 	if (priv->sample) { */
-/* 		HklSampleReflection *reflection = NULL; */
-/* 		GtkTreeIter iter = {0}; */
-/* 		gboolean flag; */
-/* 		gint n_rows; */
-/* 		GError *error = NULL; */
-
-/* 		reflection = hkl_sample_reflection_new(priv->diffractometer->geometry, */
-/* 						       priv->diffractometer->detector, */
-/* 						       0, 0, 0, &error); */
-/* 		if(!reflection) */
-/* 			raise_error(self, &error); */
-/* 		else{ */
-/* 			hkl_sample_add_reflection(priv->sample, reflection); */
-/* 			flag = hkl_sample_reflection_flag_get(reflection); */
-
-/* 			n_rows = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(priv->liststore_reflections), */
-/* 								NULL); */
-/* 			gtk_list_store_insert_with_values (priv->liststore_reflections, */
-/* 							   &iter, -1, */
-/* 							   REFLECTION_COL_INDEX, n_rows, */
-/* 							   REFLECTION_COL_H, 0., */
-/* 							   REFLECTION_COL_K, 0., */
-/* 							   REFLECTION_COL_L, 0., */
-/* 							   REFLECTION_COL_FLAG, flag, */
-/* 							   REFLECTION_COL_REFLECTION, reflection, */
-/* 							   -1); */
-/* 		} */
-/* 	} */
-/* } */
-
-/* void */
 /* hkl_gui_window_toolbutton_goto_reflection_clicked_cb (GtkButton* _sender, gpointer user_data) */
 /* { */
 /* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
@@ -866,11 +823,11 @@ add_sample_reflection_activated (GSimpleAction *action,
 				 GVariant *parameter,
 				 gpointer user_data)
 {
-	/* HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	/* GtkSelectionModel *model; */
 	/* gint n_items; */
 
-	/* hkl_gui_factory_add_reflection(self->factory); */
+	hkl_gui_factory_add_reflection(self->factory);
 	/* model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples)); */
 	/* g_list_store_append(self->liststore_samples, */
 	/* 		    hkl_gui_sample_new("<edit name>")); */
