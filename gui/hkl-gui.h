@@ -179,8 +179,14 @@ HKLAPI void hkl_gui_sample_set_uz(HklGuiSample *self, gdouble value);
 HKLAPI HklGuiSampleReflection* hkl_gui_sample_reflection_new(HklSampleReflection *reflection);
 
 HklSampleReflection *hkl_gui_sample_reflection_get_reflection(HklGuiSampleReflection* self);
+HKLAPI gdouble hkl_gui_sample_reflection_get_h(HklGuiSampleReflection* self);
+HKLAPI gdouble hkl_gui_sample_reflection_get_k(HklGuiSampleReflection* self);
+HKLAPI gdouble hkl_gui_sample_reflection_get_l(HklGuiSampleReflection* self);
 
 void hkl_gui_sample_reflection_set_reflection(HklGuiSampleReflection* self, HklSampleReflection *reflection);
+HKLAPI void hkl_gui_sample_reflection_set_h(HklGuiSampleReflection* self, gdouble h);
+HKLAPI void hkl_gui_sample_reflection_set_k(HklGuiSampleReflection* self, gdouble k);
+HKLAPI void hkl_gui_sample_reflection_set_l(HklGuiSampleReflection* self, gdouble l);
 
 /******************/
 /* item factories */

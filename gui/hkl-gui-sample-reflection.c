@@ -41,6 +41,9 @@
 enum {
 	PROP_0,
 
+	PROP_H,
+	PROP_K,
+	PROP_L,
 	PROP_REFLECTION,
 
 	NUM_PROPERTIES,
@@ -70,6 +73,15 @@ hkl_gui_sample_reflection_set_property (GObject *object,
 
 	switch (prop_id)
 	{
+	case PROP_H:
+		hkl_gui_sample_reflection_set_h (self, g_value_get_double (value));
+		break;
+	case PROP_K:
+		hkl_gui_sample_reflection_set_k (self, g_value_get_double (value));
+		break;
+	case PROP_L:
+		hkl_gui_sample_reflection_set_l (self, g_value_get_double (value));
+		break;
 	case PROP_REFLECTION:
 		hkl_gui_sample_reflection_set_reflection (self, g_value_get_pointer (value));
 		break;
@@ -89,6 +101,15 @@ hkl_gui_sample_reflection_get_property (GObject *object,
 
 	switch (prop_id)
 	{
+	case PROP_H:
+		g_value_set_double (value, hkl_gui_sample_reflection_get_h(self));
+		break;
+	case PROP_K:
+		g_value_set_double (value, hkl_gui_sample_reflection_get_k(self));
+		break;
+	case PROP_L:
+		g_value_set_double (value, hkl_gui_sample_reflection_get_l(self));
+		break;
 	case PROP_REFLECTION:
 		g_value_set_pointer (value, hkl_gui_sample_reflection_get_reflection(self));
 		break;
@@ -149,6 +170,27 @@ hkl_gui_sample_reflection_class_init (HklGuiSampleReflectionClass *klass)
 	object_class->get_property = hkl_gui_sample_reflection_get_property;
 	object_class->set_property = hkl_gui_sample_reflection_set_property;
 
+	props[PROP_H] =
+		g_param_spec_double ("h",
+				     "H",
+				     "The h miller coordinate",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE);
+
+	props[PROP_K] =
+		g_param_spec_double ("k",
+				     "K",
+				     "The k miller coordinate ",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE);
+
+	props[PROP_L] =
+		g_param_spec_double ("l",
+				     "L",
+				     "The l miller coordinate",
+				     -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+				     G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE);
+
 	props[PROP_REFLECTION] =
 		g_param_spec_pointer ("reflection",
 				      "Reflection",
@@ -170,6 +212,36 @@ hkl_gui_sample_reflection_new(HklSampleReflection *reflection)
 
 /* getters */
 
+gdouble
+hkl_gui_sample_reflection_get_h(HklGuiSampleReflection* self)
+{
+	gdouble h, k, l;
+
+	hkl_sample_reflection_hkl_get(self->reflection, &h, &k, &l);
+
+	return h;
+}
+
+gdouble
+hkl_gui_sample_reflection_get_k(HklGuiSampleReflection* self)
+{
+	gdouble h, k, l;
+
+	hkl_sample_reflection_hkl_get(self->reflection, &h, &k, &l);
+
+	return k;
+}
+
+gdouble
+hkl_gui_sample_reflection_get_l(HklGuiSampleReflection* self)
+{
+	gdouble h, k, l;
+
+	hkl_sample_reflection_hkl_get(self->reflection, &h, &k, &l);
+
+	return l;
+}
+
 HklSampleReflection *
 hkl_gui_sample_reflection_get_reflection(HklGuiSampleReflection *self)
 {
@@ -177,6 +249,45 @@ hkl_gui_sample_reflection_get_reflection(HklGuiSampleReflection *self)
 }
 
 /* setters */
+
+void
+hkl_gui_sample_reflection_set_h(HklGuiSampleReflection* self, gdouble h_new)
+{
+	gdouble h, k, l;
+
+	/* TODO error */
+
+	hkl_sample_reflection_hkl_get(self->reflection, &h, &k, &l);
+
+	if (TRUE == hkl_sample_reflection_hkl_set(self->reflection, h_new, k ,l, NULL))
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_H]);
+}
+
+void
+hkl_gui_sample_reflection_set_k(HklGuiSampleReflection* self, gdouble k_new)
+{
+	gdouble h, k, l;
+
+	/* TODO error */
+
+	hkl_sample_reflection_hkl_get(self->reflection, &h, &k, &l);
+
+	if (TRUE == hkl_sample_reflection_hkl_set(self->reflection, h, k_new ,l, NULL))
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_K]);
+}
+
+void
+hkl_gui_sample_reflection_set_l(HklGuiSampleReflection* self, gdouble l_new)
+{
+	gdouble h, k, l;
+
+	/* TODO error */
+
+	hkl_sample_reflection_hkl_get(self->reflection, &h, &k, &l);
+
+	if (TRUE == hkl_sample_reflection_hkl_set(self->reflection, h, k ,l_new, NULL))
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_L]);
+}
 
 void
 hkl_gui_sample_reflection_set_reflection(HklGuiSampleReflection *self, HklSampleReflection *reflection)
