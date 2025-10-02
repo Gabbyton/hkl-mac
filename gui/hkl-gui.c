@@ -917,7 +917,7 @@ new_window (GApplication *app,
 	GtkWidget *frame_wavelength;
 	GtkWidget *frame_axes;
 	GtkWidget *frame_pseudo_axes;
-	GtkWidget *frame_samples;
+	GtkWidget *frame_sample;
 	GtkWidget *frame_solutions;
 	GtkWidget *hbox1;
 	GtkWidget *hbox2;
@@ -990,7 +990,7 @@ new_window (GApplication *app,
 	frame_wavelength = gtk_frame_new("Wavelength");
 	frame_axes = gtk_frame_new("Axes");
 	frame_pseudo_axes = gtk_frame_new("Pseudo Axes");
-	frame_samples = gtk_frame_new("Samples");
+	frame_sample = gtk_frame_new("Sample");
 	frame_solutions = gtk_frame_new("Solutions");
 	hbox1 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	hbox2 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
@@ -1071,7 +1071,7 @@ new_window (GApplication *app,
 	gtk_frame_set_child(GTK_FRAME(frame_pseudo_axes), self->column_view_pseudo_axes);
 
 	/* frame samples */
-	gtk_frame_set_child(GTK_FRAME(frame_samples), self->drop_down_samples);
+	gtk_frame_set_child(GTK_FRAME(frame_sample), self->drop_down_samples);
 
 	/* frame solutions*/
 	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);
@@ -1111,7 +1111,7 @@ new_window (GApplication *app,
 	/* vbox2 */
 	gtk_box_append(GTK_BOX(vbox2), frame_diffractometer);
 	gtk_box_append(GTK_BOX(vbox2), frame_wavelength);
-	gtk_box_append(GTK_BOX(vbox2), frame_samples);
+	gtk_box_append(GTK_BOX(vbox2), frame_sample);
 	gtk_box_append(GTK_BOX(vbox2), frame_axes);
 	gtk_box_append(GTK_BOX(vbox2), frame_solutions);
 
