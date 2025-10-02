@@ -53,8 +53,10 @@ GListStore *liststore_samples;
 	GBinding *adjustement_wavelength_binding;
 
 	GtkWidget *button_delete_sample;
+	GtkWidget *button_delete_sample_reflection;
 	GtkWidget *column_view_axes;
 	GtkWidget *column_view_pseudo_axes;
+	GtkWidget *column_view_sample_reflections;
 	GtkWidget *column_view_samples;
 	GtkWidget *column_view_solutions;
 	GtkWidget *drop_down_samples;
@@ -850,6 +852,27 @@ add_sample_activated (GSimpleAction *action,
 }
 
 static void
+add_sample_reflection_activated (GSimpleAction *action,
+				 GVariant *parameter,
+				 gpointer user_data)
+{
+	/* HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
+	/* GtkSelectionModel *model; */
+	/* gint n_items; */
+
+	/* hkl_gui_factory_add_reflection(self->factory); */
+	/* model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples)); */
+	/* g_list_store_append(self->liststore_samples, */
+	/* 		    hkl_gui_sample_new("<edit name>")); */
+	/* n_items = g_list_model_get_n_items(G_LIST_MODEL(model)); */
+	/* gtk_single_selection_set_selected(GTK_SINGLE_SELECTION(model), n_items - 1); */
+
+	/* if(n_items > 1) */
+	/* 	gtk_widget_set_sensitive(self->button_delete_sample, true); */
+	/* TODO go to the sample name in edit mode */
+}
+
+static void
 copy_sample_activated (GSimpleAction *action,
 		      GVariant *parameter,
 		      gpointer user_data)
@@ -872,6 +895,28 @@ copy_sample_activated (GSimpleAction *action,
 	/* TODO go to the edit name */
 }
 
+static void
+copy_sample_reflection_activated (GSimpleAction *action,
+				  GVariant *parameter,
+				  gpointer user_data)
+{
+	/* HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
+	/* GtkSelectionModel *model; */
+	/* HklGuiSample *gsample; */
+	/* gint n_items; */
+
+	/* model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples)); */
+	/* gsample = gtk_single_selection_get_selected_item(GTK_SINGLE_SELECTION(model)); */
+
+	/* g_list_store_append(self->liststore_samples, */
+	/* 		    hkl_gui_sample_new_copy(gsample)); */
+
+	/* n_items = g_list_model_get_n_items(G_LIST_MODEL(model)); */
+	/* if(n_items > 1) */
+	/* 	gtk_widget_set_sensitive(self->button_delete_sample, true); */
+
+	/* /\* TODO go to the edit name *\/ */
+}
 
 static void
 delete_sample_activated (GSimpleAction *action,
@@ -892,10 +937,32 @@ delete_sample_activated (GSimpleAction *action,
 		gtk_widget_set_sensitive(self->button_delete_sample, false);
 }
 
+static void
+delete_sample_reflection_activated (GSimpleAction *action,
+				    GVariant *parameter,
+				    gpointer user_data)
+{
+	/* HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
+	/* GtkSelectionModel *model; */
+	/* gint n_items; */
+	/* gint selected; */
+
+	/* model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples)); */
+	/* selected = gtk_single_selection_get_selected(GTK_SINGLE_SELECTION(model)); */
+
+	/* g_list_store_remove(self->liststore_samples, selected); */
+	/* n_items = g_list_model_get_n_items(G_LIST_MODEL(model)); */
+	/* if (1 == n_items) */
+	/* 	gtk_widget_set_sensitive(self->button_delete_sample, false); */
+}
+
 static GActionEntry win_entries[] = {
 	{ "add-sample", add_sample_activated, NULL, NULL, NULL },
+	{ "add-sample-reflection", add_sample_reflection_activated, NULL, NULL, NULL },
 	{ "copy-sample", copy_sample_activated, NULL, NULL, NULL },
+	{ "copy-sample-reflection", copy_sample_reflection_activated, NULL, NULL, NULL },
 	{ "delete-sample", delete_sample_activated, NULL, NULL, NULL },
+	{ "delete-sample-reflection", delete_sample_reflection_activated, NULL, NULL, NULL },
 };
 
 static void
@@ -911,23 +978,30 @@ new_window (GApplication *app,
 	GtkListItemFactory *item_factory_drop_down_samples;
 
 	GtkWidget *button_add_sample;
+	GtkWidget *button_add_sample_reflection;
 	GtkWidget *button_copy_sample;
+	GtkWidget *button_copy_sample_reflection;
 	GtkWidget *dropdown1;
 	GtkWidget *frame_diffractometer;
 	GtkWidget *frame_wavelength;
 	GtkWidget *frame_axes;
 	GtkWidget *frame_pseudo_axes;
 	GtkWidget *frame_sample;
+	GtkWidget *frame_sample_reflections;
 	GtkWidget *frame_samples;
 	GtkWidget *frame_solutions;
 	GtkWidget *hbox1;
 	GtkWidget *hbox2;
+	GtkWidget *hbox3;
 	GtkWidget *label;
 	GtkWidget *scrolledwindow1;
 	GtkWidget *scrolledwindow2;
+	GtkWidget *scrolledwindow3;
 	GtkWidget *vbox1;
 	GtkWidget *vbox2;
 	GtkWidget *vbox3;
+	GtkWidget *vbox4;
+	GtkWidget *vbox5;
 
 	HklFactory **factories;
 
@@ -976,8 +1050,10 @@ new_window (GApplication *app,
 
 	self->alert_dialog_solutions = gtk_alert_dialog_new("Solutions");
 	self->button_delete_sample = gtk_button_new();
+	self->button_delete_sample_reflection = gtk_button_new();
 	self->column_view_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->column_view_pseudo_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
+	self->column_view_sample_reflections = gtk_column_view_new (GTK_SELECTION_MODEL (gtk_single_selection_new(NULL)));
 	self->column_view_samples = gtk_column_view_new (GTK_SELECTION_MODEL (gtk_single_selection_new( G_LIST_MODEL (self->liststore_samples))));
 	self->column_view_solutions = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->drop_down_samples = gtk_drop_down_new(G_LIST_MODEL(self->liststore_samples), NULL);
@@ -987,37 +1063,59 @@ new_window (GApplication *app,
 	self->window1 = gtk_application_window_new (GTK_APPLICATION (app));
 
 	button_add_sample = gtk_button_new();
+	button_add_sample_reflection = gtk_button_new();
 	button_copy_sample = gtk_button_new();
+	button_copy_sample_reflection = gtk_button_new();
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
 	frame_diffractometer = gtk_frame_new("Diffractometer");
 	frame_wavelength = gtk_frame_new("Wavelength");
 	frame_axes = gtk_frame_new("Axes");
 	frame_pseudo_axes = gtk_frame_new("Pseudo Axes");
 	frame_sample = gtk_frame_new("Sample");
+	frame_sample_reflections = gtk_frame_new("Reflections");
 	frame_samples = gtk_frame_new("Samples");
 	frame_solutions = gtk_frame_new("Solutions");
 	hbox1 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	hbox2 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+	hbox3 = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	scrolledwindow1 = gtk_scrolled_window_new();
 	scrolledwindow2 = gtk_scrolled_window_new();
+	scrolledwindow3 = gtk_scrolled_window_new();
 	vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	vbox3 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	vbox4 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	vbox5 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
 	/* button_add_sample */
 	gtk_widget_set_tooltip_text(button_add_sample, "Add a new sample");
 	gtk_button_set_icon_name (GTK_BUTTON (button_add_sample), "list-add-symbolic");
 	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_add_sample), "win.add-sample");
 
+	/* button_add_sample_reflection */
+	gtk_widget_set_tooltip_text(button_add_sample_reflection, "Add a new reflection");
+	gtk_button_set_icon_name (GTK_BUTTON (button_add_sample_reflection), "list-add-symbolic");
+	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_add_sample_reflection), "win.add-sample-reflection");
+
 	/* button_copy_sample */
 	gtk_widget_set_tooltip_text(button_copy_sample, "Copy the selected sample");
 	gtk_button_set_icon_name (GTK_BUTTON (button_copy_sample), "edit-copy-symbolic");
 	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_copy_sample), "win.copy-sample");
 
-	/* button_add_sample */
+	/* button_copy_sample_reflection */
+	gtk_widget_set_tooltip_text(button_copy_sample_reflection, "Copy the selected reflection");
+	gtk_button_set_icon_name (GTK_BUTTON (button_copy_sample_reflection), "edit-copy-symbolic");
+	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_copy_sample_reflection), "win.copy-sample-reflection");
+
+	/* button_delete_sample */
 	gtk_widget_set_tooltip_text(self->button_delete_sample, "Delete the selected sample");
 	gtk_button_set_icon_name (GTK_BUTTON (self->button_delete_sample), "list-remove-symbolic");
 	gtk_actionable_set_action_name (GTK_ACTIONABLE (self->button_delete_sample), "win.delete-sample");
+
+	/* button_delete_sample_reflection */
+	gtk_widget_set_tooltip_text(self->button_delete_sample_reflection, "Delete the selected reflection");
+	gtk_button_set_icon_name (GTK_BUTTON (self->button_delete_sample_reflection), "list-remove-symbolic");
+	gtk_actionable_set_action_name (GTK_ACTIONABLE (self->button_delete_sample_reflection), "win.delete-sample-reflection");
 
 	/* column view axes */
 	add_column(self->column_view_axes, "name", label_property, "name");
@@ -1028,6 +1126,9 @@ new_window (GApplication *app,
 	/* column view pseudo axes */
 	add_column(self->column_view_pseudo_axes, "name", label_property, "name");
 	add_column(self->column_view_pseudo_axes, "value", label_property, "value");
+
+	/* column view sample reflections */
+	gtk_widget_set_vexpand(self->column_view_sample_reflections, true);
 
 	/* column view samples */
 	gtk_widget_set_vexpand(self->column_view_samples, true);
@@ -1079,16 +1180,28 @@ new_window (GApplication *app,
 	/* frame sample */
 	gtk_frame_set_child(GTK_FRAME(frame_sample), self->drop_down_samples);
 
+	/* frame sample reflections */
+	gtk_frame_set_child(GTK_FRAME(frame_sample_reflections), vbox5);
+
 	/* frame samples */
-	gtk_frame_set_child(GTK_FRAME(frame_samples), vbox3);
+	gtk_frame_set_child(GTK_FRAME(frame_samples), vbox4);
 
 	/* frame solutions*/
 	gtk_frame_set_child(GTK_FRAME(frame_solutions), self->column_view_solutions);
+
+	/* hbox1 */
+	gtk_box_append(GTK_BOX(hbox1), vbox2);
+	gtk_box_append(GTK_BOX(hbox1), self->notebook1);
 
 	/* hbox2 */
 	gtk_box_append(GTK_BOX(hbox2), button_add_sample);
 	gtk_box_append(GTK_BOX(hbox2), button_copy_sample);
 	gtk_box_append(GTK_BOX(hbox2), self->button_delete_sample);
+
+	/* hbox3 */
+	gtk_box_append(GTK_BOX(hbox3), button_add_sample_reflection);
+	gtk_box_append(GTK_BOX(hbox3), button_copy_sample_reflection);
+	gtk_box_append(GTK_BOX(hbox3), self->button_delete_sample_reflection);
 
 	/* notebook1 */
 	gtk_widget_set_hexpand(self->notebook1, true);
@@ -1098,7 +1211,7 @@ new_window (GApplication *app,
 				  label);
 	label =  gtk_label_new("Samples Configuration");
 	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
-				  frame_samples,
+				  vbox3,
 				  label);
 
 	/* scrolledwindow1 */
@@ -1110,6 +1223,11 @@ new_window (GApplication *app,
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow2),
 				       GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledwindow2), self->column_view_samples);
+
+	/* scrolledwindow3 */
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow3),
+				       GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledwindow3), self->column_view_sample_reflections);
 
 	/* spinbutton_wavelength */
 	gtk_widget_set_sensitive(self->spinbutton_wavelength, FALSE);
@@ -1126,13 +1244,16 @@ new_window (GApplication *app,
 	gtk_box_append(GTK_BOX(vbox2), frame_solutions);
 
 	/* vbox3 */
-	gtk_box_append(GTK_BOX(vbox3), hbox2);
-	gtk_box_append(GTK_BOX(vbox3), scrolledwindow2);
+	gtk_box_append(GTK_BOX(vbox3), frame_samples);
+	gtk_box_append(GTK_BOX(vbox3), frame_sample_reflections);
 
-	/* hbox1 */
-	gtk_box_append(GTK_BOX(hbox1), vbox2);
-	gtk_box_append(GTK_BOX(hbox1), self->notebook1);
+	/* vbox4 */
+	gtk_box_append(GTK_BOX(vbox4), hbox2);
+	gtk_box_append(GTK_BOX(vbox4), scrolledwindow2);
 
+	/* vbox5 */
+	gtk_box_append(GTK_BOX(vbox5), hbox3);
+	gtk_box_append(GTK_BOX(vbox5), scrolledwindow3);
 
 	/* gtk_paned_set_start_child (GTK_PANED (hpaned1), vbox2); */
 	/* gtk_paned_set_shrink_start_child (GTK_PANED (hpaned1), false); */
