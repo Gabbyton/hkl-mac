@@ -46,9 +46,7 @@
 struct _HklGuiWindow {
 	GtkApplication parent_instance;
 
-	gint page_sample;
-
-	GListStore *liststore_samples;
+GListStore *liststore_samples;
 
 	GtkAdjustment *adjustment_wavelength;
 	GtkAlertDialog *alert_dialog_solutions;
@@ -265,27 +263,11 @@ drop_down_samples_notify_selected_item_cb(GtkDropDown *dropdown,
 					  GParamSpec* pspec,
 					  gpointer *user_data)
 {
-	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
-	HklGuiSample *gsample;
-	GtkWidget *frame;
+	//HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+	//HklGuiSample *gsample;
+	//GtkWidget *frame;
 
-	gsample = gtk_drop_down_get_selected_item(dropdown);
-	frame = hkl_gui_sample_get_frame(gsample);
-
-	if (self->page_sample == -1){
-		self->page_sample = gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
-							      frame,
-							      NULL);
-	}else{
-		gtk_notebook_remove_page (GTK_NOTEBOOK (self->notebook1), self->page_sample);
-		gtk_notebook_insert_page (GTK_NOTEBOOK (self->notebook1),
-					  frame,
-					  NULL, self->page_sample);
-	}
-
-	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK (self->notebook1),
-					 frame,
-					 "Crystal Configuration");
+	// gsample = gtk_drop_down_get_selected_item(dropdown);
 }
 
 void
@@ -1018,14 +1000,17 @@ new_window (GApplication *app,
 	vbox3 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
 	/* button_add_sample */
+	gtk_widget_set_tooltip_text(button_add_sample, "Add a new sample");
 	gtk_button_set_icon_name (GTK_BUTTON (button_add_sample), "list-add-symbolic");
 	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_add_sample), "win.add-sample");
 
 	/* button_copy_sample */
+	gtk_widget_set_tooltip_text(button_copy_sample, "Copy the selected sample");
 	gtk_button_set_icon_name (GTK_BUTTON (button_copy_sample), "edit-copy-symbolic");
 	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_copy_sample), "win.copy-sample");
 
 	/* button_add_sample */
+	gtk_widget_set_tooltip_text(self->button_delete_sample, "Delete the selected sample");
 	gtk_button_set_icon_name (GTK_BUTTON (self->button_delete_sample), "list-remove-symbolic");
 	gtk_actionable_set_action_name (GTK_ACTIONABLE (self->button_delete_sample), "win.delete-sample");
 
@@ -1055,10 +1040,14 @@ new_window (GApplication *app,
 	g_signal_connect (self->column_view_solutions, "activate", G_CALLBACK (column_view_solutions_activate_cb), self);
 
 	/* dropdown1 */
+	gtk_widget_set_tooltip_text(dropdown1, "Select a diffractometer");
+	gtk_drop_down_set_show_arrow(GTK_DROP_DOWN(dropdown1), true);
 	gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown1), item_factory_drop_down_factories);
 	g_signal_connect (dropdown1, "notify::selected-item", G_CALLBACK (dropdown1_notify_selected_item_cb), self);
 
 	/* drop_down_samples */
+	gtk_widget_set_tooltip_text(self->drop_down_samples, "Select a sample");
+	gtk_drop_down_set_show_arrow(GTK_DROP_DOWN(self->drop_down_samples), true);
 	gtk_drop_down_set_factory(GTK_DROP_DOWN(self->drop_down_samples), item_factory_drop_down_samples);
 	g_signal_connect (self->drop_down_samples, "notify::selected-item",
 			  G_CALLBACK (drop_down_samples_notify_selected_item_cb), self);
@@ -1127,8 +1116,8 @@ new_window (GApplication *app,
 	gtk_box_append(GTK_BOX(vbox2), frame_solutions);
 
 	/* vbox3 */
-	gtk_box_append(GTK_BOX(vbox3), self->column_view_samples);
 	gtk_box_append(GTK_BOX(vbox3), hbox2);
+	gtk_box_append(GTK_BOX(vbox3), self->column_view_samples);
 
 	/* hbox1 */
 	gtk_box_append(GTK_BOX(hbox1), vbox2);
@@ -1197,8 +1186,6 @@ static void hkl_gui_window_init (HklGuiWindow * self)
 	self->adjustment_wavelength = gtk_adjustment_new (0.0, 0.0, G_MAXDOUBLE,
 							  0.0001, 0.01, 0.0);
 	self->adjustement_wavelength_binding = NULL;
-
-	self->page_sample = -1;
 }
 
 static void hkl_gui_window_class_init (HklGuiWindowClass *class)
@@ -1220,7 +1207,7 @@ static HklGuiWindow* hkl_gui_window_new (void)
 	HklGuiWindow *ghkl;
 
 	g_set_application_name ("Ghkl");
-	ghkl = g_object_new (hkl_gui_window_get_type (),
+	ghkl = g_object_new (HKL_GUI_TYPE_WINDOW,
 			     "application-id", "fr.synchrotron-soleil.ghkl",
 			     "flags", G_APPLICATION_HANDLES_OPEN,
 			     "inactivity-timeout", 30000,
