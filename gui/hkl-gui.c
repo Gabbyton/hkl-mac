@@ -54,6 +54,7 @@ struct _HklGuiWindow {
 	GtkAlertDialog *alert_dialog_solutions;
 	GBinding *adjustement_wavelength_binding;
 
+	GtkWidget *button_delete_sample;
 	GtkWidget *column_view_axes;
 	GtkWidget *column_view_pseudo_axes;
 	GtkWidget *column_view_samples;
@@ -853,14 +854,16 @@ add_sample_activated (GSimpleAction *action,
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	GtkSelectionModel *model;
-	gint position;
+	gint n_items;
 
 	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples));
 	g_list_store_append(self->liststore_samples,
 			    hkl_gui_sample_new("<edit name>"));
-	position = g_list_model_get_n_items(G_LIST_MODEL(model));
-	gtk_single_selection_set_selected(GTK_SINGLE_SELECTION(model), position -1);
+	n_items = g_list_model_get_n_items(G_LIST_MODEL(model));
+	gtk_single_selection_set_selected(GTK_SINGLE_SELECTION(model), n_items - 1);
 
+	if(n_items > 1)
+		gtk_widget_set_sensitive(self->button_delete_sample, true);
 	/* TODO go to the sample name in edit mode */
 }
 
@@ -872,12 +875,17 @@ copy_sample_activated (GSimpleAction *action,
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	GtkSelectionModel *model;
 	HklGuiSample *gsample;
+	gint n_items;
 
 	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples));
 	gsample = gtk_single_selection_get_selected_item(GTK_SINGLE_SELECTION(model));
 
 	g_list_store_append(self->liststore_samples,
 			    hkl_gui_sample_new_copy(gsample));
+
+	n_items = g_list_model_get_n_items(G_LIST_MODEL(model));
+	if(n_items > 1)
+		gtk_widget_set_sensitive(self->button_delete_sample, true);
 
 	/* TODO go to the edit name */
 }
@@ -890,12 +898,16 @@ delete_sample_activated (GSimpleAction *action,
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	GtkSelectionModel *model;
-	gint position;
+	gint n_items;
+	gint selected;
 
 	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples));
-	position = gtk_single_selection_get_selected(GTK_SINGLE_SELECTION(model));
+	selected = gtk_single_selection_get_selected(GTK_SINGLE_SELECTION(model));
 
-	g_list_store_remove(self->liststore_samples, position);
+	g_list_store_remove(self->liststore_samples, selected);
+	n_items = g_list_model_get_n_items(G_LIST_MODEL(model));
+	if (1 == n_items)
+		gtk_widget_set_sensitive(self->button_delete_sample, false);
 }
 
 static GActionEntry win_entries[] = {
@@ -918,7 +930,6 @@ new_window (GApplication *app,
 
 	GtkWidget *button_add_sample;
 	GtkWidget *button_copy_sample;
-	GtkWidget *button_delete_sample;
 	GtkWidget *dropdown1;
 	GtkWidget *frame_diffractometer;
 	GtkWidget *frame_wavelength;
@@ -979,6 +990,7 @@ new_window (GApplication *app,
 	/***********/
 
 	self->alert_dialog_solutions = gtk_alert_dialog_new("Solutions");
+	self->button_delete_sample = gtk_button_new();
 	self->column_view_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->column_view_pseudo_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->column_view_samples = gtk_column_view_new (GTK_SELECTION_MODEL (gtk_single_selection_new( G_LIST_MODEL (self->liststore_samples))));
@@ -991,7 +1003,6 @@ new_window (GApplication *app,
 
 	button_add_sample = gtk_button_new();
 	button_copy_sample = gtk_button_new();
-	button_delete_sample = gtk_button_new();
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
 	frame_diffractometer = gtk_frame_new("Diffractometer");
 	frame_wavelength = gtk_frame_new("Wavelength");
@@ -1015,8 +1026,8 @@ new_window (GApplication *app,
 	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_copy_sample), "win.copy-sample");
 
 	/* button_add_sample */
-	gtk_button_set_icon_name (GTK_BUTTON (button_delete_sample), "list-remove-symbolic");
-	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_delete_sample), "win.delete-sample");
+	gtk_button_set_icon_name (GTK_BUTTON (self->button_delete_sample), "list-remove-symbolic");
+	gtk_actionable_set_action_name (GTK_ACTIONABLE (self->button_delete_sample), "win.delete-sample");
 
 	/* column view axes */
 	add_column(self->column_view_axes, "name", label_property, "name");
@@ -1079,7 +1090,7 @@ new_window (GApplication *app,
 	/* hbox2 */
 	gtk_box_append(GTK_BOX(hbox2), button_add_sample);
 	gtk_box_append(GTK_BOX(hbox2), button_copy_sample);
-	gtk_box_append(GTK_BOX(hbox2), button_delete_sample);
+	gtk_box_append(GTK_BOX(hbox2), self->button_delete_sample);
 
 	/* notebook1 */
 	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
