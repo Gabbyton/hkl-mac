@@ -335,7 +335,7 @@ GtkListItemFactory *
 hkl_gui_item_factory_new_spin_button_sample_reflection_geometry_axis(gint idx)
 {
 	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_spin_button_cb), NULL);
+	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_spin_button_vertical_cb), NULL);
 	g_signal_connect (factory, "bind", G_CALLBACK (bind_spin_button__sample_reflection_geometry_axis_value_cb), GINT_TO_POINTER(idx));
 
 	return factory;
