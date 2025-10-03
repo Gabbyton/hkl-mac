@@ -203,6 +203,7 @@ HKLAPI void hkl_gui_sample_reflection_set_l(HklGuiSampleReflection* self, gdoubl
 
 /* gobject */
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_entry_property(char *property);
+HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_entry_numeric_property(char *property);
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_label_property(char *property);
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_vertical_property(char *property);
 

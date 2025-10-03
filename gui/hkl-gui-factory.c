@@ -552,20 +552,6 @@ hkl_gui_factory_add_reflection(HklGuiFactory *self)
 				      0, 0, 0);
 }
 
-
-/**************************/
-/* Gui ListItem factories */
-/**************************/
-
-struct diffractometer_t *
-hkl_gui_factory_get_diffractometer(HklGuiFactory *self)
-{
-	return self->diffractometer;
-}
-
-
-/* Sort of class method */
-
 void
 hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self,
 					    GtkColumnView *column_view)
@@ -625,12 +611,24 @@ hkl_gui_factory_setup_column_view_sample_reflections(HklGuiFactory *self,
 	}
 
 	/* Add the right columns */
-	add_column(column_view, "h", spin_button_vertical_property, "h");
-	add_column(column_view, "k", spin_button_vertical_property, "k");
-	add_column(column_view, "l", spin_button_vertical_property, "l");
+	add_column(column_view, "h", entry_numeric_property, "h");
+	add_column(column_view, "k", entry_numeric_property, "k");
+	add_column(column_view, "l", entry_numeric_property, "l");
 	idx=0;
 	darray_foreach(name, *names){
 		add_column(column_view, *name, spin_button_sample_reflection_geometry_axis, idx);
 		++idx;
 	}
 }
+
+/**************************/
+/* Gui ListItem factories */
+/**************************/
+
+struct diffractometer_t *
+hkl_gui_factory_get_diffractometer(HklGuiFactory *self)
+{
+	return self->diffractometer;
+}
+
+/* Sort of class method */

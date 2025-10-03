@@ -22,6 +22,12 @@
 
 #include <gtk/gtk.h>
 
+/*********/
+/* Entry */
+/*********/
+
+/* entry */
+
 void
 hkl_gui_setup_item_factory_entry_cb (GtkListItemFactory *factory,
 				     GtkListItem *list_item)
@@ -31,40 +37,6 @@ hkl_gui_setup_item_factory_entry_cb (GtkListItemFactory *factory,
 	entry = gtk_entry_new ();
 	gtk_list_item_set_child (list_item, entry);
 }
-
-
-void
-hkl_gui_setup_item_factory_label_cb (GtkListItemFactory *factory,
-				     GtkListItem        *list_item)
-{
-	GtkWidget *label;
-
-	label = gtk_label_new ("");
-	gtk_list_item_set_child (list_item, label);
-}
-
-
-void
-hkl_gui_setup_item_factory_spin_button_cb (GtkListItemFactory *factory,
-					   GtkListItem *list_item)
-{
-	GtkWidget *spin_button;
-
-	spin_button = gtk_spin_button_new_with_range (-G_MAXDOUBLE, G_MAXDOUBLE, 0.0001);
-	gtk_list_item_set_child (list_item, spin_button);
-}
-
-void
-hkl_gui_setup_item_factory_spin_button_vertical_cb (GtkListItemFactory *factory,
-						    GtkListItem *list_item)
-{
-	GtkWidget *spin_button;
-
-	spin_button = gtk_spin_button_new_with_range (-G_MAXDOUBLE, G_MAXDOUBLE, 0.0001);
-	gtk_orientable_set_orientation (GTK_ORIENTABLE (spin_button), GTK_ORIENTATION_VERTICAL);
-	gtk_list_item_set_child (list_item, spin_button);
-}
-
 
 void
 hkl_gui_bind_item_factory_entry_property_cb (GtkListItemFactory *factory,
@@ -97,6 +69,109 @@ hkl_gui_bind_item_factory_entry_property_cb (GtkListItemFactory *factory,
 	g_object_bind_property(self, source_property, G_OBJECT (buffer), "text", G_BINDING_BIDIRECTIONAL);
 }
 
+GtkListItemFactory *
+hkl_gui_item_factory_new_entry_property(char *property)
+{
+	GtkListItemFactory *item_factory;
+
+	item_factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_entry_cb), NULL);
+	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_entry_property_cb), property);
+
+	return item_factory;
+}
+
+/* entry numeric */
+
+void
+hkl_gui_setup_item_factory_entry_numeric_cb (GtkListItemFactory *factory,
+					     GtkListItem *list_item)
+{
+	GtkWidget *entry;
+
+	entry = gtk_entry_new ();
+	gtk_entry_set_input_purpose(GTK_ENTRY(entry),
+				    GTK_INPUT_PURPOSE_NUMBER);
+
+	gtk_list_item_set_child (list_item, entry);
+}
+
+static gint string_to_double(GBinding *binding,
+			     const GValue * value_a,
+			     GValue *value_b,
+			     gpointer user_data)
+{
+	  g_assert (G_VALUE_HOLDS_STRING (value_a));
+	  g_assert (G_VALUE_HOLDS_DOUBLE (value_b));
+
+	  g_value_set_double(value_b, atof(g_value_get_string(value_a)));
+
+	  return TRUE;
+}
+
+void
+hkl_gui_bind_item_factory_entry_numeric_property_cb (GtkListItemFactory *factory,
+						     GtkListItem *list_item,
+						     const char *source_property)
+{
+	GtkWidget *entry;
+	GtkEntryBuffer *buffer;
+	GObject *self;
+	GValue value = G_VALUE_INIT;
+
+	g_return_if_fail (GTK_IS_LIST_ITEM_FACTORY (factory));
+	g_return_if_fail (GTK_IS_LIST_ITEM (list_item));
+	g_return_if_fail (source_property != NULL);
+	g_return_if_fail (g_param_spec_is_valid_name (source_property));
+
+	entry = gtk_list_item_get_child (list_item);
+
+	g_return_if_fail (GTK_IS_ENTRY (entry));
+
+	buffer = gtk_entry_get_buffer (GTK_ENTRY (entry));
+
+	self = gtk_list_item_get_item (list_item);
+
+	g_return_if_fail (G_IS_OBJECT (self));
+
+	g_object_get_property(self, source_property, &value);
+	g_object_set_property (G_OBJECT (buffer), "text", &value);
+
+	g_object_bind_property_full(self, source_property,
+				    G_OBJECT (buffer), "text",
+				    G_BINDING_BIDIRECTIONAL,
+				    NULL,
+				    string_to_double,
+				    NULL,
+				    NULL);
+}
+
+GtkListItemFactory *
+hkl_gui_item_factory_new_entry_numeric_property(char *property)
+{
+	GtkListItemFactory *item_factory;
+
+	item_factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_entry_numeric_cb), NULL);
+	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_entry_numeric_property_cb), property);
+
+	return item_factory;
+}
+
+/*********/
+/* Label */
+/*********/
+
+void
+hkl_gui_setup_item_factory_label_cb (GtkListItemFactory *factory,
+				     GtkListItem        *list_item)
+{
+	GtkWidget *label;
+
+	label = gtk_label_new ("");
+	gtk_list_item_set_child (list_item, label);
+}
+
 void
 hkl_gui_bind_item_factory_label_property_cb (GtkListItemFactory *factory,
 					     GtkListItem *list_item,
@@ -113,6 +188,44 @@ hkl_gui_bind_item_factory_label_property_cb (GtkListItemFactory *factory,
 
 	g_object_bind_property(self, property, label, "label", G_BINDING_SYNC_CREATE);
 }
+
+GtkListItemFactory *
+hkl_gui_item_factory_new_label_property(char *property)
+{
+	GtkListItemFactory *item_factory;
+
+	item_factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
+	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), property);
+
+	return item_factory;
+}
+
+/***************/
+/* Spin Button */
+/***************/
+
+void
+hkl_gui_setup_item_factory_spin_button_cb (GtkListItemFactory *factory,
+					   GtkListItem *list_item)
+{
+	GtkWidget *spin_button;
+
+	spin_button = gtk_spin_button_new_with_range (-G_MAXDOUBLE, G_MAXDOUBLE, 0.0001);
+	gtk_list_item_set_child (list_item, spin_button);
+}
+
+void
+hkl_gui_setup_item_factory_spin_button_vertical_cb (GtkListItemFactory *factory,
+						    GtkListItem *list_item)
+{
+	GtkWidget *spin_button;
+
+	spin_button = gtk_spin_button_new_with_range (-G_MAXDOUBLE, G_MAXDOUBLE, 0.0001);
+	gtk_orientable_set_orientation (GTK_ORIENTABLE (spin_button), GTK_ORIENTATION_VERTICAL);
+	gtk_list_item_set_child (list_item, spin_button);
+}
+
 
 void
 hkl_gui_bind_item_factory_spin_button_property_cb (GtkListItemFactory *factory,
@@ -142,30 +255,6 @@ hkl_gui_bind_item_factory_spin_button_property_cb (GtkListItemFactory *factory,
 	g_object_bind_property(self, source_property, G_OBJECT (spin_button), "value", G_BINDING_BIDIRECTIONAL);
 }
 
-
-GtkListItemFactory *
-hkl_gui_item_factory_new_entry_property(char *property)
-{
-	GtkListItemFactory *item_factory;
-
-	item_factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_entry_cb), NULL);
-	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_entry_property_cb), property);
-
-	return item_factory;
-}
-
-GtkListItemFactory *
-hkl_gui_item_factory_new_label_property(char *property)
-{
-	GtkListItemFactory *item_factory;
-
-	item_factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (item_factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
-	g_signal_connect (item_factory, "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), property);
-
-	return item_factory;
-}
 
 GtkListItemFactory *
 hkl_gui_item_factory_new_spin_button_vertical_property(char *property)
