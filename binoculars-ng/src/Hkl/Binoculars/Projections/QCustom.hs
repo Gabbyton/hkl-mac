@@ -1080,21 +1080,21 @@ processQCustomP = do
 
 
 instance ChunkP [DSDataFrameQCustom DSPath] where
-    chunkP mSkipFirst mSkipLast p =
+    chunkP mSkipFirst mSkipLast ps =
       skipMalformed $ forever $ do
       sfp <- await
       withScanFileP sfp $ \f' ->
-        withDataSourcesP f' p $ \p' -> do
+        withDataSourcesP f' ps $ \_p p' -> do
           (DataSourceShape'Range (Z :. f) (Z :. t)) <- ds'Shape p'
           yield $ cclip (fromMaybe 0 mSkipFirst) (fromMaybe 0 mSkipLast) (Chunk sfp f (t - 1))
 
 instance FramesP [DSDataFrameQCustom DSPath] DataFrameQCustom where
-    framesP p =
+    framesP ps =
         skipMalformed $ forever $ do
           (fp, js) <- await
           withScanFileP fp $ \f ->
-            withDataSourcesP f p $ \ g ->
-            forM_ js (tryYield . extract1DStreamValue g)
+            withDataSourcesP f ps $ \_p p' ->
+                forM_ js (tryYield . extract1DStreamValue p')
 
 ---------
 -- Cmd --

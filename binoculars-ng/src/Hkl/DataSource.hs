@@ -59,7 +59,6 @@ import           Bindings.HDF5.Datatype            (getTypeSize, nativeTypeOf,
 import           Control.Exception                 (throwIO)
 import           Control.Monad.Extra               (ifM)
 import           Control.Monad.IO.Class            (MonadIO (liftIO))
-import           Control.Monad.Trans.Cont          (cont, runCont)
 import           Data.Aeson                        (FromJSON (..), ToJSON (..))
 import           Data.Int                          (Int32)
 import           Data.Kind                         (Type)
@@ -307,33 +306,33 @@ generic'withDataSourceP :: ( Generic (d DSPath)
                           , Location l
                           , MonadSafe m
                           )
-                        => ScanFile l -> d DSPath -> (d DSAcq -> m r) -> m r
-generic'withDataSourceP file src gg = g'withDataSourceP file (from src) (gg . to)
+                        => ScanFile l -> d DSPath -> (d DSPath -> d DSAcq -> m r) -> m r
+generic'withDataSourceP file src gg = g'withDataSourceP file (from src) (\path acq -> gg (to path) (to acq))
 
 
 class GDataSourcePath dataPath dataAcq where
     g'withDataSourceP :: (Location l, MonadSafe m)
-                      => ScanFile l -> dataPath x -> (dataAcq x -> m r) -> m r
+                      => ScanFile l -> dataPath x -> (dataPath x -> dataAcq x -> m r) -> m r
 
 instance GDataSourcePath f g => GDataSourcePath (M1 i c f) (M1 i c' g) where
-    g'withDataSourceP f (M1 d) gg = g'withDataSourceP f d (gg . M1)
+    g'withDataSourceP f (M1 d) gg = g'withDataSourceP f d (\path acq -> gg (M1 path) (M1 acq))
 
 instance (GDataSourcePath f g, GDataSourcePath f' g') => GDataSourcePath (f :*: f') (g :*: g') where
     g'withDataSourceP file (f :*: f') gg =
-        g'withDataSourceP file f $ \g ->
-        g'withDataSourceP file f' $ \g' ->
-            gg (g :*: g')
+        g'withDataSourceP file f $ \path g ->
+        g'withDataSourceP file f' $ \path' g' ->
+            gg (path :*: path') (g :*: g')
 
 instance (Show (a DSPath), DataSource a) => GDataSourcePath (K1 i [a DSPath]) (K1 i (a DSAcq)) where
-    g'withDataSourceP file (K1 acq) gg =
-        withDataSourcesP file acq $ \dat ->
-            gg (K1 dat)
+    g'withDataSourceP file (K1 acqs) gg =
+        withDataSourcesP file acqs $ \acq dat ->
+            gg (K1 [acq]) (K1 dat)
 
 -- DataSource
 
 class DataSource d where
     ds'Shape :: MonadSafe m => d DSAcq -> m DataSourceShape
-    withDataSourceP :: (Location l, MonadSafe m) => ScanFile l -> d DSPath -> (d DSAcq -> m r) -> m r
+    withDataSourceP :: (Location l, MonadSafe m) => ScanFile l -> d DSPath -> (d DSPath -> d DSAcq -> m r) -> m r
 
     default ds'Shape :: ( MonadSafe m
                        , Generic (d DSAcq)
@@ -347,11 +346,11 @@ class DataSource d where
                               , Location l
                               , MonadSafe m
                               )
-                            => ScanFile l -> d DSPath -> (d DSAcq -> m r) -> m r
+                            => ScanFile l -> d DSPath -> (d DSPath -> d DSAcq -> m r) -> m r
     withDataSourceP = generic'withDataSourceP
 
 withDataSourcesP :: (DataSource d, Location l, MonadSafe m, Show (d DSPath))
-                 => ScanFile l -> [d DSPath] -> (d DSAcq -> m r) -> m r
+                 => ScanFile l -> [d DSPath] -> (d DSPath -> d DSAcq -> m r) -> m r
 withDataSourcesP f paths g = go paths
   where
     go [] = throwM $ HklDataSourceException'NoRemainingDataPath (show paths)
@@ -393,9 +392,9 @@ instance DataSource DSAttenuation where
   ds'Shape DataSourceAcq'NoAttenuation                 = pure shape1
 
 
-  withDataSourceP f (DataSourcePath'Attenuation p o c m) g = withDataSourcesP f p $ \ds -> g (DataSourceAcq'Attenuation ds o c m)
-  withDataSourceP f (DataSourcePath'ApplyedAttenuationFactor p) g = withDataSourcesP f p $ \ds -> g (DataSourceAcq'ApplyedAttenuationFactor ds)
-  withDataSourceP _ DataSourcePath'NoAttenuation g = g DataSourceAcq'NoAttenuation
+  withDataSourceP f (DataSourcePath'Attenuation ps o c m) g = withDataSourcesP f ps $ \p ds -> g (DataSourcePath'Attenuation [p] o c m) (DataSourceAcq'Attenuation ds o c m)
+  withDataSourceP f (DataSourcePath'ApplyedAttenuationFactor ps) g = withDataSourcesP f ps $ \p ds -> g (DataSourcePath'ApplyedAttenuationFactor [p]) (DataSourceAcq'ApplyedAttenuationFactor ds)
+  withDataSourceP _ DataSourcePath'NoAttenuation g = g DataSourcePath'NoAttenuation DataSourceAcq'NoAttenuation
 
 -- Dataset
 
@@ -410,8 +409,8 @@ newtype instance DSDataset sh a DSAcq
       deriving Generic
 
 instance DataSource (DSDataset sh a) where
-    withDataSourceP (ScanFile f _) (DataSourcePath'Dataset p) g
-        = withHdf5PathP f p $ \ds -> g (DataSourceAcq'Dataset ds)
+    withDataSourceP (ScanFile f _) path@(DataSourcePath'Dataset p) g
+        = withHdf5PathP f p $ \ds -> g path (DataSourceAcq'Dataset ds)
 
 -- Degree
 
@@ -427,9 +426,9 @@ data instance DSDegree DSAcq
     deriving Generic
 
 instance DataSource DSDegree where
-  withDataSourceP f (DataSourcePath'Degree'Hdf5 p) g
-    = withDataSourcesP f p $ \p' -> g (DataSourceAcq'Degree'Hdf5 p')
-  withDataSourceP _ (DataSourcePath'Degree'Const d) g = g (DataSourceAcq'Degree'Const d)
+  withDataSourceP f (DataSourcePath'Degree'Hdf5 ps) g
+    = withDataSourcesP f ps $ \p p' -> g (DataSourcePath'Degree'Hdf5 [p]) (DataSourceAcq'Degree'Hdf5 p')
+  withDataSourceP _ path@(DataSourcePath'Degree'Const d) g = g path (DataSourceAcq'Degree'Const d)
 
 -- Double
 
@@ -446,25 +445,22 @@ data instance DSDouble DSAcq
     deriving Generic
 
 instance DataSource DSDouble where
-  withDataSourceP f (DataSourcePath'Double'Hdf5 p) g
-      = withDataSourcesP f p $ \ds -> do
+  withDataSourceP f (DataSourcePath'Double'Hdf5 ps) g
+      = withDataSourcesP f ps $ \p ds -> do
                                sh <- ds'Shape ds
                                if sh == shape1
                                then do
                                  v <- liftIO $ extract0DStreamValue ds
-                                 g (DataSourceAcq'Double'Const v)
-                               else g (DataSourceAcq'Double'Hdf5 ds)
-  withDataSourceP _ (DataSourcePath'Double'Const a) g = g (DataSourceAcq'Double'Const a)
-  withDataSourceP _ (DataSourcePath'Double'Ini (ConfigContent cfg) s k) g =
+                                 g (DataSourcePath'Double'Const v) (DataSourceAcq'Double'Const v)
+                               else g (DataSourcePath'Double'Hdf5 [p]) (DataSourceAcq'Double'Hdf5 ds)
+  withDataSourceP _ path@(DataSourcePath'Double'Const a) g = g path (DataSourceAcq'Double'Const a)
+  withDataSourceP _ path@(DataSourcePath'Double'Ini (ConfigContent cfg) s k) g =
       eitherF (const $ throwM $ CanNotOpenDataSource'Double'Ini s k) (parse' cfg s k)
       (\mv -> case mv of
                Nothing -> throwM $ CanNotOpenDataSource'Double'Ini s k
-               Just v  ->  g (DataSourceAcq'Double'Const v))
+               Just v  ->  g path (DataSourceAcq'Double'Const v))
 
 -- [Double]
-
-nest :: [(r -> a) -> a] -> ([r] -> a) -> a
-nest xs = runCont (Prelude.mapM cont xs)
 
 data family DSDoubles (k :: DSKind)
 newtype instance DSDoubles DSPath
@@ -480,8 +476,11 @@ instance DataSource DSDoubles where
         = do ss <- mapM ds'Shape ds
              pure $ foldl1 combine'Shape ss
 
-    withDataSourceP f (DataSourcePath'List ps) g
-        = nest (Prelude.map (withDataSourcesP f) ps) (\as -> g $ (DataSourceAcq'List as))
+    withDataSourceP f (DataSourcePath'List pathss) g
+        = go pathss [] []
+          where
+            go [] ps as = g (DataSourcePath'List ps) (DataSourceAcq'List as)
+            go (ps : pss) accPath accAcq = withDataSourcesP f ps $ \p s -> go pss (accPath ++ [[p]]) (accAcq ++ [s])
 
 -- Float
 
@@ -495,7 +494,7 @@ newtype instance DSFloat DSAcq
     deriving Generic
 
 instance DataSource DSFloat where
-    withDataSourceP f (DataSourcePath'Float'Hdf5 p) g = withDataSourcesP f p $ \ds -> g (DataSourceAcq'Float'Hdf5 ds)
+    withDataSourceP f (DataSourcePath'Float'Hdf5 ps) g = withDataSourcesP f ps $ \p ds -> g (DataSourcePath'Float'Hdf5 [p]) (DataSourceAcq'Float'Hdf5 ds)
 
 -- Geometry
 
@@ -516,13 +515,13 @@ data instance DSGeometry DSAcq
     deriving Generic
 
 instance DataSource DSGeometry where
-  withDataSourceP f (DataSourcePath'Geometry g w as) gg =
-    withDataSourcesP f w $ \w' ->
-    withDataSourcesP f as $ \as' -> do
-    gg (DataSourceAcq'Geometry g w' as')
-  withDataSourceP f (DataSourcePath'Geometry'Fix w) gg =
-    withDataSourcesP f w $ \w' -> do
-    gg (DataSourceAcq'Geometry fixed w' (DataSourceAcq'List []))
+  withDataSourceP f (DataSourcePath'Geometry g wPaths asPaths) gg =
+    withDataSourcesP f wPaths $ \wPath w' ->
+    withDataSourcesP f asPaths $ \asPath as' -> do
+    gg (DataSourcePath'Geometry g [wPath] [asPath]) (DataSourceAcq'Geometry g w' as')
+  withDataSourceP f (DataSourcePath'Geometry'Fix wPaths) gg =
+    withDataSourcesP f wPaths $ \wPath w' -> do
+    gg (DataSourcePath'Geometry'Fix [wPath]) (DataSourceAcq'Geometry fixed w' (DataSourceAcq'List []))
 
 -- Image
 
@@ -548,33 +547,33 @@ data instance DSImage DSAcq
     deriving Generic
 
 instance DataSource DSImage where
-  withDataSourceP _ (DataSourcePath'Image'Dummy det v) g
+  withDataSourceP _ path@(DataSourcePath'Image'Dummy det v) g
       =  do let n = (size . shape $ det)
             arr <- liftIO $ replicate n v
-            g (DataSourceAcq'Image'Dummy arr)
+            g path (DataSourceAcq'Image'Dummy arr)
 
-  withDataSourceP (ScanFile f _) (DataSourcePath'Image'Hdf5 det p) g = withHdf5PathP f p $ \ds -> do
+  withDataSourceP (ScanFile f _) path@(DataSourcePath'Image'Hdf5 det p) g = withHdf5PathP f p $ \ds -> do
     t <- liftIO $ getDatasetType ds
     s <- liftIO $ getTypeSize t
     let n = (size . shape $ det) * fromEnum s
     condM [ (liftIO $ typeIDsEqual t (nativeTypeOf (undefined ::  Double)), do
                 arr <- liftIO $ unsafeNew n
-                g (DataSourceAcq'Image'Hdf5'Double det ds arr))
+                g path (DataSourceAcq'Image'Hdf5'Double det ds arr))
           , (liftIO $ typeIDsEqual t (nativeTypeOf (undefined ::  Int32)), do
                 arr <- liftIO $ unsafeNew n
-                g (DataSourceAcq'Image'Hdf5'Int32 det ds arr))
+                g path (DataSourceAcq'Image'Hdf5'Int32 det ds arr))
           , (liftIO $ typeIDsEqual t (nativeTypeOf (undefined :: Word16)), do
                 arr <- liftIO $ unsafeNew n
-                g (DataSourceAcq'Image'Hdf5'Word16 det ds arr))
+                g path (DataSourceAcq'Image'Hdf5'Word16 det ds arr))
           , (liftIO $ typeIDsEqual t (nativeTypeOf (undefined :: Word32)), do
                 arr <- liftIO $ unsafeNew n
-                g (DataSourceAcq'Image'Hdf5'Word32 det ds arr))
+                g path (DataSourceAcq'Image'Hdf5'Word32 det ds arr))
           ]
 
-  withDataSourceP (ScanFile _ sn) (DataSourcePath'Image'Img det tmpl (Scannumber sn0)) g
+  withDataSourceP (ScanFile _ sn) path@(DataSourcePath'Image'Img det tmpl (Scannumber sn0)) g
     = do let n = (size . shape $ det)
          arr <- liftIO $ unsafeNew n
-         g (DataSourceAcq'Image'Img'Int32 det arr tmpl sn f)
+         g path (DataSourceAcq'Image'Img'Int32 det arr tmpl sn f)
              where
                f :: Text -> Scannumber -> Int -> FilePath
                f tmpl' (Scannumber sn') i = printf (unpack tmpl') sn0 sn0 ((sn' - sn0) * 1029 + i)
@@ -595,7 +594,7 @@ newtype instance DSInt DSAcq
     deriving Generic
 
 instance DataSource DSInt where
-  withDataSourceP _ (DataSourcePath'Int p) g = g (DataSourceAcq'Int p)
+  withDataSourceP _ path@(DataSourcePath'Int p) g = g path (DataSourceAcq'Int p)
 
 -- Mask
 
@@ -612,10 +611,10 @@ data instance DSMask DSAcq
     deriving Generic
 
 instance DataSource DSMask where
-    withDataSourceP _ DataSourcePath'Mask'NoMask g = g DataSourceAcq'Mask'NoMask
-    withDataSourceP (ScanFile _ sn)  (DataSourcePath'Mask l d) g
+    withDataSourceP _ path@DataSourcePath'Mask'NoMask g = g path DataSourceAcq'Mask'NoMask
+    withDataSourceP (ScanFile _ sn) path@(DataSourcePath'Mask l d) g
         = do  m <- getMask l d sn
-              g (DataSourceAcq'Mask m)
+              g path (DataSourceAcq'Mask m)
 
 -- Scannumber
 
@@ -629,7 +628,7 @@ data instance DSScannumber DSAcq
     deriving Generic
 
 instance DataSource DSScannumber where
-  withDataSourceP (ScanFile _ s) DataSourcePath'Scannumber g = g (DataSourceAcq'Scannumber'Const s)
+  withDataSourceP (ScanFile _ s) path@DataSourcePath'Scannumber g = g path (DataSourceAcq'Scannumber'Const s)
 
 
 -- Timestamp
@@ -646,8 +645,8 @@ data instance DSTimestamp DSAcq
     deriving Generic
 
 instance DataSource DSTimestamp where
-    withDataSourceP f (DataSourcePath'Timestamp'Hdf5 p) g = withDataSourcesP f p $ \ds -> g (DataSourceAcq'Timestamp'Hdf5 ds)
-    withDataSourceP _ DataSourcePath'Timestamp'NoTimestamp g = g DataSourceAcq'Timestamp'NoTimestamp
+    withDataSourceP f (DataSourcePath'Timestamp'Hdf5 ps) g = withDataSourcesP f ps $ \p ds -> g (DataSourcePath'Timestamp'Hdf5 [p]) (DataSourceAcq'Timestamp'Hdf5 ds)
+    withDataSourceP _ path@DataSourcePath'Timestamp'NoTimestamp g = g path DataSourceAcq'Timestamp'NoTimestamp
 
 -- Timescan0
 
@@ -663,5 +662,5 @@ data instance DSTimescan0 DSAcq
     deriving Generic
 
 instance DataSource DSTimescan0 where
-    withDataSourceP f (DataSourcePath'Timescan0'Hdf5 p) g = withDataSourcesP f p $ \ds -> g (DataSourceAcq'Timescan0'Hdf5 ds)
-    withDataSourceP _ DataSourcePath'Timescan0'NoTimescan0 g = g DataSourceAcq'Timescan0'NoTimescan0
+    withDataSourceP f (DataSourcePath'Timescan0'Hdf5 ps) g = withDataSourcesP f ps $ \p ds -> g (DataSourcePath'Timescan0'Hdf5 [p]) (DataSourceAcq'Timescan0'Hdf5 ds)
+    withDataSourceP _ path@DataSourcePath'Timescan0'NoTimescan0 g = g path DataSourceAcq'Timescan0'NoTimescan0
