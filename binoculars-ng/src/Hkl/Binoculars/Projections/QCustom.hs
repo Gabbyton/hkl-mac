@@ -1084,7 +1084,8 @@ instance ChunkP [DSDataFrameQCustom DSPath] where
       skipMalformed $ forever $ do
       sfp <- await
       withScanFileP sfp $ \f' ->
-        withDataSourcesP f' ps $ \_p p' -> do
+        withDataSourcesP f' ps $ \p p' -> do
+          liftIO $ print p
           (DataSourceShape'Range (Z :. f) (Z :. t)) <- ds'Shape p'
           yield $ cclip (fromMaybe 0 mSkipFirst) (fromMaybe 0 mSkipLast) (Chunk sfp f (t - 1))
 
@@ -1093,8 +1094,9 @@ instance FramesP [DSDataFrameQCustom DSPath] DataFrameQCustom where
         skipMalformed $ forever $ do
           (fp, js) <- await
           withScanFileP fp $ \f ->
-            withDataSourcesP f ps $ \_p p' ->
-                forM_ js (tryYield . extract1DStreamValue p')
+            withDataSourcesP f ps $ \p p' -> do
+                                    liftIO $ print p
+                                    forM_ js (tryYield . extract1DStreamValue p')
 
 ---------
 -- Cmd --

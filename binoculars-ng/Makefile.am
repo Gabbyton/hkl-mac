@@ -195,7 +195,7 @@ sixs: binoculars-ng
 #	$(PROCESS) data/test/config_sixs_ruche_rigaku.ini 55-72
 #	$(PROCESS) data/test/config_sixs_ruche_rigaku.ini 73-84
 #	$(PROCESS) data/test/config_sixs_ruche_rigaku.ini 97-112
-	$(PROCESS) data/test/config_sixs_ruche_rigaku.ini 113-128
+#	$(PROCESS) data/test/config_sixs_ruche_rigaku.ini 113-128
 #	$(PROCESS) data/test/config_sixs_ruche_rigaku.ini 161-172
 #	$(PROCESS) data/test/config_sixs_ruche_rigaku.ini 161-172
 #	$(PROCESS) data/test/config_sixs_ruche_medv_noetaa.ini 457
@@ -203,3 +203,5 @@ sixs: binoculars-ng
 #	$(PROCESS) data/test/config_sixs_ruche_medv_noetaa.ini 459
 #	$(PROCESS) data/test/config_sixs_polarisation.ini 600-631
 #	$(PROCESS) data/test/config_sixs_polarisation.ini 631
+#	$(PROCESS) /nfs/ruche/sixs-soleil/com-sixs/2025/Run4/Cheng-Long_20250900/binoculars/config_stereo.cfg 339
+	$(PROCESS) /nfs/ruche/sixs-soleil/com-sixs/2025/Run4/Cheng-Long_20250900/binoculars/config_stereo.cfg 340

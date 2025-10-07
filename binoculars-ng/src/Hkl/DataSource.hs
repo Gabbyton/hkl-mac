@@ -57,7 +57,7 @@ import           Bindings.HDF5.Dataset             (getDatasetType)
 import           Bindings.HDF5.Datatype            (getTypeSize, nativeTypeOf,
                                                     typeIDsEqual)
 import           Control.Exception                 (throwIO)
-import           Control.Monad.Extra               (ifM)
+import           Control.Monad.Extra               (ifM, when)
 import           Control.Monad.IO.Class            (MonadIO (liftIO))
 import           Data.Aeson                        (FromJSON (..), ToJSON (..))
 import           Data.Int                          (Int32)
@@ -353,10 +353,11 @@ withDataSourcesP :: (DataSource d, Location l, MonadSafe m, Show (d DSPath))
                  => ScanFile l -> [d DSPath] -> (d DSPath -> d DSAcq -> m r) -> m r
 withDataSourcesP f paths g = go paths
   where
-    go [] = throwM $ HklDataSourceException'NoRemainingDataPath (show paths)
-    go (s : ss) = withDataSourceP f s g
-                  `catch`
-                  \(_exl :: HklDataSourceException) -> go ss
+    go [] = throwM $ HklDataSourceException'NoRemainingDataPath ""
+    go (s : ss) =  withDataSourceP f s g
+                   `catch` \(exl :: HklDataSourceException) ->
+                       do when (null ss) $ liftIO $ print exl
+                          go ss
 
 -- DataSource (instances)
 
