@@ -122,6 +122,7 @@ import           Foreign.StablePtr               (StablePtr, castPtrToStablePtr,
 import           GHC.Generics                    (Generic)
 import           Numeric.LinearAlgebra           (Matrix, reshape)
 import           Test.QuickCheck                 (Arbitrary (..), oneof)
+import           Text.Printf                     (printf)
 
 import           Hkl.Detector
 import           Hkl.Exception
@@ -380,7 +381,14 @@ data Hdf5Path sh e
   | H5GroupAtPath Int (Hdf5Path sh e)
   | H5DatasetPath ByteString
   | H5DatasetPathAttr (ByteString, ByteString)
-    deriving (Eq, Generic, Show, FromJSON, ToJSON)
+    deriving (Eq, Generic, FromJSON, ToJSON)
+
+instance Show (Hdf5Path sh e) where
+    show (H5RootPath p)                   = "hdf5://" <> show p
+    show (H5GroupPath name p)             = unpack name <> "/" <> show p
+    show (H5GroupAtPath pos p)            = (printf "@%d" pos) <> "/" <> show p
+    show (H5DatasetPath name)             = unpack name
+    show (H5DatasetPathAttr (key, value)) = printf "%s=%s" (unpack key) (unpack value)
 
 instance Arbitrary (Hdf5Path sh e) where
   {- HLINT ignore "Redundant <$>" -}

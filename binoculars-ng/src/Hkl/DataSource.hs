@@ -402,8 +402,11 @@ instance DataSource DSAttenuation where
 data family DSDataset (sh :: Type) (a :: Type) (k :: DSKind)
 newtype instance DSDataset sh a DSPath
     = DataSourcePath'Dataset (Hdf5Path sh a)
-    deriving (Eq, Generic, Show)
+    deriving (Eq, Generic)
     deriving anyclass (FromJSON, ToJSON)
+
+instance Show (DSDataset sh a DSPath) where
+    show (DataSourcePath'Dataset p) = show p
 
 newtype instance DSDataset sh a DSAcq
     = DataSourceAcq'Dataset Dataset
