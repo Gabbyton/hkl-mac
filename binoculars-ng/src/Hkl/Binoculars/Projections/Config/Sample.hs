@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -92,22 +91,22 @@ instance Is0DStreamable (DSSample DSAcq) Sample where
 default'DataSource'Sample :: DSWrap_ DSSample DSPath
 default'DataSource'Sample
     = [ DataSource'Sample
-        ([DataSourcePath'Double'Hdf5([DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/A")])])
-        ([DataSourcePath'Double'Hdf5([DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/B")])])
-        ([DataSourcePath'Double'Hdf5([DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/C")])])
-        ([DataSourcePath'Degree'Hdf5([DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Alpha")])])
-        ([DataSourcePath'Degree'Hdf5([DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Beta")])])
-        ([DataSourcePath'Degree'Hdf5([DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Gamma")])])
-        ([DataSourcePath'Degree'Hdf5([DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Ux")])])
-        ([DataSourcePath'Degree'Hdf5([DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Uy")])])
-        ([DataSourcePath'Degree'Hdf5([DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Uz")])])
+        [DataSourcePath'Double'Hdf5 [DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/A")]]
+        [DataSourcePath'Double'Hdf5 [DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/B")]]
+        [DataSourcePath'Double'Hdf5 [DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/C")]]
+        [DataSourcePath'Degree'Hdf5 [DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Alpha")]]
+        [DataSourcePath'Degree'Hdf5 [DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Beta")]]
+        [DataSourcePath'Degree'Hdf5 [DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Gamma")]]
+        [DataSourcePath'Degree'Hdf5 [DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Ux")]]
+        [DataSourcePath'Degree'Hdf5 [DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Uy")]]
+        [DataSourcePath'Degree'Hdf5 [DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/I14-C-CX2__EX__DIFF-UHV__#1/Uz")]]
       ]
 
 
 overload'DataSource'Sample :: Config Sample
                            -> DSWrap_ DSSample DSPath
                            -> DSWrap_ DSSample DSPath
-overload'DataSource'Sample (BinocularsConfig'Sample ma mb mc malpha mbeta mgamma mux muy muz) sps
+overload'DataSource'Sample (BinocularsConfig'Sample ma mb mc malpha mbeta mgamma mux muy muz)
   = map (\(DataSource'Sample pa pb pc palpha pbeta pgamma pux puy puz) ->
              DataSource'Sample
              (maybe pa (\x -> [DataSourcePath'Double'Const x]) ma)
@@ -119,7 +118,7 @@ overload'DataSource'Sample (BinocularsConfig'Sample ma mb mc malpha mbeta mgamma
              (maybe pux (\x -> [DataSourcePath'Degree'Const x]) mux)
              (maybe puy (\x -> [DataSourcePath'Degree'Const x]) muy)
              (maybe puz (\x -> [DataSourcePath'Degree'Const x]) muz)
-        ) sps
+        )
 
 guess'DataSource'Sample :: Config Common
                         -> Config Sample
@@ -128,21 +127,27 @@ guess'DataSource'Sample common sample =
   do let inputType = binocularsConfig'Common'InputType common
      let samplePath' beamline device =
            DataSource'Sample
-           [ DataSourcePath'Double'Hdf5([DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "A")])
-           , DataSourcePath'Double'Hdf5([DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "a")])]
-           [ DataSourcePath'Double'Hdf5([DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "B")])
-           , DataSourcePath'Double'Hdf5([DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "b")])]
-           [ DataSourcePath'Double'Hdf5([DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "C")])
-           , DataSourcePath'Double'Hdf5([DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "c")])]
-           [ DataSourcePath'Degree'Hdf5([DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "alpha")])]
-           [ DataSourcePath'Degree'Hdf5([DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "beta")])]
-           [ DataSourcePath'Degree'Hdf5([DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "gamma")])]
-           [ DataSourcePath'Degree'Hdf5([ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "Ux")
-                                        , DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "u_x")])]
-           [ DataSourcePath'Degree'Hdf5([ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "Uy")
-                                        , DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "u_y")])]
-           [ DataSourcePath'Degree'Hdf5([ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "Uz")
-                                        , DataSourcePath'Dataset(hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "u_z")])]
+           [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "A") ]
+           , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "a") ]
+           ]
+           [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "B") ]
+           , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "b") ]
+           ]
+           [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "C") ]
+           , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "c") ]
+           ]
+           [ DataSourcePath'Degree'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "alpha") ] ]
+           [ DataSourcePath'Degree'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "beta") ] ]
+           [ DataSourcePath'Degree'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "gamma") ] ]
+           [ DataSourcePath'Degree'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "Ux")
+                                        , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "u_x") ]
+           ]
+           [ DataSourcePath'Degree'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "Uy")
+                                        , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "u_y") ]
+           ]
+           [ DataSourcePath'Degree'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "Uz")
+                                        , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp beamline $ groupp device $ datasetp "u_z") ]
+           ]
      let cristalSamplePath = [samplePath' "NOBEAMLINE" "NOBEAMLINE"]
      let diffabsSamplePath = [samplePath' "DIFFABS" undefined]
      let marsSamplePath = [ samplePath' "MARS" "d03-1-cx2__ex__dif-cm_#1"]

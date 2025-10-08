@@ -184,8 +184,9 @@ maskOr :: (MonadThrow m, MonadIO m) =>
 maskOr (Detector2D d _ sh) l r = do
   let n =  toEnum . fromEnum $ d
   liftIO $ withForeignPtr (toForeignPtr l) $ \c'l ->
-    withForeignPtr (toForeignPtr r) $ \c'r ->
-    fromPtr sh MaskInternalError =<< c'hkl_binoculars_detector_2d_mask_or n c'l c'r
+      withForeignPtr
+      (toForeignPtr r)
+      (fromPtr sh MaskInternalError <=< c'hkl_binoculars_detector_2d_mask_or n c'l)
 
 inDetector :: (Int, Int) -> Detector Hkl DIM2 -> Bool
 inDetector (x, y) det = inShape (shape det) (ix2 y x)

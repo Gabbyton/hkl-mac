@@ -197,7 +197,7 @@ getPosition dataset' n = do
   v <- getPosition' dataset' [(HSize (fromIntegral n), Nothing,  HSize 1, Nothing)]
   let v' = head v
   if isNaN v'
-    then throwIO $ ContainNanValue
+    then throwIO ContainNanValue
     else return v'
 
 getUB :: Dataset -> IO (Matrix Double)
@@ -386,7 +386,7 @@ data Hdf5Path sh e
 instance Show (Hdf5Path sh e) where
     show (H5RootPath p)                   = "hdf5://" <> show p
     show (H5GroupPath name p)             = unpack name <> "/" <> show p
-    show (H5GroupAtPath pos p)            = (printf "@%d" pos) <> "/" <> show p
+    show (H5GroupAtPath pos p)            = printf "@%d" pos <> "/" <> show p
     show (H5DatasetPath name)             = unpack name
     show (H5DatasetPathAttr (key, value)) = printf "%s=%s" (unpack key) (unpack value)
 

@@ -1,8 +1,8 @@
 {-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE RecordWildCards       #-}
@@ -123,13 +123,13 @@ overload'DataSourcePath'DataFrameTest :: Config Common
                                       -> Config Sample
                                       -> DSWrap_ DSDataFrameTest DSPath
                                       -> DSWrap_ DSDataFrameTest DSPath
-overload'DataSourcePath'DataFrameTest common sample dfs
+overload'DataSourcePath'DataFrameTest common sample
     = Prelude.map
       ( \(DSDataFrameTest qCustomPath samplePath) ->
             let newQCustomPath = overload'DataSource'DataFrameQCustom common Nothing qCustomPath
                 newSamplePath = overload'DataSource'Sample sample samplePath
             in DSDataFrameTest newQCustomPath newSamplePath
-      ) dfs
+      )
 
 instance HasIniConfig 'TestProjection where
   data Config 'TestProjection
@@ -160,10 +160,10 @@ instance HasIniConfig 'TestProjection where
            binocularsConfig'Test'ProjectionType <- parseFDef cfg "projection" "type" (binocularsConfig'Test'ProjectionType defaultConfig)
            binocularsConfig'Test'ProjectionResolution <- parseFDef cfg "projection" "resolution" (binocularsConfig'Test'ProjectionResolution defaultConfig)
            binocularsConfig'Test'ProjectionLimits <- parseMb cfg "projection" "limits"
-           binocularsConfig'Test'DataPath <- (pure $ eitherF (const $ guess'DataSourcePath'DataFrameTest binocularsConfig'Test'Common binocularsConfig'Test'Sample content) (parse' cfg "input" "datapath")
-                                             (\md -> case md of
-                                                      Nothing -> guess'DataSourcePath'DataFrameTest binocularsConfig'Test'Common binocularsConfig'Test'Sample content
-                                                      Just d  ->  overload'DataSourcePath'DataFrameTest binocularsConfig'Test'Common binocularsConfig'Test'Sample d))
+           let binocularsConfig'Test'DataPath = eitherF (const $ guess'DataSourcePath'DataFrameTest binocularsConfig'Test'Common binocularsConfig'Test'Sample content) (parse' cfg "input" "datapath")
+                                                (\case
+                                                  Nothing -> guess'DataSourcePath'DataFrameTest binocularsConfig'Test'Common binocularsConfig'Test'Sample content
+                                                  Just d  ->  overload'DataSourcePath'DataFrameTest binocularsConfig'Test'Common binocularsConfig'Test'Sample d)
            pure BinocularsConfig'Test{..}
 
   toIni c = toIni (binocularsConfig'Test'Common c)

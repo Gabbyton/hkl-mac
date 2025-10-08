@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -103,10 +104,10 @@ instance HasIniConfig 'AnglesProjection where
                                                                                         RealSpaceProjection -> undefined
                                                                                         PixelsProjection -> undefined
                                                                                         TestProjection  -> undefined
-           binocularsConfig'Angles'DataPath <- pure $ eitherF (const $ guess'DataSource'DataFrameQCustom binocularsConfig'Angles'Common Nothing content) (parse' cfg "input" "datapath")
-                                              (\md -> case md of
-                                                       Nothing -> guess'DataSource'DataFrameQCustom binocularsConfig'Angles'Common Nothing content
-                                                       Just d  ->  overload'DataSource'DataFrameQCustom binocularsConfig'Angles'Common Nothing d)
+           let binocularsConfig'Angles'DataPath = eitherF (const $ guess'DataSource'DataFrameQCustom binocularsConfig'Angles'Common Nothing content) (parse' cfg "input" "datapath")
+                                                  (\case
+                                                    Nothing -> guess'DataSource'DataFrameQCustom binocularsConfig'Angles'Common Nothing content
+                                                    Just d  ->  overload'DataSource'DataFrameQCustom binocularsConfig'Angles'Common Nothing d)
            pure BinocularsConfig'Angles{..}
 
   toIni c = toIni (binocularsConfig'Angles'Common c)

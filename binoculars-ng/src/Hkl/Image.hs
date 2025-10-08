@@ -84,7 +84,7 @@ sum' :: (Integral a, Storable a) => IOVector a -> Double
 sum' v = unsafePerformIO $ foldl' (\b a -> b + fromIntegral a) 0.0 v
 
 sumImage :: Image -> Double
-sumImage (ImageDouble v) = unsafePerformIO $ foldl' (\b a -> b + a) 0.0 v
+sumImage (ImageDouble v) = unsafePerformIO $ foldl' (+) 0.0 v
 sumImage (ImageInt32 v)  = sum' v
 sumImage (ImageWord16 v) = sum' v
 sumImage (ImageWord32 v) = sum' v
@@ -95,9 +95,9 @@ filterSumImage mMax img = case mMax of
                             Nothing  -> True
                             (Just m) -> sumImage img < m
 
-readImgInBuffer :: IOVector Int32 -> (Detector Hkl DIM2) -> FilePath -> IO (IOVector Int32)
+readImgInBuffer :: IOVector Int32 -> Detector Hkl DIM2 -> FilePath -> IO (IOVector Int32)
 readImgInBuffer vec (Detector2D n _ _) fp
   = unsafeWith vec $ \buf ->
   withCString fp $ \c'fp -> do
-  c'hkl_binoculars_detector_2d_img_load_into (toEnum . fromEnum $ n) c'fp buf ((toEnum $ Data.Vector.Storable.Mutable.length vec) * 4) -- TODO avoid this hardcode
+  c'hkl_binoculars_detector_2d_img_load_into (toEnum . fromEnum $ n) c'fp buf (toEnum (Data.Vector.Storable.Mutable.length vec) * 4) -- TODO avoid this hardcode
   return vec

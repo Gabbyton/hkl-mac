@@ -3,8 +3,6 @@
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE GADTs                     #-}
-{-# LANGUAGE OverloadedStrings         #-}
-{-# LANGUAGE StandaloneDeriving        #-}
 
 module Hkl.Exception where
 

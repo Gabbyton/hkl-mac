@@ -197,9 +197,7 @@ inShape :: forall sh
         -> Bool
 
 {-# INLINE inShape #-}
-inShape sh ix
-        = inShapeRange zeroDim sh ix
-
+inShape = inShapeRange zeroDim
 
 -- | Nicely format a shape as a string
 showShape :: Shape sh => sh -> String
@@ -286,7 +284,7 @@ instance Shape sh => Shape (sh :. Int) where
 
         {-# INLINE [1] intersectDim #-}
         intersectDim (sh1 :. n1) (sh2 :. n2)
-                = (intersectDim sh1 sh2 :. (min n1 n2))
+                = intersectDim sh1 sh2 :. min n1 n2
 
         {-# INLINE [1] addDim #-}
         addDim (sh1 :. n1) (sh2 :. n2)
@@ -321,7 +319,7 @@ instance Shape sh => Shape (sh :. Int) where
 
         {-# INLINE [1] inShapeRange #-}
         inShapeRange (zs :. z) (sh1 :. n1) (sh2 :. n2)
-                = (n2 >= z) && (n2 < n1) && (inShapeRange zs sh1 sh2)
+                = (n2 >= z) && (n2 < n1) && inShapeRange zs sh1 sh2
 
         {-# NOINLINE listOfShape #-}
         listOfShape (sh :. n)

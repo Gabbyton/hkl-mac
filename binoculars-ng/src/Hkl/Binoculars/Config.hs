@@ -388,7 +388,7 @@ instance HasFieldValue ConfigRange where
 getInitialScannumber :: ConfigRange -> Scannumber
 getInitialScannumber (ConfigRange ne) = let (InputRange int) = Data.List.NonEmpty.head ne
                                             sn0 = inf int
-                                        in (Scannumber sn0)
+                                        in Scannumber sn0
 
 -- DestinationTmpl
 
@@ -426,9 +426,7 @@ instance HasIniParser (Maybe Geometry) where
                                          pure $ mk'Geometry sample_axes detector_axes
         where
           words' :: Parser [Text]
-          words' = do
-            t <- takeText
-            pure $ Data.Text.words t
+          words' = Data.Text.words <$> takeText
 
           iniParser'Axis :: Text -> IniParser Axis
           iniParser'Axis n
@@ -1107,7 +1105,7 @@ isHdf5 :: Path Abs File -> Bool
 isHdf5 p =
   case (fileExtension p :: Maybe [Char]) of
     Nothing  -> False
-    Just ext -> ext `elem` [".nxs"]
+    Just ext -> ext == ".nxs"
 
 -- isInConfigRange :: Maybe InputTmpl -> Maybe ConfigRange -> FilePath -> Bool
 -- isInConfigRange mtmpl mr f

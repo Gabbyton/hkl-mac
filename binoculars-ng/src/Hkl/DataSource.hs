@@ -8,11 +8,11 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 
@@ -157,13 +157,13 @@ badAttenuation :: Float
 badAttenuation = -100
 
 instance Is1DStreamable (DSDataset DIM1 Double DSAcq) CDouble where
-    extract1DStreamValue (DataSourceAcq'Dataset ds) i = getPosition ds i
+    extract1DStreamValue (DataSourceAcq'Dataset ds) = getPosition ds
 
 instance Is1DStreamable (DSDataset DIM1 Double DSAcq) Double where
-    extract1DStreamValue (DataSourceAcq'Dataset ds) i = getPosition ds i
+    extract1DStreamValue (DataSourceAcq'Dataset ds) = getPosition ds
 
 instance Is1DStreamable (DSDataset DIM1 Float DSAcq) Float where
-    extract1DStreamValue (DataSourceAcq'Dataset ds) i = getPosition ds i
+    extract1DStreamValue (DataSourceAcq'Dataset ds) = getPosition ds
 
 instance Is1DStreamable (DSAttenuation DSAcq) Attenuation where
     extract1DStreamValue (DataSourceAcq'Attenuation ds offset coef mmax) i =
@@ -207,8 +207,8 @@ instance Is1DStreamable (DSImage DSAcq) Image where
     extract1DStreamValue (DataSourceAcq'Image'Img'Int32 det buf tmpl sn fn) i = ImageInt32 <$> readImgInBuffer buf det (fn tmpl sn i)
 
 instance Is1DStreamable (DSMask DSAcq) (Maybe Mask) where
-    extract1DStreamValue (DataSourceAcq'Mask'NoMask) _ = pure Nothing
-    extract1DStreamValue (DataSourceAcq'Mask m) _      = pure $ Just m
+    extract1DStreamValue DataSourceAcq'Mask'NoMask _ = pure Nothing
+    extract1DStreamValue (DataSourceAcq'Mask m) _    = pure $ Just m
 
 instance Is1DStreamable (DSTimestamp DSAcq) Timestamp where
     extract1DStreamValue (DataSourceAcq'Timestamp'Hdf5 ds) i   = Timestamp <$> extract1DStreamValue ds i
@@ -263,7 +263,7 @@ class GDSAK1 a where
    g'ds'Shape'K1 _ = pure shape1
 
 instance DataSource a => GDSAK1 (a DSAcq) where
-   g'ds'Shape'K1 acq = ds'Shape acq
+   g'ds'Shape'K1 = ds'Shape
 
 instance GDSAK1 Dataset where
     g'ds'Shape'K1 = liftIO . ds'Shape'Dataset
@@ -353,7 +353,7 @@ withDataSourcesP :: (DataSource d, Location l, MonadSafe m, Show (d DSPath))
                  => ScanFile l -> [d DSPath] -> (d DSPath -> d DSAcq -> m r) -> m r
 withDataSourcesP f paths g = go paths
   where
-    go [] = throwM $ HklDataSourceException'NoRemainingDataPath (show $ paths)
+    go [] = throwM $ HklDataSourceException'NoRemainingDataPath (show paths)
     go (s : ss) =  withDataSourceP f s g `catch` \(exl :: HklDataSourceException) ->
                    case exl of
                      HklDataSourceException'NoRemainingDataPath _ -> throwM exl
@@ -460,9 +460,9 @@ instance DataSource DSDouble where
   withDataSourceP _ path@(DataSourcePath'Double'Const a) g = g path (DataSourceAcq'Double'Const a)
   withDataSourceP _ path@(DataSourcePath'Double'Ini (ConfigContent cfg) s k) g =
       eitherF (const $ throwM $ CanNotOpenDataSource'Double'Ini s k) (parse' cfg s k)
-      (\mv -> case mv of
-               Nothing -> throwM $ CanNotOpenDataSource'Double'Ini s k
-               Just v  ->  g path (DataSourceAcq'Double'Const v))
+      (\case
+        Nothing -> throwM $ CanNotOpenDataSource'Double'Ini s k
+        Just v  ->  g path (DataSourceAcq'Double'Const v))
 
 -- [Double]
 
@@ -552,7 +552,7 @@ data instance DSImage DSAcq
 
 instance DataSource DSImage where
   withDataSourceP _ path@(DataSourcePath'Image'Dummy det v) g
-      =  do let n = (size . shape $ det)
+      =  do let n = size . shape $ det
             arr <- liftIO $ replicate n v
             g path (DataSourceAcq'Image'Dummy arr)
 
@@ -577,7 +577,7 @@ instance DataSource DSImage where
                                     ]
 
   withDataSourceP (ScanFile _ sn) path@(DataSourcePath'Image'Img det tmpl (Scannumber sn0)) g
-    = do let n = (size . shape $ det)
+    = do let n = size . shape $ det
          arr <- liftIO $ unsafeNew n
          g path (DataSourceAcq'Image'Img'Int32 det arr tmpl sn f)
              where
@@ -629,7 +629,7 @@ data instance DSScannumber DSPath
     = DataSourcePath'Scannumber
     deriving (Eq, Generic, Show, FromJSON, ToJSON)
 
-data instance DSScannumber DSAcq
+newtype instance DSScannumber DSAcq
     = DataSourceAcq'Scannumber'Const Scannumber
     deriving Generic
 
