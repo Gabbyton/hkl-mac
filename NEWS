@@ -26,6 +26,10 @@
      - 'q_thetax_phix' -> latitude and longitude of q with qx as reference.
      - 'q_thetay_phiy' -> latitude and longitude of q with qy as reference.
      - 'q_thetaz_phiz' -> latitude and longitude of q with qz as reference.
+   - DataSource
+     - better error message when we do not find the data's. It display
+       the faulty DataSourcePaths.
+     - When opening a datafile, display the real DataSource of the DataFrame.
    - DataSource Image
      - support for double image from hdf5 files.
      - Added a constructor in order to read the Rigaku images.
