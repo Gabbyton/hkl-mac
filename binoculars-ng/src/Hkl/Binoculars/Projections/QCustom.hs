@@ -1095,7 +1095,6 @@ instance FramesP [DSDataFrameQCustom DSPath] DataFrameQCustom where
           (fp, js) <- await
           withScanFileP fp $ \f ->
             withDataSourcesP f ps $ \p p' -> do
-                                    liftIO $ print p
                                     forM_ js (tryYield . extract1DStreamValue p')
 
 ---------
