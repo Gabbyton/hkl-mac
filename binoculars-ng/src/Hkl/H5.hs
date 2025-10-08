@@ -11,7 +11,7 @@
 
 
 {-
-    Copyright  : Copyright (C) 2014-2024 Synchrotron SOLEIL
+    Copyright  : Copyright (C) 2014-2025 Synchrotron SOLEIL
                                          L'Orme des Merisiers Saint-Aubin
                                          BP 48 91192 GIF-sur-YVETTE CEDEX
     License    : GPL3+
@@ -119,7 +119,6 @@ import           Foreign.StablePtr               (StablePtr, castPtrToStablePtr,
                                                   castStablePtrToPtr,
                                                   deRefStablePtr, freeStablePtr,
                                                   newStablePtr)
-import           GHC.Base                        (Alternative (..))
 import           GHC.Generics                    (Generic)
 import           Numeric.LinearAlgebra           (Matrix, reshape)
 import           Test.QuickCheck                 (Arbitrary (..), oneof)
@@ -381,7 +380,6 @@ data Hdf5Path sh e
   | H5GroupAtPath Int (Hdf5Path sh e)
   | H5DatasetPath ByteString
   | H5DatasetPathAttr (ByteString, ByteString)
-  | H5Or (Hdf5Path sh e) (Hdf5Path sh e)
     deriving (Eq, Generic, Show, FromJSON, ToJSON)
 
 instance Arbitrary (Hdf5Path sh e) where
@@ -392,7 +390,6 @@ instance Arbitrary (Hdf5Path sh e) where
     , H5GroupAtPath <$> arbitrary <*> arbitrary
     , H5DatasetPath <$> pure "dataset"
     , H5DatasetPathAttr <$> pure ("attibute", "value")
-    , H5Or <$> arbitrary <*> arbitrary
     ]
 
 hdf5p :: Hdf5Path sh e -> Hdf5Path sh e
@@ -416,7 +413,6 @@ withHdf5Path' loc (H5GroupPath n subpath) f = withGroup (openGroup' loc n Nothin
 withHdf5Path' loc (H5GroupAtPath i subpath) f = withGroupAt loc i $ \g -> withHdf5Path' g subpath f
 withHdf5Path' loc (H5DatasetPath n) f = withDataset (openDataset' loc n Nothing) f
 withHdf5Path' loc (H5DatasetPathAttr (a, c)) f = withDataset (openDatasetWithAttr loc a c) f
-withHdf5Path' loc (H5Or l r) f = withHdf5Path' loc l f <|> withHdf5Path' loc r f
 
 withHdf5Path :: FilePath -> Hdf5Path sh e -> (Dataset -> IO r) -> IO r
 withHdf5Path fn path f = withH5File fn $ \fn' -> withHdf5Path' fn' path f

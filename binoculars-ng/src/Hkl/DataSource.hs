@@ -57,7 +57,7 @@ import           Bindings.HDF5.Dataset             (getDatasetType)
 import           Bindings.HDF5.Datatype            (getTypeSize, nativeTypeOf,
                                                     typeIDsEqual)
 import           Control.Exception                 (throwIO)
-import           Control.Monad.Extra               (ifM, when)
+import           Control.Monad.Extra               (ifM)
 import           Control.Monad.IO.Class            (MonadIO (liftIO))
 import           Data.Aeson                        (FromJSON (..), ToJSON (..))
 import           Data.Int                          (Int32)
@@ -534,7 +534,7 @@ data family DSImage (k :: DSKind)
 
 data instance DSImage DSPath
   = DataSourcePath'Image'Dummy (Detector Hkl DIM2) Double
-  | DataSourcePath'Image'Hdf5 (Detector Hkl DIM2) (Hdf5Path DIM3 Int32) -- TODO Int32 is wrong
+  | DataSourcePath'Image'Hdf5 (Detector Hkl DIM2) (DSWrap_ (DSDataset DIM3 Int32) DSPath) -- TODO Int32 is wrong
   | DataSourcePath'Image'Img (Detector Hkl DIM2) Text Scannumber
   deriving (Eq, Generic, Show, FromJSON, ToJSON)
 
@@ -553,23 +553,25 @@ instance DataSource DSImage where
             arr <- liftIO $ replicate n v
             g path (DataSourceAcq'Image'Dummy arr)
 
-  withDataSourceP (ScanFile f _) path@(DataSourcePath'Image'Hdf5 det p) g = withHdf5PathP f p $ \ds -> do
-    t <- liftIO $ getDatasetType ds
-    s <- liftIO $ getTypeSize t
-    let n = (size . shape $ det) * fromEnum s
-    condM [ (liftIO $ typeIDsEqual t (nativeTypeOf (undefined ::  Double)), do
-                arr <- liftIO $ unsafeNew n
-                g path (DataSourceAcq'Image'Hdf5'Double det ds arr))
-          , (liftIO $ typeIDsEqual t (nativeTypeOf (undefined ::  Int32)), do
-                arr <- liftIO $ unsafeNew n
-                g path (DataSourceAcq'Image'Hdf5'Int32 det ds arr))
-          , (liftIO $ typeIDsEqual t (nativeTypeOf (undefined :: Word16)), do
-                arr <- liftIO $ unsafeNew n
-                g path (DataSourceAcq'Image'Hdf5'Word16 det ds arr))
-          , (liftIO $ typeIDsEqual t (nativeTypeOf (undefined :: Word32)), do
-                arr <- liftIO $ unsafeNew n
-                g path (DataSourceAcq'Image'Hdf5'Word32 det ds arr))
-          ]
+  withDataSourceP f (DataSourcePath'Image'Hdf5 det ps) g
+      = withDataSourcesP f ps $ \p (DataSourceAcq'Dataset ds) -> do
+                              let path = DataSourcePath'Image'Hdf5 det [p]
+                              t <- liftIO $ getDatasetType ds
+                              s <- liftIO $ getTypeSize t
+                              let n = (size . shape $ det) * fromEnum s
+                              condM [ (liftIO $ typeIDsEqual t (nativeTypeOf (undefined ::  Double)), do
+                                         arr <- liftIO $ unsafeNew n
+                                         g path (DataSourceAcq'Image'Hdf5'Double det ds arr))
+                                    , (liftIO $ typeIDsEqual t (nativeTypeOf (undefined ::  Int32)), do
+                                         arr <- liftIO $ unsafeNew n
+                                         g path (DataSourceAcq'Image'Hdf5'Int32 det ds arr))
+                                    , (liftIO $ typeIDsEqual t (nativeTypeOf (undefined :: Word16)), do
+                                         arr <- liftIO $ unsafeNew n
+                                         g path (DataSourceAcq'Image'Hdf5'Word16 det ds arr))
+                                    , (liftIO $ typeIDsEqual t (nativeTypeOf (undefined :: Word32)), do
+                                         arr <- liftIO $ unsafeNew n
+                                         g path (DataSourceAcq'Image'Hdf5'Word32 det ds arr))
+                                    ]
 
   withDataSourceP (ScanFile _ sn) path@(DataSourcePath'Image'Img det tmpl (Scannumber sn0)) g
     = do let n = (size . shape $ det)
