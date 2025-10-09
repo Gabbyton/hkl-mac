@@ -254,7 +254,6 @@ hkl_gui_factory_set_factory(HklGuiFactory *self,
 	self->liststore_solutions = g_list_store_new(HKL_GUI_TYPE_GEOMETRY);
 	update_liststore_solutions(self);
 
-
 	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_FACTORY]);
 }
 
@@ -544,18 +543,18 @@ hkl_gui_factory_set_wavelength(HklGuiFactory *self,
 /* methods */
 
 void
-hkl_gui_factory_add_reflection(HklGuiFactory *self)
+hkl_gui_factory_add_reflection(HklGuiFactory *self, HklGuiSample *sample)
 {
-	hkl_gui_sample_add_reflection(self->gsample,
+	hkl_gui_sample_add_reflection(sample,
 				      self->diffractometer->geometry,
 				      self->diffractometer->detector,
 				      0, 0, 0);
 }
 
 void
-hkl_gui_factory_del_reflection(HklGuiFactory *self, gint idx)
+hkl_gui_factory_del_reflection(HklGuiFactory *self, HklGuiSample *sample, gint idx)
 {
-	hkl_gui_sample_del_reflection(self->gsample, idx);
+	hkl_gui_sample_del_reflection(sample, idx);
 }
 
 void

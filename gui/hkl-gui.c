@@ -160,6 +160,25 @@ factory_notify_error_cb(HklGuiFactory *factory,
 	raise_error(self, hkl_gui_factory_get_error(factory));
 }
 
+static void
+column_view_samples_selection_changed_cb (GtkSelectionModel* model,
+					  guint position,
+					  guint n_items,
+					  gpointer user_data)
+{
+	GListStore *liststore;
+	HklGuiWindow* self = HKL_GUI_WINDOW(user_data);
+	GtkSingleSelection *single_selection;
+	HklGuiSample *sample;
+
+	sample = HKL_GUI_SAMPLE (gtk_single_selection_get_selected_item (GTK_SINGLE_SELECTION (model)));
+
+	single_selection = GTK_SINGLE_SELECTION (gtk_column_view_get_model (GTK_COLUMN_VIEW(self->column_view_sample_reflections)));
+	liststore = hkl_gui_sample_get_reflections(sample);
+	gtk_single_selection_set_model(single_selection, G_LIST_MODEL(liststore));
+}
+
+
 /* select diffractometer */
 static void
 dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
@@ -248,7 +267,7 @@ drop_down_samples_notify_selected_item_cb(GtkDropDown *dropdown,
 	// gsample = gtk_drop_down_get_selected_item(dropdown);
 }
 
-void
+static void
 column_view_solutions_activate_cb (GtkColumnView *column_view,
 				   guint position,
 				   gpointer user_data)
@@ -276,6 +295,7 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 	/* 	gtk_tree_path_free (path); */
 	/* } */
 }
+
 
 /* /\* reflection flag *\/ */
 /* void */
@@ -632,9 +652,16 @@ add_sample_reflection_activated (GSimpleAction *action,
 				 GVariant *parameter,
 				 gpointer user_data)
 {
+	GtkSingleSelection *single_selection;
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+	HklGuiSample *sample;
 
-	hkl_gui_factory_add_reflection(self->factory);
+	single_selection = GTK_SINGLE_SELECTION (gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples)));
+	sample = HKL_GUI_SAMPLE (gtk_single_selection_get_selected_item (single_selection));
+
+	g_return_if_fail (NULL != sample);
+
+	hkl_gui_factory_add_reflection(self->factory, sample);
 }
 
 static void
@@ -684,15 +711,21 @@ delete_sample_reflection_activated (GSimpleAction *action,
 				    GVariant *parameter,
 				    gpointer user_data)
 {
-	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	GtkSelectionModel *model;
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+	HklGuiSample *sample;
 	gint selected;
 
+	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples));
+	sample = HKL_GUI_SAMPLE (gtk_single_selection_get_selected_item (GTK_SINGLE_SELECTION (model)));
+
+	g_return_if_fail (NULL != sample);
+
 	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_sample_reflections));
-	selected  = gtk_single_selection_get_selected(GTK_SINGLE_SELECTION(model));
+	selected  = gtk_single_selection_get_selected (GTK_SINGLE_SELECTION (model));
 
 	if (-1 != selected)
-		hkl_gui_factory_del_reflection(self->factory, selected);
+		hkl_gui_factory_del_reflection(self->factory, sample, selected);
 }
 
 static GActionEntry win_entries[] = {
@@ -863,6 +896,7 @@ new_window (GApplication *app,
 
 	/* column view samples */
 	gtk_widget_set_vexpand(self->column_view_samples, true);
+
 	add_column(self->column_view_samples, "name", entry_property, "name");
 	add_column(self->column_view_samples, "a", entry_numeric_property, "a");
 	add_column(self->column_view_samples, "b", entry_numeric_property, "b");
@@ -873,6 +907,9 @@ new_window (GApplication *app,
 	add_column(self->column_view_samples, "ux", entry_numeric_property, "ux");
 	add_column(self->column_view_samples, "uy", entry_numeric_property, "uy");
 	add_column(self->column_view_samples, "uz", entry_numeric_property, "uz");
+
+	g_signal_connect (gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples)), "selection-changed",
+			  G_CALLBACK (column_view_samples_selection_changed_cb), self);
 
 	/* column view solutions */
 	g_signal_connect (self->column_view_solutions, "activate", G_CALLBACK (column_view_solutions_activate_cb), self);
