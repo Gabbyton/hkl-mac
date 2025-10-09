@@ -123,7 +123,7 @@ HKLAPI HklGuiGeometry* hkl_gui_geometry_new(const HklGeometry *geometry);
 
 HKLAPI HklGeometry* hkl_gui_geometry_get_geometry(HklGuiGeometry *geometry);
 
-HKLAPI GtkListItemFactory* hkl_gui_geometry_axis_value_factory_new(gint idx);
+HKLAPI gdouble hkl_gui_geometry_get_axis_value(HklGuiGeometry *geometry, gint idx);
 
 /*************/
 /* parameter */
@@ -200,6 +200,13 @@ HKLAPI void hkl_gui_sample_reflection_set_l(HklGuiSampleReflection* self, gdoubl
 /* item factories */
 /******************/
 
+/* gui geometry */
+
+HKLAPI GtkListItemFactory* hkl_gui_geometry_axis_value_factory_new(gint idx);
+
+HKLAPI void hkl_gui_bind_item_factory_label__geometry_axis_value_cb(GtkListItemFactory *factory,
+								    GtkListItem *list_item,
+								    gpointer user_data);
 
 /* gobject */
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_entry_property(char *property);
@@ -213,7 +220,8 @@ HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_parameter_min(vo
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_parameter_max(void);
 
 /* sample reflection */
-HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_sample_reflection_geometry_axis(int idx);
+
+HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_label__sample_reflection_geometry_axis(int idx);
 
 HKLAPI void hkl_gui_setup_item_factory_entry_cb (GtkListItemFactory *factory,
 						 GtkListItem *list_item);

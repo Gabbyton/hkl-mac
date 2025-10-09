@@ -19,6 +19,7 @@
  *
  * Authors: Picca Frédéric-Emmanuel <picca@synchrotron-soleil.fr>
  */
+#include <locale.h>
 
 #include <gtk/gtk.h>
 
@@ -84,6 +85,78 @@ hkl_gui_item_factory_new_entry_property(char *property)
 /* entry numeric */
 
 void
+entry_numeric_insert_text (GtkEditable *editable,
+			   const char  *new_text,
+			   int          new_text_length,
+			   int         *position,
+			   gpointer     data)
+{
+	g_signal_stop_emission_by_name (editable, "insert-text");
+
+	struct lconv *lc;
+	gboolean sign;
+	int dotpos = -1;
+	int i;
+	int entry_length;
+	const char *entry_text;
+	int digits = 20;
+
+	entry_text = gtk_editable_get_text (editable);
+	entry_length = g_utf8_strlen (entry_text, -1);
+
+
+	lc = localeconv ();
+
+	for (sign = FALSE, i = 0; i<entry_length; i++)
+		if (entry_text[i] == '-' || entry_text[i] == '+')
+		{
+			sign = TRUE;
+			break;
+		}
+
+	if (sign && !(*position))
+		return;
+
+	for (dotpos = -1, i = 0; i<entry_length; i++)
+		if (entry_text[i] == *(lc->decimal_point))
+		{
+			dotpos = i;
+			break;
+		}
+
+	if (dotpos > -1 && *position > dotpos &&
+	    digits - entry_length
+	    + dotpos - new_text_length + 1 < 0)
+		return;
+	for (i = 0; i < new_text_length; i++)
+	{
+		if (new_text[i] == '-' || new_text[i] == '+')
+		{
+			if (sign || (*position) || i)
+				return;
+			sign = TRUE;
+		}
+		else if (new_text[i] == *(lc->decimal_point))
+		{
+			if (!digits || dotpos > -1 ||
+			    (new_text_length - 1 - i + entry_length - *position > digits))
+				return;
+			dotpos = *position + i;
+		}
+		else if (new_text[i] < 0x30 || new_text[i] > 0x39)
+			return;
+	}
+
+	g_signal_handlers_block_by_func (editable, entry_numeric_insert_text, data);
+
+	gtk_editable_insert_text (editable,
+				  new_text, new_text_length, position);
+
+	g_signal_handlers_unblock_by_func (editable, entry_numeric_insert_text, data);
+}
+
+
+void
 hkl_gui_setup_item_factory_entry_numeric_cb (GtkListItemFactory *factory,
 					     GtkListItem *list_item)
 {
@@ -93,6 +166,10 @@ hkl_gui_setup_item_factory_entry_numeric_cb (GtkListItemFactory *factory,
 	gtk_entry_set_input_purpose(GTK_ENTRY(entry),
 				    GTK_INPUT_PURPOSE_NUMBER);
 
+	g_signal_connect (gtk_editable_get_delegate(GTK_EDITABLE(entry)),
+			  "insert-text",
+			  G_CALLBACK (entry_numeric_insert_text), entry);
+
 	gtk_list_item_set_child (list_item, entry);
 }
 
@@ -101,12 +178,12 @@ static gint string_to_double(GBinding *binding,
 			     GValue *value_b,
 			     gpointer user_data)
 {
-	  g_assert (G_VALUE_HOLDS_STRING (value_a));
-	  g_assert (G_VALUE_HOLDS_DOUBLE (value_b));
+	g_assert (G_VALUE_HOLDS_STRING (value_a));
+	g_assert (G_VALUE_HOLDS_DOUBLE (value_b));
 
-	  g_value_set_double(value_b, atof(g_value_get_string(value_a)));
+	g_value_set_double(value_b, atof(g_value_get_string(value_a)));
 
-	  return TRUE;
+	return TRUE;
 }
 
 void
@@ -134,6 +211,7 @@ hkl_gui_bind_item_factory_entry_numeric_property_cb (GtkListItemFactory *factory
 
 	g_return_if_fail (G_IS_OBJECT (self));
 
+	/* synchrotronise the object at first */
 	g_object_get_property(self, source_property, &value);
 	g_object_set_property (G_OBJECT (buffer), "text", &value);
 

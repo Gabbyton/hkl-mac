@@ -33,6 +33,7 @@
 
 #include "hkl.h"
 #include "hkl-gui.h"
+#include "hkl-gui-macros.h"
 
 /**********/
 /* Sample */
@@ -305,38 +306,29 @@ hkl_gui_sample_reflection_set_reflection(HklGuiSampleReflection *self, HklSample
 
 
 static void
-bind_spin_button__sample_reflection_geometry_axis_value_cb (GtkListItemFactory *factory,
-							    GtkListItem *list_item,
-							    gpointer user_data)
+bind_label__sample_reflection_geometry_axis_value_cb (GtkListItemFactory *factory,
+						      GtkListItem *list_item,
+						      gpointer user_data)
 {
-	GtkWidget *spin_button;
+	GtkWidget *label;
 	HklGuiSampleReflection *self;
 	gint idx = GPOINTER_TO_INT(user_data);
-	gint n_values;
-	HklGeometry *geometry;
 
-	spin_button = gtk_list_item_get_child (list_item);
+	label = gtk_list_item_get_child (list_item);
 	self = gtk_list_item_get_item (list_item);
 
 	g_return_if_fail(NULL != self->geometry);
 
-	geometry = hkl_gui_geometry_get_geometry(self->geometry);
-
-	n_values = darray_size(*hkl_geometry_axis_names_get(geometry));
-	double values[n_values];
-
-	hkl_geometry_axis_values_get(geometry, values, n_values, HKL_UNIT_USER);
-
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (spin_button), values[idx]);
+	set_label_from_double(label, hkl_gui_geometry_get_axis_value(self->geometry, idx));
 }
 
 
 GtkListItemFactory *
-hkl_gui_item_factory_new_spin_button_sample_reflection_geometry_axis(gint idx)
+hkl_gui_item_factory_new_label__sample_reflection_geometry_axis(gint idx)
 {
 	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
-	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_spin_button_vertical_cb), NULL);
-	g_signal_connect (factory, "bind", G_CALLBACK (bind_spin_button__sample_reflection_geometry_axis_value_cb), GINT_TO_POINTER(idx));
+	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), NULL);
+	g_signal_connect (factory, "bind", G_CALLBACK (bind_label__sample_reflection_geometry_axis_value_cb), GINT_TO_POINTER(idx));
 
 	return factory;
 }

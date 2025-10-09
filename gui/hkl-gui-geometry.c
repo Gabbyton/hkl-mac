@@ -33,6 +33,7 @@
 
 #include "hkl.h"
 #include "hkl-gui.h"
+#include "hkl-gui-macros.h"
 
 /***********/
 /* Factory */
@@ -172,6 +173,19 @@ hkl_gui_geometry_new(const HklGeometry *geometry)
 }
 
 
+gdouble
+hkl_gui_geometry_get_axis_value(HklGuiGeometry *self, gint idx)
+{
+	gint n_values;
+
+	n_values = darray_size(*hkl_geometry_axis_names_get(self->geometry));
+	double values[n_values];
+
+	hkl_geometry_axis_values_get(self->geometry, values, n_values, HKL_UNIT_USER);
+
+	return values[idx];
+}
+
 HklGeometry *
 hkl_gui_geometry_get_geometry(HklGuiGeometry *self)
 {
@@ -183,36 +197,28 @@ hkl_gui_geometry_get_geometry(HklGuiGeometry *self)
 /****************/
 
 static void
-bind_factory_axis_value_cb (GtkListItemFactory *factory,
-			    GtkListItem *list_item,
-			    gpointer user_data)
+bind_item_factory_label__geometry_axis_value_cb(GtkListItemFactory *factory,
+						GtkListItem *list_item,
+						gpointer user_data)
 {
 	GtkWidget *label;
 	gint idx = GPOINTER_TO_INT(user_data);
 	HklGuiGeometry *self;
-	gint n_values;
 
 	label = gtk_list_item_get_child (list_item);
 	self = gtk_list_item_get_item (list_item);
 
 	g_return_if_fail(NULL != self->geometry);
 
-	n_values = darray_size(*hkl_geometry_axis_names_get(self->geometry));
-	double values[n_values];
-
-	hkl_geometry_axis_values_get(self->geometry, values, n_values, HKL_UNIT_USER);
-
-	char *buf = g_strdup_printf ("%0.*f", 6, values[idx]);
-	gtk_label_set_label (GTK_LABEL (label), buf);
-	g_free(buf);
+	set_label_from_double(label, hkl_gui_geometry_get_axis_value(self, idx));
 }
 
 GtkListItemFactory *
 hkl_gui_geometry_axis_value_factory_new(gint idx)
 {
-		GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
-		g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), GINT_TO_POINTER(idx));
-		g_signal_connect (factory, "bind", G_CALLBACK (bind_factory_axis_value_cb), GINT_TO_POINTER(idx));
+	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_label_cb), GINT_TO_POINTER(idx));
+	g_signal_connect (factory, "bind", G_CALLBACK (bind_item_factory_label__geometry_axis_value_cb), GINT_TO_POINTER(idx));
 
-		return factory;
+	return factory;
 }

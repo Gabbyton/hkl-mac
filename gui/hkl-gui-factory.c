@@ -616,7 +616,7 @@ hkl_gui_factory_setup_column_view_sample_reflections(HklGuiFactory *self,
 	add_column(column_view, "l", entry_numeric_property, "l");
 	idx=0;
 	darray_foreach(name, *names){
-		add_column(column_view, *name, spin_button_sample_reflection_geometry_axis, idx);
+		add_column(column_view, *name, label__sample_reflection_geometry_axis, idx);
 		++idx;
 	}
 }

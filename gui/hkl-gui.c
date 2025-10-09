@@ -1100,15 +1100,15 @@ new_window (GApplication *app,
 	/* column view samples */
 	gtk_widget_set_vexpand(self->column_view_samples, true);
 	add_column(self->column_view_samples, "name", entry_property, "name");
-	add_column(self->column_view_samples, "a", spin_button_vertical_property, "a");
-	add_column(self->column_view_samples, "b", spin_button_vertical_property, "b");
-	add_column(self->column_view_samples, "c", spin_button_vertical_property, "c");
-	add_column(self->column_view_samples, "alpha", spin_button_vertical_property, "alpha");
-	add_column(self->column_view_samples, "beta", spin_button_vertical_property, "beta");
-	add_column(self->column_view_samples, "gamma", spin_button_vertical_property, "gamma");
-	add_column(self->column_view_samples, "ux", spin_button_vertical_property, "ux");
-	add_column(self->column_view_samples, "uy", spin_button_vertical_property, "uy");
-	add_column(self->column_view_samples, "uz", spin_button_vertical_property, "uz");
+	add_column(self->column_view_samples, "a", entry_numeric_property, "a");
+	add_column(self->column_view_samples, "b", entry_numeric_property, "b");
+	add_column(self->column_view_samples, "c", entry_numeric_property, "c");
+	add_column(self->column_view_samples, "alpha", entry_numeric_property, "alpha");
+	add_column(self->column_view_samples, "beta", entry_numeric_property, "beta");
+	add_column(self->column_view_samples, "gamma", entry_numeric_property, "gamma");
+	add_column(self->column_view_samples, "ux", entry_numeric_property, "ux");
+	add_column(self->column_view_samples, "uy", entry_numeric_property, "uy");
+	add_column(self->column_view_samples, "uz", entry_numeric_property, "uz");
 
 	/* column view solutions */
 	g_signal_connect (self->column_view_solutions, "activate", G_CALLBACK (column_view_solutions_activate_cb), self);

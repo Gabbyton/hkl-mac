@@ -42,4 +42,10 @@
 	((0 == access("../data/" filename, R_OK)) ? "../data/" filename : \
 	 ((0 == access(PKGDATA "/hkl3d/" filename, R_OK)) ? PKGDATA "/hkl3d/" filename : NULL))
 
+#define set_label_from_double(label, value) do {			\
+		char *buf = g_strdup_printf ("%0.*f", 6, value);	\
+		gtk_label_set_label (GTK_LABEL (label), buf);		\
+		g_free(buf);						\
+	} while (0)
+
 #endif /* __HKL_GUI_MACROS_H__ */
