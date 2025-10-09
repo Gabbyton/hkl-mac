@@ -628,6 +628,8 @@ void hkl_gui_sample_del_reflection(HklGuiSample *self, gint idx)
 
 	reflection = g_list_model_get_item (G_LIST_MODEL (self->liststore_reflections), idx);
 
+	g_return_if_fail (NULL != reflection);
+
 	hkl_sample_del_reflection(self->sample,
 				  hkl_gui_sample_reflection_get_reflection(reflection));
 
