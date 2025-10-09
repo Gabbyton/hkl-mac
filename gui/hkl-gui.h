@@ -84,6 +84,7 @@ HKLAPI void hkl_gui_engine_update (HklGuiEngine* self);
 HKLAPI HklGuiFactory* hkl_gui_factory_new(const HklFactory *factory);
 
 HKLAPI void hkl_gui_factory_add_reflection(HklGuiFactory *self);
+HKLAPI void hkl_gui_factory_del_reflection(HklGuiFactory *self, gint idx);
 
 HKLAPI struct diffractometer_t* hkl_gui_factory_get_diffractometer(HklGuiFactory *self);
 
@@ -179,6 +180,7 @@ HKLAPI void hkl_gui_sample_set_uz(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_add_reflection(HklGuiSample *self,
 					  HklGeometry *goemetry, HklDetector *detector,
 					  gdouble h, gdouble k, gdouble l);
+HKLAPI void hkl_gui_sample_del_reflection(HklGuiSample *self, gint idx);
 
 /*********************/
 /* Sample Reflection */

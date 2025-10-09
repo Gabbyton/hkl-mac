@@ -553,6 +553,12 @@ hkl_gui_factory_add_reflection(HklGuiFactory *self)
 }
 
 void
+hkl_gui_factory_del_reflection(HklGuiFactory *self, gint idx)
+{
+	hkl_gui_sample_del_reflection(self->gsample, idx);
+}
+
+void
 hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self,
 					    GtkColumnView *column_view)
 {

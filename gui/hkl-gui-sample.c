@@ -615,10 +615,24 @@ void hkl_gui_sample_add_reflection(HklGuiSample *self,
 					       detector,
 					       h,k, l, NULL);
 
+	hkl_sample_add_reflection(self->sample, reflection);
+
 	g_list_store_append(self->liststore_reflections,
 			    hkl_gui_sample_reflection_new(reflection));
 }
 
+
+void hkl_gui_sample_del_reflection(HklGuiSample *self, gint idx)
+{
+	HklGuiSampleReflection *reflection;
+
+	reflection = g_list_model_get_item (G_LIST_MODEL (self->liststore_reflections), idx);
+
+	hkl_sample_del_reflection(self->sample,
+				  hkl_gui_sample_reflection_get_reflection(reflection));
+
+	g_list_store_remove(self->liststore_reflections, idx);
+}
 
 /****************/
 /* The Gui Part */

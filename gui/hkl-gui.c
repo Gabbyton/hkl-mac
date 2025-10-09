@@ -105,40 +105,6 @@ raise_error(HklGuiWindow *self, GError *error)
 }
 
 /* static void */
-/* update_reflections (HklGuiWindow *self) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-
-/* 	gtk_list_store_clear (priv->liststore_reflections); */
-
-/* 	if(priv->sample){ */
-/* 		HklSampleReflection* reflection; */
-/* 		guint index = 0; */
-
-/* 		HKL_SAMPLE_REFLECTIONS_FOREACH(reflection, priv->sample){ */
-/* 			GtkTreeIter iter = {0}; */
-/* 			gdouble h, k, l; */
-/* 			gboolean flag; */
-
-/* 			hkl_sample_reflection_hkl_get(reflection, &h, &k, &l); */
-/* 			flag = hkl_sample_reflection_flag_get(reflection); */
-
-/* 			gtk_list_store_append (priv->liststore_reflections, &iter); */
-
-/* 			gtk_list_store_set (priv->liststore_reflections, */
-/* 					    &iter, */
-/* 					    REFLECTION_COL_INDEX, index++, */
-/* 					    REFLECTION_COL_H, h, */
-/* 					    REFLECTION_COL_K, k, */
-/* 					    REFLECTION_COL_L, l, */
-/* 					    REFLECTION_COL_FLAG, flag, */
-/* 					    REFLECTION_COL_REFLECTION, reflection, */
-/* 					    -1); */
-/* 		} */
-/* 	} */
-/* } */
-
-/* static void */
 /* update_3d(HklGuiWindow *self) */
 /* { */
 /* #ifdef HKL3D */
@@ -311,51 +277,6 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 	/* } */
 }
 
-/* /\* reflection h k l *\/ */
-/* #define HKL_GUI_WINDOW_CELLRENDERERTEXT_HKL_EDITED_CB(_number, _hkl, _HKL) \ */
-/* 	void								\ */
-/* 	hkl_gui_window_cellrenderertext ## _number ## _edited_cb(GtkCellRendererText* _sender, const gchar* path, \ */
-/* 								 const gchar* new_text, gpointer user_data) \ */
-/* 	{								\ */
-/* 		HklGuiWindow *self = HKL_GUI_WINDOW(user_data);		\ */
-/* 		HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); \ */
-/* 									\ */
-/* 		g_return_if_fail (self != NULL);			\ */
-/* 		g_return_if_fail (path != NULL);			\ */
-/* 		g_return_if_fail (new_text != NULL);			\ */
-/* 									\ */
-/* 		if (priv->sample){					\ */
-/* 			gdouble h = 0.0;				\ */
-/* 			gdouble k = 0.0;				\ */
-/* 			gdouble l = 0.0;				\ */
-/* 			HklSampleReflection* reflection = NULL;		\ */
-/* 			GtkTreeIter iter = {0};				\ */
-/* 			GError *error = NULL;				\ */
-/* 									\ */
-/* 			gtk_tree_model_get_iter_from_string (GTK_TREE_MODEL(priv->liststore_reflections), \ */
-/* 							     &iter, path); \ */
-/* 			gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_reflections), \ */
-/* 					    &iter,			\ */
-/* 					    REFLECTION_COL_REFLECTION, &reflection, \ */
-/* 					    -1);			\ */
-/* 									\ */
-/* 			hkl_sample_reflection_hkl_get (reflection, &h, &k, &l);	\ */
-/* 			_hkl = atof(new_text);				\ */
-/* 			if(!hkl_sample_reflection_hkl_set (reflection, h, k, l, NULL)) \ */
-/* 				raise_error(self, &error);		\ */
-/* 			else						\ */
-/* 				gtk_list_store_set (priv->liststore_reflections, \ */
-/* 						    &iter,		\ */
-/* 						    REFLECTION_COL_ ## _HKL, _hkl, \ */
-/* 						    -1);		\ */
-/* 		}							\ */
-/* 	} */
-
-/* HKL_GUI_WINDOW_CELLRENDERERTEXT_HKL_EDITED_CB(7, h, H); */
-/* HKL_GUI_WINDOW_CELLRENDERERTEXT_HKL_EDITED_CB(8, k, K); */
-/* HKL_GUI_WINDOW_CELLRENDERERTEXT_HKL_EDITED_CB(9, l, L); */
-
-
 /* /\* reflection flag *\/ */
 /* void */
 /* hkl_gui_window_cellrenderertoggle1_toggled_cb (GtkCellRendererToggle* renderer, const gchar* path, */
@@ -450,46 +371,6 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* 	} */
 /* } */
 
-
-/* static void */
-/* set_up_tree_view_reflections(HklGuiWindow *self) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-/* 	GtkTreeSelection* selection = NULL; */
-
-/* 	selection = gtk_tree_view_get_selection (priv->treeview_reflections); */
-/* 	gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE); */
-/* } */
-
-/* /\* crystal name *\/ */
-/* void */
-/* hkl_gui_window_cellrenderertext10_edited_cb(GtkCellRendererText* _sender, const gchar* path, */
-/* 					    const gchar* new_text, gpointer user_data) */
-/* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-
-/* 	GtkTreeModel* model = NULL; */
-/* 	GtkTreeIter iter = {0}; */
-/* 	HklSample* sample = NULL; */
-
-/* 	g_return_if_fail (user_data != NULL); */
-/* 	g_return_if_fail (path != NULL); */
-/* 	g_return_if_fail (new_text != NULL); */
-
-/* 	model = GTK_TREE_MODEL(priv->liststore_crystals); */
-
-/* 	gtk_tree_model_get_iter_from_string (model, &iter, path); */
-
-/* 	gtk_tree_model_get (model, &iter, */
-/* 			    SAMPLE_COL_SAMPLE, &sample, */
-/* 			    -1); */
-
-/* 	hkl_sample_name_set (sample, new_text); */
-
-/* 	gtk_list_store_set(priv->liststore_crystals, &iter, */
-/* 			   SAMPLE_COL_NAME, new_text, */
-/* 			   -1); */
-/* } */
 
 /* #define set_reciprocal_lattice(lattice, parameter) do{			\ */
 /* 		const HklParameter *p;					\ */
@@ -723,80 +604,8 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* 	} */
 /* } */
 
-/* #define TOGGLE_LATTICE_CB(_parameter)					\ */
-/* 	void hkl_gui_window_checkbutton_ ## _parameter ## _toggled_cb(GtkCheckButton *checkbutton, \ */
-/* 								      gpointer user_data) \ */
-/* 	{								\ */
-/* 		HklGuiWindow *self = HKL_GUI_WINDOW(user_data);		\ */
-/* 		HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); \ */
-/* 		HklLattice *lattice;					\ */
-/* 		HklParameter *p;					\ */
-/* 		GError *error = NULL;					\ */
-/* 		lattice = hkl_lattice_new_copy(hkl_sample_lattice_get(priv->sample)); \ */
-/* 		p = hkl_parameter_new_copy(hkl_lattice_## _parameter ##_get(lattice)); \ */
-/* 		hkl_parameter_fit_set(p,				\ */
-/* 				      gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(checkbutton))); \ */
-/* 		if(!hkl_lattice_## _parameter ##_set(lattice, p, &error)){ \ */
-/* 			raise_error(self, &error);			\ */
-/* 		}else{							\ */
-/* 			hkl_sample_lattice_set(priv->sample, lattice);	\ */
-/* 		}							\ */
-/* 		hkl_parameter_free(p);					\ */
-/* 		hkl_lattice_free(lattice);				\ */
-/* 	} */
-
-/* TOGGLE_LATTICE_CB(a); */
-/* TOGGLE_LATTICE_CB(b); */
-/* TOGGLE_LATTICE_CB(c); */
-/* TOGGLE_LATTICE_CB(alpha); */
-/* TOGGLE_LATTICE_CB(beta); */
-/* TOGGLE_LATTICE_CB(gamma); */
-
-/* #define TOGGLE_UX_UY_UZ(_parameter)					\ */
-/* 	void hkl_gui_window_checkbutton_ ## _parameter ## _toggled_cb(GtkCheckButton *checkbutton, \ */
-/* 								      gpointer user_data) \ */
-/* 	{								\ */
-/* 		HklGuiWindow *self = HKL_GUI_WINDOW(user_data);		\ */
-/* 		HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); \ */
-/* 		HklParameter *p;					\ */
-/* 		GError *error = NULL;					\ */
-/* 		p = hkl_parameter_new_copy(hkl_sample_ ## _parameter ## _get(priv->sample)); \ */
-/* 		hkl_parameter_fit_set(p,				\ */
-/* 				      gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(checkbutton))); \ */
-/* 		if(!hkl_sample_ ## _parameter ## _set(priv->sample, p, &error)){ \ */
-/* 			raise_error(self, &error);			\ */
-/* 		}							\ */
-/* 		hkl_parameter_free(p);					\ */
-/* 	} */
-
-/* TOGGLE_UX_UY_UZ(ux); */
-/* TOGGLE_UX_UY_UZ(uy); */
-/* TOGGLE_UX_UY_UZ(uz); */
-
 /* /\* */
 
-/*   static gboolean _hkl_gui_window_on_tree_view_crystals_key_press_event_gtk_widget_key_press_event (GtkWidget* _sender, GdkEventKey* event, gpointer self) { */
-/*   gboolean result; */
-/*   result = hkl_gui_window_on_tree_view_crystals_key_press_event (event, self); */
-
-/*   return result; */
-
-/*   } */
-
-/*   static gboolean hkl_gui_window_on_tree_view_crystals_key_press_event (GdkEventKey* event, HklGuiWindow* self) { */
-/*   gboolean result = FALSE; */
-
-/*   g_return_val_if_fail (self != NULL, FALSE); */
-
-/*   g_return_val_if_fail (event != NULL, FALSE); */
-
-/*   result = TRUE; */
-
-/*   return result; */
-
-/*   } */
-
-/* *\/ */
 
 static void
 add_sample_activated (GSimpleAction *action,
@@ -824,19 +633,8 @@ add_sample_reflection_activated (GSimpleAction *action,
 				 gpointer user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
-	/* GtkSelectionModel *model; */
-	/* gint n_items; */
 
 	hkl_gui_factory_add_reflection(self->factory);
-	/* model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples)); */
-	/* g_list_store_append(self->liststore_samples, */
-	/* 		    hkl_gui_sample_new("<edit name>")); */
-	/* n_items = g_list_model_get_n_items(G_LIST_MODEL(model)); */
-	/* gtk_single_selection_set_selected(GTK_SINGLE_SELECTION(model), n_items - 1); */
-
-	/* if(n_items > 1) */
-	/* 	gtk_widget_set_sensitive(self->button_delete_sample, true); */
-	/* TODO go to the sample name in edit mode */
 }
 
 static void
@@ -863,29 +661,6 @@ copy_sample_activated (GSimpleAction *action,
 }
 
 static void
-copy_sample_reflection_activated (GSimpleAction *action,
-				  GVariant *parameter,
-				  gpointer user_data)
-{
-	/* HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-	/* GtkSelectionModel *model; */
-	/* HklGuiSample *gsample; */
-	/* gint n_items; */
-
-	/* model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples)); */
-	/* gsample = gtk_single_selection_get_selected_item(GTK_SINGLE_SELECTION(model)); */
-
-	/* g_list_store_append(self->liststore_samples, */
-	/* 		    hkl_gui_sample_new_copy(gsample)); */
-
-	/* n_items = g_list_model_get_n_items(G_LIST_MODEL(model)); */
-	/* if(n_items > 1) */
-	/* 	gtk_widget_set_sensitive(self->button_delete_sample, true); */
-
-	/* /\* TODO go to the edit name *\/ */
-}
-
-static void
 delete_sample_activated (GSimpleAction *action,
 			 GVariant *parameter,
 			 gpointer user_data)
@@ -909,25 +684,21 @@ delete_sample_reflection_activated (GSimpleAction *action,
 				    GVariant *parameter,
 				    gpointer user_data)
 {
-	/* HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-	/* GtkSelectionModel *model; */
-	/* gint n_items; */
-	/* gint selected; */
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+	GtkSelectionModel *model;
+	gint selected;
 
-	/* model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples)); */
-	/* selected = gtk_single_selection_get_selected(GTK_SINGLE_SELECTION(model)); */
+	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_sample_reflections));
+	selected  = gtk_single_selection_get_selected(GTK_SINGLE_SELECTION(model));
 
-	/* g_list_store_remove(self->liststore_samples, selected); */
-	/* n_items = g_list_model_get_n_items(G_LIST_MODEL(model)); */
-	/* if (1 == n_items) */
-	/* 	gtk_widget_set_sensitive(self->button_delete_sample, false); */
+	if (-1 != selected)
+		hkl_gui_factory_del_reflection(self->factory, selected);
 }
 
 static GActionEntry win_entries[] = {
 	{ "add-sample", add_sample_activated, NULL, NULL, NULL },
 	{ "add-sample-reflection", add_sample_reflection_activated, NULL, NULL, NULL },
 	{ "copy-sample", copy_sample_activated, NULL, NULL, NULL },
-	{ "copy-sample-reflection", copy_sample_reflection_activated, NULL, NULL, NULL },
 	{ "delete-sample", delete_sample_activated, NULL, NULL, NULL },
 	{ "delete-sample-reflection", delete_sample_reflection_activated, NULL, NULL, NULL },
 };
@@ -947,7 +718,6 @@ new_window (GApplication *app,
 	GtkWidget *button_add_sample;
 	GtkWidget *button_add_sample_reflection;
 	GtkWidget *button_copy_sample;
-	GtkWidget *button_copy_sample_reflection;
 	GtkWidget *dropdown1;
 	GtkWidget *frame_diffractometer;
 	GtkWidget *frame_wavelength;
@@ -1032,7 +802,6 @@ new_window (GApplication *app,
 	button_add_sample = gtk_button_new();
 	button_add_sample_reflection = gtk_button_new();
 	button_copy_sample = gtk_button_new();
-	button_copy_sample_reflection = gtk_button_new();
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
 	frame_diffractometer = gtk_frame_new("Diffractometer");
 	frame_wavelength = gtk_frame_new("Wavelength");
@@ -1068,11 +837,6 @@ new_window (GApplication *app,
 	gtk_widget_set_tooltip_text(button_copy_sample, "Copy the selected sample");
 	gtk_button_set_icon_name (GTK_BUTTON (button_copy_sample), "edit-copy-symbolic");
 	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_copy_sample), "win.copy-sample");
-
-	/* button_copy_sample_reflection */
-	gtk_widget_set_tooltip_text(button_copy_sample_reflection, "Copy the selected reflection");
-	gtk_button_set_icon_name (GTK_BUTTON (button_copy_sample_reflection), "edit-copy-symbolic");
-	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_copy_sample_reflection), "win.copy-sample-reflection");
 
 	/* button_delete_sample */
 	gtk_widget_set_tooltip_text(self->button_delete_sample, "Delete the selected sample");
@@ -1167,7 +931,6 @@ new_window (GApplication *app,
 
 	/* hbox3 */
 	gtk_box_append(GTK_BOX(hbox3), button_add_sample_reflection);
-	gtk_box_append(GTK_BOX(hbox3), button_copy_sample_reflection);
 	gtk_box_append(GTK_BOX(hbox3), self->button_delete_sample_reflection);
 
 	/* notebook1 */
