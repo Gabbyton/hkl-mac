@@ -53,6 +53,7 @@ GListStore *liststore_samples;
 	GBinding *adjustement_wavelength_binding;
 
 	GtkMultiSelection *column_view_sample_reflection_multi_selection;
+	GtkSingleSelection *column_view_axes_single_selection;
 
 	GtkWidget *button_delete_sample;
 	GtkWidget *button_delete_sample_reflection;
@@ -214,9 +215,9 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		g_object_bind_property(self->drop_down_samples, "selected-item", factory, "sample", G_BINDING_SYNC_CREATE);
 
 		/* set column view axes model */
-		single_selection = GTK_SINGLE_SELECTION(gtk_column_view_get_model(GTK_COLUMN_VIEW(self->column_view_axes)));
-		liststore = hkl_gui_factory_get_liststore_axes(factory);
-		gtk_single_selection_set_model(single_selection, G_LIST_MODEL(liststore));
+		liststore = hkl_gui_factory_get_liststore_axes (factory);
+		gtk_single_selection_set_model (self->column_view_axes_single_selection,
+						G_LIST_MODEL (liststore));
 
 		/* set column view pseudo axes model */
 		single_selection = GTK_SINGLE_SELECTION(gtk_column_view_get_model(GTK_COLUMN_VIEW(self->column_view_pseudo_axes)));
@@ -820,6 +821,7 @@ new_window (GApplication *app,
 	/* Selections	     */
 	/*********************/
 
+	self->column_view_axes_single_selection = gtk_single_selection_new(NULL);
 	self->column_view_sample_reflection_multi_selection = gtk_multi_selection_new(NULL);
 
 	/***********/
@@ -829,7 +831,7 @@ new_window (GApplication *app,
 	self->alert_dialog_solutions = gtk_alert_dialog_new("Solutions");
 	self->button_delete_sample = gtk_button_new();
 	self->button_delete_sample_reflection = gtk_button_new();
-	self->column_view_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
+	self->column_view_axes = gtk_column_view_new(GTK_SELECTION_MODEL(self->column_view_axes_single_selection));
 	self->column_view_pseudo_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->column_view_sample_reflections = gtk_column_view_new (GTK_SELECTION_MODEL (self->column_view_sample_reflection_multi_selection));
 	self->column_view_samples = gtk_column_view_new (GTK_SELECTION_MODEL (gtk_single_selection_new( G_LIST_MODEL (self->liststore_samples))));
