@@ -552,9 +552,9 @@ hkl_gui_factory_add_reflection(HklGuiFactory *self, HklGuiSample *sample)
 }
 
 void
-hkl_gui_factory_del_reflection(HklGuiFactory *self, HklGuiSample *sample, gint idx)
+hkl_gui_factory_del_reflection(HklGuiFactory *self, HklGuiSample *sample, GtkBitset *selected)
 {
-	hkl_gui_sample_del_reflection(sample, idx);
+	hkl_gui_sample_del_reflection(sample, selected);
 }
 
 void

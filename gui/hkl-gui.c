@@ -52,6 +52,8 @@ GListStore *liststore_samples;
 	GtkAlertDialog *alert_dialog_solutions;
 	GBinding *adjustement_wavelength_binding;
 
+	GtkMultiSelection *column_view_sample_reflection_multi_selection;
+
 	GtkWidget *button_delete_sample;
 	GtkWidget *button_delete_sample_reflection;
 	GtkWidget *column_view_axes;
@@ -168,14 +170,13 @@ column_view_samples_selection_changed_cb (GtkSelectionModel* model,
 {
 	GListStore *liststore;
 	HklGuiWindow* self = HKL_GUI_WINDOW(user_data);
-	GtkSingleSelection *single_selection;
 	HklGuiSample *sample;
 
 	sample = HKL_GUI_SAMPLE (gtk_single_selection_get_selected_item (GTK_SINGLE_SELECTION (model)));
 
-	single_selection = GTK_SINGLE_SELECTION (gtk_column_view_get_model (GTK_COLUMN_VIEW(self->column_view_sample_reflections)));
-	liststore = hkl_gui_sample_get_reflections(sample);
-	gtk_single_selection_set_model(single_selection, G_LIST_MODEL(liststore));
+	liststore = hkl_gui_sample_get_reflections (sample);
+	gtk_multi_selection_set_model (self->column_view_sample_reflection_multi_selection,
+				       G_LIST_MODEL (liststore));
 }
 
 
@@ -244,10 +245,10 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		hkl_gui_factory_setup_column_view_sample_reflections(factory,
 								     GTK_COLUMN_VIEW(self->column_view_sample_reflections));
 
-		single_selection = GTK_SINGLE_SELECTION(gtk_column_view_get_model(GTK_COLUMN_VIEW(self->column_view_sample_reflections)));
 		gsample = hkl_gui_factory_get_sample(factory);
 		liststore = hkl_gui_sample_get_reflections(gsample);
-		gtk_single_selection_set_model(single_selection, G_LIST_MODEL(liststore));
+		gtk_multi_selection_set_model (self->column_view_sample_reflection_multi_selection,
+					       G_LIST_MODEL (liststore));
 
 		/* set_up_3D(self); */
 	}
@@ -714,18 +715,19 @@ delete_sample_reflection_activated (GSimpleAction *action,
 	GtkSelectionModel *model;
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	HklGuiSample *sample;
-	gint selected;
+	GtkBitset *selected;
 
 	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_samples));
 	sample = HKL_GUI_SAMPLE (gtk_single_selection_get_selected_item (GTK_SINGLE_SELECTION (model)));
 
 	g_return_if_fail (NULL != sample);
 
-	model = gtk_column_view_get_model (GTK_COLUMN_VIEW (self->column_view_sample_reflections));
-	selected  = gtk_single_selection_get_selected (GTK_SINGLE_SELECTION (model));
+	selected = gtk_selection_model_get_selection (GTK_SELECTION_MODEL (self->column_view_sample_reflection_multi_selection));
 
-	if (-1 != selected)
+	if (gtk_bitset_is_empty(selected) == false)
 		hkl_gui_factory_del_reflection(self->factory, sample, selected);
+
+	gtk_bitset_unref(selected);
 }
 
 static GActionEntry win_entries[] = {
@@ -814,6 +816,12 @@ new_window (GApplication *app,
 	g_signal_connect (item_factory_drop_down_samples,
 			  "bind", G_CALLBACK (hkl_gui_bind_item_factory_label_property_cb), "name");
 
+	/*********************/
+	/* Selections	     */
+	/*********************/
+
+	self->column_view_sample_reflection_multi_selection = gtk_multi_selection_new(NULL);
+
 	/***********/
 	/* widgets */
 	/***********/
@@ -823,9 +831,9 @@ new_window (GApplication *app,
 	self->button_delete_sample_reflection = gtk_button_new();
 	self->column_view_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
 	self->column_view_pseudo_axes = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
-	self->column_view_sample_reflections = gtk_column_view_new (GTK_SELECTION_MODEL (gtk_single_selection_new(NULL)));
+	self->column_view_sample_reflections = gtk_column_view_new (GTK_SELECTION_MODEL (self->column_view_sample_reflection_multi_selection));
 	self->column_view_samples = gtk_column_view_new (GTK_SELECTION_MODEL (gtk_single_selection_new( G_LIST_MODEL (self->liststore_samples))));
-	self->column_view_solutions = gtk_column_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(NULL)));
+	self->column_view_solutions = gtk_column_view_new(GTK_SELECTION_MODEL (gtk_single_selection_new(NULL)));
 	self->drop_down_samples = gtk_drop_down_new(G_LIST_MODEL(self->liststore_samples), NULL);
 	self->flowbox_engines = gtk_flow_box_new();
 	self->notebook1 = gtk_notebook_new();
