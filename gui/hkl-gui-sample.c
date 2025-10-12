@@ -622,23 +622,32 @@ void hkl_gui_sample_add_reflection(HklGuiSample *self,
 }
 
 
-void hkl_gui_sample_del_reflection(HklGuiSample *self, GtkBitset *selected)
+void hkl_gui_sample_del_reflection(HklGuiSample *self, const GtkBitset *selected)
 {
 	guint i;
+	guint j=0;
 	GtkBitsetIter iter;
+	guint n = gtk_bitset_get_size(selected);
+	guint is[n];
 
+
+	/* it seems that removing element of the listtore invalidate the iterator */
 	for (gtk_bitset_iter_init_last (&iter, selected, &i);
 	     gtk_bitset_iter_is_valid (&iter);
 	     gtk_bitset_iter_previous (&iter, &i))
 	{
+		is[j++] = i;
+	}
+
+	for(i=0; i<n; ++i){
 		HklGuiSampleReflection *reflection;
 
-		reflection = g_list_model_get_item (G_LIST_MODEL (self->liststore_reflections), i);
+		reflection = g_list_model_get_item (G_LIST_MODEL (self->liststore_reflections), is[i]);
 
 		hkl_sample_del_reflection(self->sample,
 					  hkl_gui_sample_reflection_get_reflection(reflection));
 
-		g_list_store_remove(self->liststore_reflections, i);
+		g_list_store_remove(self->liststore_reflections, is[i]);
 	}
 }
 
