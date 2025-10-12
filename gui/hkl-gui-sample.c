@@ -52,6 +52,8 @@ enum {
 	PROP_UY,
 	PROP_UZ,
 	PROP_REFLECTIONS,
+	PROP_OR0,
+	PROP_OR1,
 
 	NUM_PROPERTIES,
 };
@@ -68,6 +70,8 @@ struct _HklGuiSample {
 
 	GListStore *liststore_reflections;
 	HklSample *sample;
+	HklGuiSampleReflection *or0;
+	HklGuiSampleReflection *or1;
 };
 
 G_DEFINE_FINAL_TYPE(HklGuiSample, hkl_gui_sample, G_TYPE_OBJECT);
@@ -112,6 +116,12 @@ hkl_gui_sample_set_property (GObject      *object,
 		break;
 	case PROP_UZ:
 		hkl_gui_sample_set_uz(self, g_value_get_double (value));
+		break;
+	case PROP_OR0:
+		hkl_gui_sample_set_or0(self, g_value_get_object (value));
+		break;
+	case PROP_OR1:
+		hkl_gui_sample_set_or1(self, g_value_get_object (value));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -161,6 +171,12 @@ hkl_gui_sample_get_property (GObject    *object,
 		break;
 	case PROP_REFLECTIONS:
 		g_value_set_object (value, hkl_gui_sample_get_reflections (self));;
+		break;
+	case PROP_OR0:
+		g_value_set_object (value, hkl_gui_sample_get_or0 (self));;
+		break;
+	case PROP_OR1:
+		g_value_set_object (value, hkl_gui_sample_get_or1 (self));;
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -306,6 +322,20 @@ hkl_gui_sample_class_init (HklGuiSampleClass *klass)
 				     G_TYPE_LIST_STORE,
 				     G_PARAM_STATIC_NAME | G_PARAM_READABLE);
 
+	props[PROP_OR0] =
+		g_param_spec_object ("or0",
+				     "Or0",
+				     "the or0 reflection used to compute UB",
+				     HKL_GUI_TYPE_SAMPLE_REFLECTION,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
+	props[PROP_OR1] =
+		g_param_spec_object ("or1",
+				     "Or1",
+				     "the or1 reflection used to compute UB",
+				     HKL_GUI_TYPE_SAMPLE_REFLECTION,
+				     G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
 	g_object_class_install_properties (object_class,
 					   NUM_PROPERTIES,
 					   props);
@@ -405,6 +435,18 @@ GListStore *
 hkl_gui_sample_get_reflections(HklGuiSample *self)
 {
 	return self->liststore_reflections;
+}
+
+HklGuiSampleReflection *
+hkl_gui_sample_get_or0(HklGuiSample *self)
+{
+	return self->or0;
+}
+
+HklGuiSampleReflection *
+hkl_gui_sample_get_or1(HklGuiSample *self)
+{
+	return self->or1;
 }
 
 /* setters */
@@ -601,7 +643,41 @@ hkl_gui_sample_set_uz(HklGuiSample *self, gdouble new_value)
 }
 
 
+void
+hkl_gui_sample_set_or0(HklGuiSample *self, HklGuiSampleReflection* reflection)
+{
+	g_clear_error(&self->error);
+
+	if (true == g_list_store_find (self->liststore_reflections, reflection, NULL)){
+		self->or0 = reflection;
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_OR0]);
+	}
+}
+
+void
+hkl_gui_sample_set_or1(HklGuiSample *self, HklGuiSampleReflection* reflection)
+{
+	g_clear_error(&self->error);
+
+	if (true == g_list_store_find (self->liststore_reflections, reflection, NULL)){
+		self->or1 = reflection;
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_OR1]);
+	}
+}
+
+
 /* methodes */
+
+gboolean
+hkl_gui_sample_compute_ub(HklGuiSample* self, GError **error)
+{
+
+	gboolean res = hkl_sample_compute_UB_busing_levy (self->sample,
+							  hkl_gui_sample_reflection_get_reflection(self->or0),
+							  hkl_gui_sample_reflection_get_reflection(self->or1),
+							  error);
+	return res;
+}
 
 void hkl_gui_sample_add_reflection(HklGuiSample *self,
 				   HklGeometry *geometry, HklDetector *detector,

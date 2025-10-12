@@ -542,64 +542,6 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* 	hkl_matrix_free(UB); */
 /* } */
 
-/* void */
-/* hkl_gui_window_toolbutton_computeUB_clicked_cb (GtkButton* _sender, gpointer user_data) */
-/* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-/* 	GtkTreeSelection* selection = NULL; */
-/* 	guint nb_rows = 0U; */
-
-/* 	selection = gtk_tree_view_get_selection (priv->treeview_reflections); */
-/* 	nb_rows = gtk_tree_selection_count_selected_rows (selection); */
-/* 	if (nb_rows > 1) { */
-/* 		GtkTreeModel* model = NULL; */
-/* 		GList* list; */
-/* 		GtkTreeIter iter = {0}; */
-/* 		GtkTreePath *path; */
-/* 		HklSampleReflection *ref1, *ref2; */
-/* 		GError *error = NULL; */
-
-/* 		model = GTK_TREE_MODEL(priv->liststore_reflections); */
-/* 		list = gtk_tree_selection_get_selected_rows (selection, &model); */
-
-/* 		/\* get the first reflection *\/ */
-/* 		path = g_list_nth_data(list, 0); */
-/* 		gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_reflections), */
-/* 					 &iter, */
-/* 					 path); */
-/* 		gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_reflections), &iter, */
-/* 				    REFLECTION_COL_REFLECTION, &ref1, */
-/* 				    -1); */
-
-/* 		/\* get the second one *\/ */
-/* 		path = g_list_nth_data(list, 1); */
-/* 		gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_reflections), */
-/* 					 &iter, */
-/* 					 path); */
-/* 		gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_reflections), &iter, */
-/* 				    REFLECTION_COL_REFLECTION, &ref2, */
-/* 				    -1); */
-
-/* 		if(!hkl_sample_compute_UB_busing_levy(priv->sample, */
-/* 						      ref1, ref2, &error)){ */
-/* 			raise_error(self, &error); */
-/* 		}else{ */
-/* 			if(priv->diffractometer) */
-/* 				diffractometer_set_sample(priv->diffractometer, */
-/* 							  priv->sample); */
-
-/* 			update_UB (self); */
-/* 			update_ux_uy_uz (self); */
-/* 			update_pseudo_axes (self); */
-/* 			update_pseudo_axes_frames (self); */
-/* 		} */
-/* 		g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free); */
-/* 	} else { */
-/* 		gtk_statusbar_push (priv->statusbar, 0, */
-/* 				    "Please select at least two reflection."); */
-/* 	} */
-/* } */
 
 /* void */
 /* hkl_gui_window_toolbutton_affiner_clicked_cb (GtkButton* _sender, gpointer user_data) */
@@ -720,9 +662,25 @@ delete_sample_reflection_activated (GSimpleAction *action,
 	gtk_bitset_unref(selected);
 }
 
+static void
+compute_ub_activated (GSimpleAction *action,
+		      GVariant *parameter,
+		      gpointer user_data)
+{
+	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
+	HklGuiSample *sample;
+
+	sample = gtk_single_selection_get_selected_item (self->single_selection_samples);
+
+	g_return_if_fail (NULL != sample);
+
+	hkl_gui_factory_compute_ub(self->factory, sample);
+}
+
 static GActionEntry win_entries[] = {
 	{ "add-sample", add_sample_activated, NULL, NULL, NULL },
 	{ "add-sample-reflection", add_sample_reflection_activated, NULL, NULL, NULL },
+	{ "compute-ub", compute_ub_activated, NULL, NULL, NULL },
 	{ "copy-sample", copy_sample_activated, NULL, NULL, NULL },
 	{ "delete-sample", delete_sample_activated, NULL, NULL, NULL },
 	{ "delete-sample-reflection", delete_sample_reflection_activated, NULL, NULL, NULL },
@@ -742,6 +700,7 @@ new_window (GApplication *app,
 
 	GtkWidget *button_add_sample;
 	GtkWidget *button_add_sample_reflection;
+	GtkWidget *button_compute_ub;
 	GtkWidget *button_copy_sample;
 	GtkWidget *dropdown1;
 	GtkWidget *frame_diffractometer;
@@ -836,6 +795,7 @@ new_window (GApplication *app,
 
 	button_add_sample = gtk_button_new();
 	button_add_sample_reflection = gtk_button_new();
+	button_compute_ub = gtk_button_new_with_label("Compute UB");
 	button_copy_sample = gtk_button_new();
 	dropdown1 = gtk_drop_down_new(G_LIST_MODEL(liststore1), NULL);
 	frame_diffractometer = gtk_frame_new("Diffractometer");
@@ -867,6 +827,10 @@ new_window (GApplication *app,
 	gtk_widget_set_tooltip_text(button_add_sample_reflection, "Add a new reflection");
 	gtk_button_set_icon_name (GTK_BUTTON (button_add_sample_reflection), "list-add-symbolic");
 	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_add_sample_reflection), "win.add-sample-reflection");
+
+	/* button_compute_ub */
+	gtk_widget_set_tooltip_text(button_compute_ub, "Compute the UB matrix with or0 and or1 reflections");
+	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_copy_sample), "win.compute-ub");
 
 	/* button_copy_sample */
 	gtk_widget_set_tooltip_text(button_copy_sample, "Copy the selected sample");
@@ -971,6 +935,7 @@ new_window (GApplication *app,
 	/* hbox3 */
 	gtk_box_append(GTK_BOX(hbox3), button_add_sample_reflection);
 	gtk_box_append(GTK_BOX(hbox3), self->button_delete_sample_reflection);
+	gtk_box_append(GTK_BOX(hbox3), button_compute_ub);
 
 	/* notebook1 */
 	gtk_widget_set_hexpand(self->notebook1, true);

@@ -551,6 +551,27 @@ hkl_gui_factory_add_reflection(HklGuiFactory *self, HklGuiSample *sample)
 				      0, 0, 0);
 }
 
+void hkl_gui_factory_compute_ub(HklGuiFactory *self, HklGuiSample* sample)
+{
+	GError *error = NULL;
+
+	if(!hkl_gui_sample_compute_ub (sample, &error)) {
+		/* raise_error(self, &error); */
+	}else{
+		update_liststore_pseudo_axes(self);
+		update_liststore_engines(self);
+		/* if(priv->diffractometer) */
+		/* 	diffractometer_set_sample(priv->diffractometer, */
+		/* 				  priv->sample); */
+
+		/* update_UB (self); */
+		/* update_ux_uy_uz (self); */
+		/* update_pseudo_axes (self); */
+		/* update_pseudo_axes_frames (self); */
+	}
+
+}
+
 void
 hkl_gui_factory_del_reflection(HklGuiFactory *self, HklGuiSample *sample, GtkBitset *selected)
 {

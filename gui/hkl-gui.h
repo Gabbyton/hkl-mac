@@ -86,6 +86,8 @@ HKLAPI HklGuiFactory* hkl_gui_factory_new(const HklFactory *factory);
 HKLAPI void hkl_gui_factory_add_reflection(HklGuiFactory *self, HklGuiSample *sample);
 HKLAPI void hkl_gui_factory_del_reflection(HklGuiFactory *self, HklGuiSample *sample, GtkBitset *selected);
 
+HKLAPI void hkl_gui_factory_compute_ub(HklGuiFactory *self, HklGuiSample* sample);
+
 HKLAPI struct diffractometer_t* hkl_gui_factory_get_diffractometer(HklGuiFactory *self);
 
 HKLAPI GError* hkl_gui_factory_get_error(HklGuiFactory *self);
@@ -163,6 +165,8 @@ HKLAPI gdouble hkl_gui_sample_get_uy(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_uz(HklGuiSample *self);
 HKLAPI GListStore *hkl_gui_sample_get_reflections(HklGuiSample *self);
 HKLAPI HklSample *hkl_gui_sample_get_sample(HklGuiSample *self);
+HKLAPI HklGuiSampleReflection *hkl_gui_sample_get_or0(HklGuiSample *self);
+HKLAPI HklGuiSampleReflection *hkl_gui_sample_get_or1(HklGuiSample *self);
 
 /* set */
 HKLAPI void hkl_gui_sample_set_name(HklGuiSample *self, const char *name);
@@ -175,8 +179,12 @@ HKLAPI void hkl_gui_sample_set_gamma(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_ux(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_uy(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_uz(HklGuiSample *self, gdouble value);
+HKLAPI void hkl_gui_sample_set_or0(HklGuiSample *self, HklGuiSampleReflection *reflection);
+HKLAPI void hkl_gui_sample_set_or1(HklGuiSample *self, HklGuiSampleReflection *reflection);
 
 /* methods */
+HKLAPI gboolean hkl_gui_sample_compute_ub(HklGuiSample* sample, GError **error);
+
 HKLAPI void hkl_gui_sample_add_reflection(HklGuiSample *self,
 					  HklGeometry *goemetry, HklDetector *detector,
 					  gdouble h, gdouble k, gdouble l);
