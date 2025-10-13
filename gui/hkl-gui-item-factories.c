@@ -23,6 +23,21 @@
 
 #include <gtk/gtk.h>
 
+
+/****************/
+/* Check Button */
+/****************/
+
+void
+hkl_gui_setup_item_factory_check_button_cb (GtkListItemFactory *factory,
+					    GtkListItem *list_item)
+{
+	GtkWidget *widget;
+
+	widget = gtk_check_button_new ();
+	gtk_list_item_set_child (list_item, widget);
+}
+
 /*********/
 /* Entry */
 /*********/

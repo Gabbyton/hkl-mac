@@ -728,51 +728,98 @@ void hkl_gui_sample_del_reflection(HklGuiSample *self, const GtkBitset *selected
 }
 
 /****************/
-/* The Gui Part */
+/* Item factory */
 /****************/
 
-/* static void */
-/* setup_factory_axis_value_cb (GtkListItemFactory *factory, */
-/* 			     GtkListItem *list_item, */
-/* 			     gpointer user_data) */
-/* { */
-/* 	GtkWidget *label; */
+static gint reflection_to_boolean(GBinding *binding,
+				  const GValue * value_a,
+				  GValue *value_b,
+				  gpointer user_data)
+{
+	g_assert (G_VALUE_HOLDS_OBJECT (value_a));
+	g_assert (G_VALUE_HOLDS_BOOLEAN (value_b));
+	g_assert (HKL_GUI_IS_SAMPLE_REFLECTION (user_data));
 
-/* 	label = gtk_label_new (""); */
-/* 	gtk_list_item_set_child (list_item, label); */
-/* } */
+	g_value_set_boolean(value_b, g_value_get_object(value_a) == user_data);
 
-/* static void */
-/* bind_factory_axis_value_cb (GtkListItemFactory *factory, */
-/* 			    GtkListItem *list_item, */
-/* 			    gpointer user_data) */
-/* { */
-/* 	GtkWidget *label; */
-/* 	gint idx = GPOINTER_TO_INT(user_data); */
-/* 	HklGuiSample *self; */
-/* 	gint n_values; */
+	return TRUE;
+}
 
-/* 	label = gtk_list_item_get_child (list_item); */
-/* 	self = gtk_list_item_get_item (list_item); */
+static gint boolean_to_reflection(GBinding *binding,
+				  const GValue * value_a,
+				  GValue *value_b,
+				  gpointer user_data)
+{
+	g_assert (G_VALUE_HOLDS_BOOLEAN (value_a));
+	g_assert (G_VALUE_HOLDS_OBJECT (value_b));
+	g_assert (HKL_GUI_IS_SAMPLE_REFLECTION (user_data));
 
-/* 	g_return_if_fail(NULL != self->sample); */
+	if(g_value_get_boolean(value_a))
+		g_value_set_object(value_b, user_data);
 
-/* 	// n_values = darray_size(*hkl_geometry_axis_names_get(self->sample)); */
-/* 	double values[n_values]; */
+	return TRUE;
+}
 
-/* 	// hkl_geometry_axis_values_get(self->sample, values, n_values, HKL_UNIT_USER); */
 
-/* 	char *buf = g_strdup_printf ("%0.*f", 6, values[idx]); */
-/* 	gtk_label_set_label (GTK_LABEL (label), buf); */
-/* 	g_free(buf); */
-/* } */
+static void
+_bind_factory_check_button_orX_cb (GtkListItem *list_item,
+				   HklGuiSample *sample,
+				   const char *property)
 
-/* GtkListItemFactory * */
-/* hkl_gui_sample_axis_value_factory_new(gint idx) */
-/* { */
-/* 		GtkListItemFactory *factory = gtk_signal_list_item_factory_new (); */
-/* 		g_signal_connect (factory, "setup", G_CALLBACK (setup_factory_axis_value_cb), GINT_TO_POINTER(idx)); */
-/* 		g_signal_connect (factory, "bind", G_CALLBACK (bind_factory_axis_value_cb), GINT_TO_POINTER(idx)); */
+{
+	GtkCheckButton *check_button;
+	HklGuiSampleReflection *or;
+	HklGuiSampleReflection *reflection;
 
-/* 		return factory; */
-/* } */
+	check_button = GTK_CHECK_BUTTON (gtk_list_item_get_child (list_item));
+	reflection = HKL_GUI_SAMPLE_REFLECTION (gtk_list_item_get_item (list_item));
+
+	g_object_get (G_OBJECT (sample),
+		      property, &or,
+		      NULL);
+
+	gtk_check_button_set_active (check_button, reflection == or);
+
+	g_object_bind_property_full(G_OBJECT (sample), property,
+				    G_OBJECT (check_button), "active",
+				    G_BINDING_BIDIRECTIONAL,
+				    reflection_to_boolean,
+				    boolean_to_reflection,
+				    reflection,
+				    NULL);
+}
+
+static void
+bind_factory_check_button_or0_cb (GtkListItemFactory *factory,
+				  GtkListItem *list_item,
+				  gpointer user_data)
+{
+	_bind_factory_check_button_orX_cb (list_item, user_data, "or0");
+}
+
+static void
+bind_factory_check_button_or1_cb (GtkListItemFactory *factory,
+				  GtkListItem *list_item,
+				  gpointer user_data)
+{
+	_bind_factory_check_button_orX_cb (list_item, user_data, "or1");
+}
+
+
+GtkListItemFactory *
+hkl_gui_item_factory_new_check_button__sample_orX(GtkSingleSelection *samples,
+						  const char *property)
+{
+	HklGuiSample *sample;
+	GtkListItemFactory *factory = gtk_signal_list_item_factory_new ();
+	g_signal_connect (factory, "setup", G_CALLBACK (hkl_gui_setup_item_factory_check_button_cb), NULL);
+
+	sample = gtk_single_selection_get_selected_item(samples);
+	if (!strcmp("or0", property)){
+		g_signal_connect (factory, "bind", G_CALLBACK (bind_factory_check_button_or0_cb), sample);
+	}else if (!strcmp("or1", property)) {
+		g_signal_connect (factory, "bind", G_CALLBACK (bind_factory_check_button_or1_cb), sample);
+	}
+
+	return factory;
+}

@@ -116,7 +116,9 @@ HKLAPI void hkl_gui_factory_set_sample(HklGuiFactory *self, HklGuiSample *sample
 
 HKLAPI void hkl_gui_factory_set_wavelength(HklGuiFactory *self, gdouble wavelength);
 
-HKLAPI void hkl_gui_factory_setup_column_view_sample_reflections(HklGuiFactory *self, GtkColumnView *column_view);
+HKLAPI void hkl_gui_factory_setup_column_view_sample_reflections(HklGuiFactory *self,
+								 GtkSingleSelection *samples,
+								 GtkColumnView *column_view);
 
 HKLAPI void hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self, GtkColumnView *column_view);
 
@@ -232,6 +234,12 @@ HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_spin_button_parameter_max(vo
 /* sample reflection */
 
 HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_label__sample_reflection_geometry_axis(int idx);
+
+HKLAPI GtkListItemFactory *hkl_gui_item_factory_new_check_button__sample_orX(GtkSingleSelection *single_selection,
+									     const char *property);
+
+HKLAPI void hkl_gui_setup_item_factory_check_button_cb (GtkListItemFactory *factory,
+							GtkListItem *list_item);
 
 HKLAPI void hkl_gui_setup_item_factory_entry_cb (GtkListItemFactory *factory,
 						 GtkListItem *list_item);

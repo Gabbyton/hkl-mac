@@ -245,6 +245,7 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 
 		/* set column view sample reflections */
 		hkl_gui_factory_setup_column_view_sample_reflections(factory,
+								     self->single_selection_samples,
 								     GTK_COLUMN_VIEW(self->column_view_sample_reflections));
 
 		gsample = hkl_gui_factory_get_sample(factory);

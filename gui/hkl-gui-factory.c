@@ -618,6 +618,7 @@ hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self,
 
 void
 hkl_gui_factory_setup_column_view_sample_reflections(HklGuiFactory *self,
+						     GtkSingleSelection *samples,
 						     GtkColumnView *column_view)
 {
 	g_return_if_fail(HKL_GUI_IS_FACTORY(self));
@@ -637,6 +638,8 @@ hkl_gui_factory_setup_column_view_sample_reflections(HklGuiFactory *self,
 	}
 
 	/* Add the right columns */
+	add_column(column_view, "or0", check_button__sample_orX, samples, "or0");
+	add_column(column_view, "or1", check_button__sample_orX, samples, "or1");
 	add_column(column_view, "h", entry_numeric_property, "h");
 	add_column(column_view, "k", entry_numeric_property, "k");
 	add_column(column_view, "l", entry_numeric_property, "l");
@@ -647,14 +650,14 @@ hkl_gui_factory_setup_column_view_sample_reflections(HklGuiFactory *self,
 	}
 }
 
-/**************************/
-/* Gui ListItem factories */
-/**************************/
-
 struct diffractometer_t *
 hkl_gui_factory_get_diffractometer(HklGuiFactory *self)
 {
 	return self->diffractometer;
 }
+
+/**************************/
+/* Gui ListItem factories */
+/**************************/
 
 /* Sort of class method */
