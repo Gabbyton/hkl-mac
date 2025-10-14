@@ -553,10 +553,8 @@ hkl_gui_factory_add_reflection(HklGuiFactory *self, HklGuiSample *sample)
 
 void hkl_gui_factory_compute_ub(HklGuiFactory *self, HklGuiSample* sample)
 {
-	GError *error = NULL;
-
-	if(!hkl_gui_sample_compute_ub (sample, &error)) {
-		/* raise_error(self, &error); */
+	if(!hkl_gui_sample_compute_ub (sample)) {
+		hkl_gui_factory_set_error(self, hkl_gui_sample_get_error(sample));
 	}else{
 		update_liststore_pseudo_axes(self);
 		update_liststore_engines(self);

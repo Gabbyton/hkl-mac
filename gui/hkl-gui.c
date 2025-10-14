@@ -831,7 +831,7 @@ new_window (GApplication *app,
 
 	/* button_compute_ub */
 	gtk_widget_set_tooltip_text(button_compute_ub, "Compute the UB matrix with or0 and or1 reflections");
-	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_copy_sample), "win.compute-ub");
+	gtk_actionable_set_action_name (GTK_ACTIONABLE (button_compute_ub), "win.compute-ub");
 
 	/* button_copy_sample */
 	gtk_widget_set_tooltip_text(button_copy_sample, "Copy the selected sample");

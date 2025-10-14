@@ -155,6 +155,7 @@ HKLAPI HklGuiSample* hkl_gui_sample_new(const char *name);
 HKLAPI HklGuiSample* hkl_gui_sample_new_copy(const HklGuiSample *gsample);
 
 /* get */
+HKLAPI GError *hkl_gui_sample_get_error(HklGuiSample *self);
 HKLAPI const char *hkl_gui_sample_get_name(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_a(HklGuiSample *self);
 HKLAPI gdouble hkl_gui_sample_get_b(HklGuiSample *self);
@@ -171,6 +172,7 @@ HKLAPI HklGuiSampleReflection *hkl_gui_sample_get_or0(HklGuiSample *self);
 HKLAPI HklGuiSampleReflection *hkl_gui_sample_get_or1(HklGuiSample *self);
 
 /* set */
+HKLAPI void hkl_gui_sample_set_error(HklGuiSample *self, GError *error);
 HKLAPI void hkl_gui_sample_set_name(HklGuiSample *self, const char *name);
 HKLAPI void hkl_gui_sample_set_a(HklGuiSample *self, gdouble value);
 HKLAPI void hkl_gui_sample_set_b(HklGuiSample *self, gdouble value);
@@ -185,7 +187,7 @@ HKLAPI void hkl_gui_sample_set_or0(HklGuiSample *self, HklGuiSampleReflection *r
 HKLAPI void hkl_gui_sample_set_or1(HklGuiSample *self, HklGuiSampleReflection *reflection);
 
 /* methods */
-HKLAPI gboolean hkl_gui_sample_compute_ub(HklGuiSample* sample, GError **error);
+HKLAPI gboolean hkl_gui_sample_compute_ub(HklGuiSample* sample);
 
 HKLAPI void hkl_gui_sample_add_reflection(HklGuiSample *self,
 					  HklGeometry *goemetry, HklDetector *detector,

@@ -41,6 +41,7 @@
 enum {
 	PROP_0,
 
+	PROP_ERROR,
 	PROP_NAME,
 	PROP_A,
 	PROP_B,
@@ -245,6 +246,12 @@ hkl_gui_sample_class_init (HklGuiSampleClass *klass)
 	object_class->get_property = hkl_gui_sample_get_property;
 	object_class->set_property = hkl_gui_sample_set_property;
 
+	props[PROP_ERROR] =
+		g_param_spec_pointer ("error",
+				      "Error",
+				      "the last GError",
+				      G_PARAM_STATIC_NAME | G_PARAM_READWRITE);
+
 	props[PROP_NAME] =
 		g_param_spec_string ("name",
 				     "Name",
@@ -365,6 +372,12 @@ hkl_gui_sample_new_copy(const HklGuiSample *gsample)
 
 /* getters */
 
+GError *
+hkl_gui_sample_get_error(HklGuiSample *self)
+{
+	return self->error;
+}
+
 const char *
 hkl_gui_sample_get_name(HklGuiSample *self)
 {
@@ -450,6 +463,16 @@ hkl_gui_sample_get_or1(HklGuiSample *self)
 }
 
 /* setters */
+
+void
+hkl_gui_sample_set_error(HklGuiSample *self,
+			  GError *error)
+{
+	g_clear_error(&self->error);
+	self->error = g_error_copy(error);
+
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ERROR]);
+}
 
 void
 hkl_gui_sample_set_name(HklGuiSample *self, const char *name)
@@ -669,13 +692,28 @@ hkl_gui_sample_set_or1(HklGuiSample *self, HklGuiSampleReflection* reflection)
 /* methodes */
 
 gboolean
-hkl_gui_sample_compute_ub(HklGuiSample* self, GError **error)
+hkl_gui_sample_compute_ub(HklGuiSample* self)
 {
+	gboolean res;
+	GError *error = NULL;
 
-	gboolean res = hkl_sample_compute_UB_busing_levy (self->sample,
-							  hkl_gui_sample_reflection_get_reflection(self->or0),
-							  hkl_gui_sample_reflection_get_reflection(self->or1),
-							  error);
+	g_return_val_if_fail (HKL_GUI_IS_SAMPLE (self), false);
+	g_return_val_if_fail (NULL != self->or0, false);
+	g_return_val_if_fail (NULL != self->or1, false);
+
+	res = hkl_sample_compute_UB_busing_levy (self->sample,
+						 hkl_gui_sample_reflection_get_reflection(self->or0),
+						 hkl_gui_sample_reflection_get_reflection(self->or1),
+						 &error);
+
+	if (true == res){
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_UX]);
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_UY]);
+		g_object_notify_by_pspec (G_OBJECT (self), props[PROP_UZ]);
+	}else{
+		hkl_gui_sample_set_error(self, error);
+	}
+
 	return res;
 }
 
