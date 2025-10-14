@@ -305,6 +305,7 @@ hkl_gui_setup_item_factory_spin_button_cb (GtkListItemFactory *factory,
 	GtkWidget *spin_button;
 
 	spin_button = gtk_spin_button_new_with_range (-G_MAXDOUBLE, G_MAXDOUBLE, 0.0001);
+	gtk_spin_button_set_increments (GTK_SPIN_BUTTON (spin_button), 1, 10);
 	gtk_list_item_set_child (list_item, spin_button);
 }
 
@@ -315,6 +316,7 @@ hkl_gui_setup_item_factory_spin_button_vertical_cb (GtkListItemFactory *factory,
 	GtkWidget *spin_button;
 
 	spin_button = gtk_spin_button_new_with_range (-G_MAXDOUBLE, G_MAXDOUBLE, 0.0001);
+	gtk_spin_button_set_increments (GTK_SPIN_BUTTON (spin_button), 1, 10);
 	gtk_orientable_set_orientation (GTK_ORIENTABLE (spin_button), GTK_ORIENTATION_VERTICAL);
 	gtk_list_item_set_child (list_item, spin_button);
 }

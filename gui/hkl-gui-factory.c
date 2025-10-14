@@ -35,6 +35,9 @@
 #include "hkl-gui.h"
 #include "hkl-gui-diffractometer-private.h"
 #include "hkl-gui-macros.h"
+#if HKL3D
+# include "hkl-gui-3d.h"
+#endif
 
 /***********/
 /* Factory */
@@ -68,6 +71,9 @@ struct _HklGuiFactory {
 
 	HklGuiSample *gsample; /* not owned */
 	struct diffractometer_t *diffractometer;
+#if HKL3D
+	HklGui3D *gui3d;
+#endif
 };
 
 G_DEFINE_FINAL_TYPE(HklGuiFactory, hkl_gui_factory, G_TYPE_OBJECT);
@@ -177,6 +183,18 @@ update_sample_cb(HklGuiSample *gsample,
 	update_liststore_engines(self);
 }
 
+#if HKL3D
+static void
+update_3d_cb(HklGuiSample *gsample,
+	     GParamSpec* pspec,
+	     gpointer *user_data)
+{
+	HklGuiFactory *self = HKL_GUI_FACTORY (user_data);
+	if (NULL != self->gui3d){
+		hkl_gui_3d_update(self->gui3d);
+	}
+}
+#endif
 
 static void
 hkl_gui_factory_set_factory(HklGuiFactory *self,
@@ -225,6 +243,20 @@ hkl_gui_factory_set_factory(HklGuiFactory *self,
 		g_signal_connect(g_engine, "changed", G_CALLBACK(engine_changed_cb), self);
 	}
 
+#if HKL3D
+	char *filename = NULL;
+	const char *dname = hkl_gui_factory_get_name(self);
+
+	if(!strcmp("K6C", dname))
+		filename = get_model("diffabs.yaml");
+	else if (!strcmp("K4CV", dname))
+		filename = get_model("cristal4C.yaml");
+
+	if (filename){
+		self->gui3d = hkl_gui_3d_new(filename,
+					     self->diffractometer->geometry);
+	}
+#endif
 	/* connect pseudo axes and engines parameters to axes */
 	guint n_axes = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_axes));
 	guint n_pseudo_axes = g_list_model_get_n_items(G_LIST_MODEL(self->liststore_pseudo_axes));
@@ -237,6 +269,10 @@ hkl_gui_factory_set_factory(HklGuiFactory *self,
 		/* update the diffractometer */
 		g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_diffractometer_cb), self);
 
+#if HKL3D
+		/* update the 3d */
+		g_signal_connect(g_axis, "notify::value", G_CALLBACK(update_3d_cb), self);
+#endif
 		/* update the pseudo axes */
 		for(j=0; j<n_pseudo_axes; ++j){
 			HklGuiParameter *g_pseudo_axis =  g_list_model_get_item(G_LIST_MODEL(self->liststore_pseudo_axes), j);
@@ -361,6 +397,9 @@ hkl_gui_factory_init(HklGuiFactory *self)
 {
 	self->diffractometer = NULL;
 	self->error = NULL;
+#if HKL3D
+	self->gui3d = NULL;
+#endif
 }
 
 static void
@@ -577,6 +616,24 @@ hkl_gui_factory_del_reflection(HklGuiFactory *self, HklGuiSample *sample, GtkBit
 }
 
 void
+hkl_gui_factory_setup_3d(HklGuiFactory *old, HklGuiFactory *new, GtkBox *box)
+{
+#if HKL3D
+	if (NULL != old && NULL != old->gui3d){
+		gtk_box_remove (box,
+				GTK_WIDGET (hkl_gui_3d_get_frame (old->gui3d)));
+	}
+
+	if (NULL != new && NULL != new->gui3d){
+		GtkWidget *frame = GTK_WIDGET (hkl_gui_3d_get_frame(new->gui3d));
+		g_object_ref (frame);
+		gtk_box_append (box,
+				GTK_WIDGET (hkl_gui_3d_get_frame(new->gui3d)));
+	}
+#endif
+}
+
+void
 hkl_gui_factory_setup_column_view_solutions(HklGuiFactory *self,
 					    GtkColumnView *column_view)
 {
@@ -653,9 +710,3 @@ hkl_gui_factory_get_diffractometer(HklGuiFactory *self)
 {
 	return self->diffractometer;
 }
-
-/**************************/
-/* Gui ListItem factories */
-/**************************/
-
-/* Sort of class method */

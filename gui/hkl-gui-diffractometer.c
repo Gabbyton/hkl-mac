@@ -78,7 +78,6 @@ void diffractometer_update(struct diffractometer_t *self)
 	g_return_if_fail(NULL != self->engines);
 
 	hkl_engine_list_get(self->engines);
-	diffractometer_fprintf(stdout, self);
 }
 
 void diffractometer_set_sample(struct diffractometer_t *self,

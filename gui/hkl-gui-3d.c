@@ -20,7 +20,9 @@
  * Authors: Picca Frédéric-Emmanuel <picca@synchrotron-soleil.fr>
  *	    Oussama Sboui <oussama.sboui@synchrotron-soleil.fr>
  */
-#include <GL/gl.h>
+#include <cglm/struct.h>
+#include <epoxy/gl.h>
+#include <g3d/object.h>
 #include <g3d/quat.h>
 
 #include "hkl3d.h"
@@ -28,15 +30,49 @@
 #include "hkl-gui.h"
 #include "hkl-gui-macros.h"
 #include "hkl-gui-3d.h"
-#include "hkl-gui-3d-gl.h"
 
-typedef enum  {
-	HKL_GUI_3D_COL_NAME = 0,
-	HKL_GUI_3D_COL_HIDE,
-	HKL_GUI_3D_COL_MODEL,
-	HKL_GUI_3D_COL_OBJECT,
-	HKL_GUI_3D_COL_NUM_COLS
-} HklGui3DCol;
+
+/**********/
+/* Shader */
+/**********/
+
+
+typedef struct _Shader {
+	GLuint program;
+} Shader;
+
+static void set_uniform_mat4s (Shader *s, const char *name, mat4s m)
+{
+	GLuint loc = glGetUniformLocation (s->program, name);
+	glUniformMatrix4fv(loc, 1, GL_FALSE, m.raw[0]);
+}
+
+static void set_uniform_vec3sv (Shader *s, const char *name, vec3s v)
+{
+	GLuint loc = glGetUniformLocation (s->program, name);
+	glUniform3fv(loc, 1, v.raw);
+}
+
+static void set_uniform_make_vec3s (Shader *s, const char *name, float x, float y, float z)
+{
+	CGLM_ALIGN_MAT vec3s v = {{x, y, z}};
+	set_uniform_vec3sv(s, name, v);
+}
+
+static void set_uniform_float(Shader *s, const char *name, float x)
+{
+	GLuint loc = glGetUniformLocation (s->program, name);
+	glUniform1f(loc, x);
+}
+
+typedef struct _BufferToDraw {
+	GLuint vao;
+	Hkl3DObject *object;
+} BufferToDraw;
+
+/************/
+/* HklGui3d */
+/************/
 
 enum {
 	PROP_0,
@@ -48,7 +84,7 @@ enum {
 };
 
 /* Keep a pointer to the properties definition */
-static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
+static GParamSpec *props[N_PROPERTIES] = { NULL, };
 
 enum {
 	CHANGED,
@@ -78,22 +114,25 @@ struct _HklGui3DPrivate {
 	GtkButton *button1;
 	GtkButton *button2;
 	GtkTreeStore *treestore1;
-	GtkGLArea *gl_area;
-
-	Hkl3D *hkl3d;
 
 	/* opengl connected to the drawingarea1 */
-	G3DGLRenderOptions renderoptions;
 	struct {
 		gint32 beginx;
 		gint32 beginy;
 	} mouse;
 	gboolean aabb;
+
+	Shader shader;
+	BufferToDraw *buffers;
+	size_t n_buffers;
 };
 
 struct _HklGui3D {
 	GObject parent_instance;
 	HklGui3DPrivate * priv;
+	Hkl3D *hkl3d;
+
+	GtkGLArea *gl_area;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (HklGui3D, hkl_gui_3d, G_TYPE_OBJECT);
@@ -106,25 +145,25 @@ G_DEFINE_TYPE_WITH_PRIVATE (HklGui3D, hkl_gui_3d, G_TYPE_OBJECT);
 
 /* 	gtk_tree_store_clear(priv->treestore1); */
 
-/* 	for(i=0; i<priv->hkl3d->config->len; ++i){ */
+/* 	for(i=0; i<self->hkl3d->config->len; ++i){ */
 /* 		GtkTreeIter iter = {0}; */
 
 /* 		gtk_tree_store_append(priv->treestore1, &iter, NULL); */
 /* 		gtk_tree_store_set(priv->treestore1, &iter, */
-/* 				   HKL_GUI_3D_COL_NAME, priv->hkl3d->config->models[i]->filename, */
-/* 				   HKL_GUI_3D_COL_MODEL, priv->hkl3d->config->models[i], */
+/* 				   HKL_GUI_3D_COL_NAME, self->hkl3d->config->models[i]->filename, */
+/* 				   HKL_GUI_3D_COL_MODEL, self->hkl3d->config->models[i], */
 /* 				   HKL_GUI_3D_COL_OBJECT, NULL, */
 /* 				   -1); */
 
-/* 		for(j=0; j<priv->hkl3d->config->models[i]->len; ++j){ */
+/* 		for(j=0; j<self->hkl3d->config->models[i]->len; ++j){ */
 /* 			GtkTreeIter citer = {0}; */
 
 /* 			gtk_tree_store_append(priv->treestore1, &citer, &iter); */
 /* 			gtk_tree_store_set(priv->treestore1, &citer, */
-/* 					   HKL_GUI_3D_COL_NAME, priv->hkl3d->config->models[i]->objects[j]->axis_name, */
-/* 					   HKL_GUI_3D_COL_HIDE, priv->hkl3d->config->models[i]->objects[j]->hide, */
-/* 					   HKL_GUI_3D_COL_MODEL, priv->hkl3d->config->models[i], */
-/* 					   HKL_GUI_3D_COL_OBJECT, priv->hkl3d->config->models[i]->objects[j], */
+/* 					   HKL_GUI_3D_COL_NAME, self->hkl3d->config->models[i]->objects[j]->axis_name, */
+/* 					   HKL_GUI_3D_COL_HIDE, self->hkl3d->config->models[i]->objects[j]->hide, */
+/* 					   HKL_GUI_3D_COL_MODEL, self->hkl3d->config->models[i], */
+/* 					   HKL_GUI_3D_COL_OBJECT, self->hkl3d->config->models[i]->objects[j], */
 /* 					   -1); */
 /* 		} */
 /* 	} */
@@ -148,22 +187,14 @@ hkl_gui_3d_get_geometry(HklGui3D *self)
 	return priv->geometry;
 }
 
-void _filename_and_geometry(HklGui3D *self)
+static void _filename_and_geometry(HklGui3D *self)
 {
+
 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
 	if(priv->filename && priv->geometry){
-		if (priv->hkl3d)
-			hkl3d_free(priv->hkl3d);
-		priv->hkl3d = hkl3d_new(priv->filename, priv->geometry);
-		if(priv->hkl3d){
-			/* priv->scene = hkl_gui_3d_scene_new(priv->hkl3d, FALSE, FALSE, FALSE, FALSE); */
-
-			/* hkl_gui_3d_update_hkl3d_objects_TreeStore(self); */
-			/* gtk_box_pack_start(GTK_BOX(priv->vbox1), */
-			/*		   GTK_WIDGET(priv->scene), */
-			/*		   TRUE, TRUE, 0); */
-			/* gtk_widget_show_all(GTK_WIDGET(priv->vbox1)); */
-		}
+		if (self->hkl3d)
+			hkl3d_free(self->hkl3d);
+		self->hkl3d = hkl3d_new(priv->filename, priv->geometry);
 	}
 }
 
@@ -177,6 +208,7 @@ hkl_gui_3d_set_filename(HklGui3D *self, const char *filename)
 	priv->filename = g_strdup(filename);
 
 	_filename_and_geometry(self);
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_FILENAME]);
 }
 
 static void
@@ -186,6 +218,7 @@ hkl_gui_3d_set_geometry(HklGui3D *self, HklGeometry *geometry)
 
 	priv->geometry = geometry;
 	_filename_and_geometry(self);
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_GEOMETRY]);
 }
 
 static void
@@ -230,14 +263,14 @@ get_property (GObject *object, guint prop_id,
 static void
 finalize (GObject* object)
 {
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(HKL_GUI_3D(object));
-
+	HklGui3D *self = HKL_GUI_3D (object);
+	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(HKL_GUI_3D(self));
 
 	g_free(priv->filename);
 
 	g_object_unref(priv->builder);
 
-	hkl3d_free(priv->hkl3d);
+	hkl3d_free(self->hkl3d);
 
 	G_OBJECT_CLASS (hkl_gui_3d_parent_class)->finalize (object);
 }
@@ -251,29 +284,19 @@ hkl_gui_3d_new (const char *filename, HklGeometry *geometry)
 			     NULL);
 }
 
-GtkFrame *hkl_gui_3d_frame_get(HklGui3D *self)
+GtkFrame *hkl_gui_3d_get_frame(HklGui3D *self)
 {
 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
 
 	return priv->frame1;
 }
 
-void hkl_gui_3d_is_colliding(HklGui3D *self)
+void hkl_gui_3d_update(HklGui3D *self)
 {
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
-
-	if(priv->hkl3d)
-		hkl3d_is_colliding(priv->hkl3d);
-}
-
-void hkl_gui_3d_invalidate(HklGui3D *self)
-{
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
-
-	priv->renderoptions.updated = TRUE;
-
-	/* queue a redraw on the GtkGLArea */
-	gtk_widget_queue_draw (GTK_WIDGET(priv->gl_area));
+	if(self->hkl3d){
+		hkl3d_is_colliding(self->hkl3d);
+		hkl_gui_3d_invalidate(self);
+	}
 }
 
 /************/
@@ -300,7 +323,7 @@ void hkl_gui_3d_invalidate(HklGui3D *self)
 /* 	hide = !gtk_cell_renderer_toggle_get_active(renderer); */
 
 /* 	if(object){ */
-/* 		hkl3d_hide_object(priv->hkl3d, object, hide); */
+/* 		hkl3d_hide_object(self->hkl3d, object, hide); */
 /* 		gtk_tree_store_set (priv->treestore1, */
 /* 				    &iter, */
 /* 				    HKL_GUI_3D_COL_HIDE, hide, */
@@ -328,7 +351,7 @@ void hkl_gui_3d_invalidate(HklGui3D *self)
 /* 			valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(priv->treestore1), */
 /* 							     &children, &iter); */
 /* 			while(valid){ */
-/* 				hkl3d_hide_object(priv->hkl3d, model->objects[i++], hide); */
+/* 				hkl3d_hide_object(self->hkl3d, model->objects[i++], hide); */
 /* 				gtk_tree_store_set (priv->treestore1, */
 /* 						    &children, */
 /* 						    HKL_GUI_3D_COL_HIDE, hide, */
@@ -359,9 +382,9 @@ void hkl_gui_3d_invalidate(HklGui3D *self)
 /* 	gtk_tree_path_free(path); */
 
 /* 	/\* need to unselect of objects of all 3d models *\/ */
-/* 	for(i=0; i<priv->hkl3d->config->len; ++i) */
-/* 		for(j=0; j<priv->hkl3d->config->models[i]->len; ++j) */
-/* 			priv->hkl3d->config->models[i]->objects[j]->selected = FALSE; */
+/* 	for(i=0; i<self->hkl3d->config->len; ++i) */
+/* 		for(j=0; j<self->hkl3d->config->models[i]->len; ++j) */
+/* 			self->hkl3d->config->models[i]->objects[j]->selected = FALSE; */
 
 /* 	/\* now select the right object *\/ */
 /* 	gtk_tree_model_get (GTK_TREE_MODEL(priv->treestore1), */
@@ -402,313 +425,174 @@ void hkl_gui_3d_invalidate(HklGui3D *self)
 /* 			    HKL_GUI_3D_COL_OBJECT, &object, */
 /* 			    -1); */
 /* 	if(object){ */
-/* 		hkl3d_remove_object(priv->hkl3d, object); */
+/* 		hkl3d_remove_object(self->hkl3d, object); */
 /* 		hkl_gui_3d_update_hkl3d_objects_TreeStore(self); */
 /* 		hkl_gui_3d_invalidate(self); */
 /* 	} */
 /* } */
 
-static void
-reset_3d(G3DGLRenderOptions *renderoptions)
-{
-	/* renderoptions */
-	renderoptions->updated = TRUE;
-	renderoptions->initialized = FALSE;
-        renderoptions->zoom = 7;
-        renderoptions->bgcolor[0] = 0.9;
-        renderoptions->bgcolor[1] = 0.8;
-        renderoptions->bgcolor[2] = 0.6;
-        renderoptions->bgcolor[3] = 1.0;
-	renderoptions->glflags =
-		/* G3D_FLAG_GL_ISOMETRIC | */
-		G3D_FLAG_GL_SPECULAR |
-		G3D_FLAG_GL_SHININESS |
-		G3D_FLAG_GL_TEXTURES |
-		G3D_FLAG_GL_COLORS|
-		G3D_FLAG_GL_COORD_AXES;
-
-        g3d_quat_trackball(renderoptions->quat, 0.0, 0.0, 0.0, 0.0, 0.8);
-
-	/* rotate a little bit */
-	gfloat q1[4], q2[4];
-	gfloat a1[3] = { 0.0, 1.0, 0.0 }, a2[3] = {1.0, 0.0, 1.0};
-
-	g3d_quat_rotate(q1, a1, - 45.0 * G_PI / 180.0);
-	g3d_quat_rotate(q2, a2, - 45.0 * G_PI / 180.0);
-	g3d_quat_add(renderoptions->quat, q1, q2);
-}
-
-/* re-initialize the 3d view */
-/* void hkl_gui_3d_toolbutton3_clicked_cb(GtkToolButton *toolbutton, */
-/* 				       gpointer user_data) */
+/* static void */
+/* reset_3d(G3DGLRenderOptions *renderoptions) */
 /* { */
-/* 	HklGui3D *self = user_data; */
-/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
+/* 	/\* renderoptions *\/ */
+/* 	renderoptions->updated = TRUE; */
+/* 	renderoptions->initialized = FALSE; */
+/*         renderoptions->zoom = 7; */
+/*         renderoptions->bgcolor[0] = 0.9; */
+/*         renderoptions->bgcolor[1] = 0.8; */
+/*         renderoptions->bgcolor[2] = 0.6; */
+/*         renderoptions->bgcolor[3] = 1.0; */
+/* 	renderoptions->glflags = */
+/* 		/\* G3D_FLAG_GL_ISOMETRIC | *\/ */
+/* 		G3D_FLAG_GL_SPECULAR | */
+/* 		G3D_FLAG_GL_SHININESS | */
+/* 		G3D_FLAG_GL_TEXTURES | */
+/* 		G3D_FLAG_GL_COLORS| */
+/* 		G3D_FLAG_GL_COORD_AXES; */
 
-/* 	reset_3d(&priv->renderoptions); */
-/* 	hkl_gui_3d_invalidate(self); */
+/*         g3d_quat_trackball(renderoptions->quat, 0.0, 0.0, 0.0, 0.0, 0.8); */
+
+/* 	/\* rotate a little bit *\/ */
+/* 	gfloat q1[4], q2[4]; */
+/* 	gfloat a1[3] = { 0.0, 1.0, 0.0 }; */
+/* 	gfloat a2[3] = { 1.0, 0.0, 1.0 }; */
+
+/* 	g3d_quat_rotate(q1, a1, - 45.0 * G_PI / 180.0); */
+/* 	g3d_quat_rotate(q2, a2, - 45.0 * G_PI / 180.0); */
+/* 	g3d_quat_add(renderoptions->quat, q1, q2); */
 /* } */
 
-/* void hkl_gui_3d_toolbutton4_toggled_cb(GtkToggleToolButton *toggle_tool_button, */
-/* 				       gpointer user_data) */
-/* { */
-/* 	HklGui3D *self = user_data; */
-/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
-
-/* 	priv->aabb = gtk_toggle_tool_button_get_active(toggle_tool_button); */
-/* 	hkl_gui_3d_invalidate(self); */
-/* } */
-
-/* void hkl_gui_3d_button1_clicked_cb(GtkButton *button, */
-/* 				   gpointer user_data) */
-/* { */
-/* 	HklGui3D *self = user_data; */
-/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
-/* 	GSList *filenames; */
-/* 	GSList *filename; */
-
-/* 	filenames = gtk_file_chooser_get_files(GTK_FILE_CHOOSER(priv->filechooserdialog1)); */
-/* 	filename = filenames; */
-/* 	while(filename){ */
-/* 		GFile *file = filename->data; */
-/* 		GFile *directory = g_file_get_parent(file); */
-/* 		char *basename = g_file_get_basename(file); */
-/* 		char *path = g_file_get_path(directory); */
-
-/* 		hkl3d_add_model_from_file(priv->hkl3d, basename, path); */
-/* 		hkl3d_connect_all_axes(priv->hkl3d); */
-
-/* 		g_free(path); */
-/* 		g_free(basename); */
-/* 		g_object_unref(G_OBJECT(directory)); */
-/* 		g_object_unref(G_OBJECT(file)); */
-/* 		filename = g_slist_next(filename); */
-/* 	}; */
-
-/* 	hkl_gui_3d_update_hkl3d_objects_TreeStore(self); */
-/* 	gtk_widget_hide(GTK_WIDGET(priv->filechooserdialog1)); */
-/* 	g_slist_free(filenames); */
-/* } */
-
-/* void hkl_gui_3d_button2_clicked_cb(GtkButton *button, */
-/* 				   gpointer user_data) */
-/* { */
-/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data); */
-
-/* 	gtk_widget_hide(GTK_WIDGET(priv->filechooserdialog1)); */
-/* } */
 
 /***************/
 /* OpenGL part */
 /***************/
 
-enum DisplayList {
-	MODEL = 1,
-	BULLET,
-	COLLISION,
-	AABBBOX,
-	HIGHLIGHT
-};
+/* void hkl_gui_3d_draw_selected(HklGui3D *self) */
+/* { */
+/* 	int i; */
+/* 	int j; */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self); */
 
-static void hkl_gui_3d_draw_g3dmodel(HklGui3D *self)
+/* 	/\* glDisable(GL_LIGHTING); *\/ */
+
+/* 	for(i=0; i<self->hkl3d->config->len; i++) */
+/* 		for(j=0; j<self->hkl3d->config->models[i]->len; j++){ */
+/* 			if(self->hkl3d->config->models[i]->objects[j]->selected */
+/* 			   && !self->hkl3d->config->models[i]->objects[j]->hide){ */
+/* 				// Push the GL attribute bits so that we don't wreck any settings */
+/* 				glPushAttrib( GL_ALL_ATTRIB_BITS ); */
+
+/* 				// Enable polygon offsets, and offset filled polygons forward by 2.5 */
+/* 				glEnable( GL_POLYGON_OFFSET_FILL ); */
+/* 				glPolygonOffset( -2.5, -2.5); */
+
+/* 				// Set the render mode to be line rendering with a thick line width */
+/* 				glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ); */
+/* 				glLineWidth( 3.f ); */
+/* 				// Set the colour to be pink */
+/* 				glColor3f( 1.f, .0f, 1.f ); */
+/* 				// Render the object */
+/* 				draw_g3dObject(self->hkl3d->config->models[i]->objects[j]->g3d); */
+/* 				// Set the polygon mode to be filled triangles */
+/* 				glLineWidth( 1.f ); */
+/* 				glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ); */
+/* 				// Set the colour to the background */
+/* 				glCullFace(GL_FRONT); */
+/* 				glColor3f( 0.0f, 0.0f, 0.0f ); */
+/* 				// Render the object */
+/* 				draw_g3dObject(self->hkl3d->config->models[i]->objects[j]->g3d); */
+
+/* 				// Pop the state changes off the attribute */
+/* 				// to set things back how they were */
+/* 				glPopAttrib(); */
+/* 			} */
+/* 		} */
+/* 	/\* glEnable(GL_LIGHTING); *\/ */
+/* } */
+
+/* static void draw_sphere(float radius, int lats, int longs) */
+/* { */
+/* 	int i, j; */
+/* 	for(i=0;i<=lats;i++){ */
+/* 		float lat0 = M_PI * (-0.5 + (float) (i - 1) / lats); */
+/* 		float z0  = radius * sin(lat0); */
+/* 		float zr0 =  radius * cos(lat0); */
+
+/* 		float lat1 = M_PI * (-0.5 + (float) i / lats); */
+/* 		float z1 = radius * sin(lat1); */
+/* 		float zr1 = radius * cos(lat1); */
+
+/* 		glBegin(GL_QUAD_STRIP); */
+/* 		for(j=0;j<=longs;j++) { */
+/* 			float lng = 2 * M_PI * (float) (j - 1) / longs; */
+/* 			float x = cos(lng); */
+/* 			float y = sin(lng); */
+
+/* 			glNormal3f(x * zr1, y * zr1, z1); */
+/* 			glVertex3f(x * zr1, y * zr1, z1); */
+/* 			glNormal3f(x * zr0, y * zr0, z0); */
+/* 			glVertex3f(x * zr0, y * zr0, z0); */
+/* 		} */
+/* 		glEnd(); */
+/* 	} */
+/* } */
+
+/* void hkl_gui_3d_draw_collisions(HklGui3D *self) */
+/* { */
+/* 	int i; */
+/* 	int numManifolds; */
+/* 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self); */
+
+/* 	/\* glDisable(GL_LIGHTING); *\/ */
+/* 	///one way to draw all the contact points is iterating over contact manifolds / points: */
+/* 	numManifolds = hkl3d_get_nb_manifolds(self->hkl3d); */
+/* 	for (i=0; i<numManifolds; i++){ */
+/* 		int numContacts; */
+/* 		int j; */
+
+/* 		// now draw the manifolds / points */
+/* 		numContacts = hkl3d_get_nb_contacts(self->hkl3d, i); */
+/* 		for (j=0; j<numContacts; j++){ */
+/* 			double xa, ya, za; */
+/* 			double xb, yb, zb; */
+
+/* 			hkl3d_get_collision_coordinates(self->hkl3d, i, j, */
+/* 							&xa, &ya, &za, &xb, &yb, &zb); */
+
+/* 			glDisable(GL_DEPTH_TEST); */
+/* 			glBegin(GL_LINES); */
+/* 			glColor4f(0, 0, 0, 1); */
+/* 			glVertex3d(xa, ya, za); */
+/* 			glVertex3d(xb, yb, zb); */
+/* 			glEnd(); */
+/* 			glColor4f(1, 0, 0, 1); */
+/* 			glPushMatrix(); */
+/* 			glTranslatef (xb, yb, zb); */
+/* 			glScaled(0.05,0.05,0.05); */
+
+/* 			draw_sphere(1, 10, 10); */
+
+/* 			glPopMatrix(); */
+/* 			glColor4f(1, 1, 0, 1); */
+/* 			glPushMatrix(); */
+/* 			glTranslatef (xa, ya, za); */
+/* 			glScaled(0.05,0.05,0.05); */
+
+/* 			draw_sphere(1, 10, 10); */
+
+/* 			glPopMatrix(); */
+/* 			glEnable(GL_DEPTH_TEST); */
+/* 		} */
+/* 	} */
+/* 	glFlush(); */
+/* } */
+
+static void
+draw_aabb(const float from[3], const float to[3], const float color[4])
 {
-	int i;
-	int j;
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
+	GLfloat vertexes[7 * 2 * 12]; /* position, color(RGB) */
+	GLfloat *v;
 
-	/* set the alpha canal to 0.5 if there is a collision */
-	for(i=0; i<priv->hkl3d->config->len; i++)
-		for(j=0; j<priv->hkl3d->config->models[i]->len; j++){
-			GSList *faces;
-			G3DFace *face;
-			double alpha;
-
-			if(priv->hkl3d->config->models[i]->objects[j]->is_colliding)
-				alpha = 0.5;
-			else
-				alpha = 1;
-
-			faces = priv->hkl3d->config->models[i]->objects[j]->g3d->faces;
-			while(faces){
-				face = (G3DFace *)(faces->data);
-				face->material->a = alpha;
-				faces = g_slist_next(faces);
-			}
-		}
-
-	/* draw the G3DObjects */
-	gl_draw(&priv->renderoptions, priv->hkl3d->model);
-}
-
-static void draw_g3dObject(G3DObject *object)
-{
-	GSList *faces;
-	float *vertex;
-
-	faces = object->faces;
-	vertex = object->vertex_data;
-
-	glPushMatrix();
-
-	/* apply the transformation of the object */
-	if(object->transformation)
-		glMultMatrixf(object->transformation->matrix);
-
-	/* draw all faces with the current stencil */
-	while(faces){
-		G3DFace * face;
-
-		face = (G3DFace*)faces->data;
-		glBegin(GL_TRIANGLES);
-		glVertex3d(vertex[3*(face->vertex_indices[0])],
-			   vertex[3*(face->vertex_indices[0])+1],
-			   vertex[3*(face->vertex_indices[0])+2]);
-		glVertex3d(vertex[3*(face->vertex_indices[1])],
-			   vertex[3*(face->vertex_indices[1])+1],
-			   vertex[3*(face->vertex_indices[1])+2]);
-		glVertex3d(vertex[3*(face->vertex_indices[2])],
-			   vertex[3*(face->vertex_indices[2])+1],
-			   vertex[3*(face->vertex_indices[2])+2]);
-		glEnd();
-		faces = g_slist_next(faces);
-	}
-
-	glPopMatrix();
-}
-
-void hkl_gui_3d_draw_selected(HklGui3D *self)
-{
-	int i;
-	int j;
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
-
-	/* glDisable(GL_LIGHTING); */
-
-	for(i=0; i<priv->hkl3d->config->len; i++)
-		for(j=0; j<priv->hkl3d->config->models[i]->len; j++){
-			if(priv->hkl3d->config->models[i]->objects[j]->selected
-			   && !priv->hkl3d->config->models[i]->objects[j]->hide){
-				// Push the GL attribute bits so that we don't wreck any settings
-				glPushAttrib( GL_ALL_ATTRIB_BITS );
-
-				// Enable polygon offsets, and offset filled polygons forward by 2.5
-				glEnable( GL_POLYGON_OFFSET_FILL );
-				glPolygonOffset( -2.5, -2.5);
-
-				// Set the render mode to be line rendering with a thick line width
-				glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-				glLineWidth( 3.f );
-				// Set the colour to be pink
-				glColor3f( 1.f, .0f, 1.f );
-				// Render the object
-				draw_g3dObject(priv->hkl3d->config->models[i]->objects[j]->g3d);
-				// Set the polygon mode to be filled triangles
-				glLineWidth( 1.f );
-				glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-				// Set the colour to the background
-				glCullFace(GL_FRONT);
-				glColor3f( 0.0f, 0.0f, 0.0f );
-				// Render the object
-				draw_g3dObject(priv->hkl3d->config->models[i]->objects[j]->g3d);
-
-				// Pop the state changes off the attribute
-				// to set things back how they were
-				glPopAttrib();
-			}
-		}
-	/* glEnable(GL_LIGHTING); */
-}
-
-static void draw_sphere(float radius, int lats, int longs)
-{
-	int i, j;
-	for(i=0;i<=lats;i++){
-		float lat0 = M_PI * (-0.5 + (float) (i - 1) / lats);
-		float z0  = radius * sin(lat0);
-		float zr0 =  radius * cos(lat0);
-
-		float lat1 = M_PI * (-0.5 + (float) i / lats);
-		float z1 = radius * sin(lat1);
-		float zr1 = radius * cos(lat1);
-
-		glBegin(GL_QUAD_STRIP);
-		for(j=0;j<=longs;j++) {
-			float lng = 2 * M_PI * (float) (j - 1) / longs;
-			float x = cos(lng);
-			float y = sin(lng);
-
-			glNormal3f(x * zr1, y * zr1, z1);
-			glVertex3f(x * zr1, y * zr1, z1);
-			glNormal3f(x * zr0, y * zr0, z0);
-			glVertex3f(x * zr0, y * zr0, z0);
-		}
-		glEnd();
-	}
-}
-
-void hkl_gui_3d_draw_collisions(HklGui3D *self)
-{
-	int i;
-	int numManifolds;
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
-
-	/* glDisable(GL_LIGHTING); */
-	///one way to draw all the contact points is iterating over contact manifolds / points:
-	numManifolds = hkl3d_get_nb_manifolds(priv->hkl3d);
-	for (i=0; i<numManifolds; i++){
-		int numContacts;
-		int j;
-
-		// now draw the manifolds / points
-		numContacts = hkl3d_get_nb_contacts(priv->hkl3d, i);
-		for (j=0; j<numContacts; j++){
-			double xa, ya, za;
-			double xb, yb, zb;
-
-			hkl3d_get_collision_coordinates(priv->hkl3d, i, j,
-							&xa, &ya, &za, &xb, &yb, &zb);
-
-			glDisable(GL_DEPTH_TEST);
-			glBegin(GL_LINES);
-			glColor4f(0, 0, 0, 1);
-			glVertex3d(xa, ya, za);
-			glVertex3d(xb, yb, zb);
-			glEnd();
-			glColor4f(1, 0, 0, 1);
-			glPushMatrix();
-			glTranslatef (xb, yb, zb);
-			glScaled(0.05,0.05,0.05);
-
-			draw_sphere(1, 10, 10);
-
-			glPopMatrix();
-			glColor4f(1, 1, 0, 1);
-			glPushMatrix();
-			glTranslatef (xa, ya, za);
-			glScaled(0.05,0.05,0.05);
-
-			draw_sphere(1, 10, 10);
-
-			glPopMatrix();
-			glEnable(GL_DEPTH_TEST);
-		}
-	}
-	glFlush();
-}
-
-static void draw_line(const float from[3], const float to[3],
-		      const float fromColor[3], const float toColor[3])
-{
-	glBegin(GL_LINES);
-	glColor3f(fromColor[0], fromColor[1], fromColor[2]);
-	glVertex3d(from[0], from[1], from[2]);
-	glColor3f(toColor[0], toColor[1], toColor[2]);
-	glVertex3d(to[0], to[1], to[2]);
-	glEnd();
-}
-
-static void draw_aabb(const float from[3], const float to[3], const float color[3])
-{
 	float halfExtents[3] = {
 		(to[0] - from[0]) * .5,
 		(to[1] - from[1]) * .5,
@@ -723,23 +607,35 @@ static void draw_aabb(const float from[3], const float to[3], const float color[
 
 	float edgecoord[3] = {1., 1., 1.};
 
+	v = &vertexes[0];
 	for (i=0;i<4;i++){
 		for (j=0;j<3;j++){
-			float pa[3] = {
-				edgecoord[0] * halfExtents[0] + center[0],
-				edgecoord[1] * halfExtents[1] + center[1],
-				edgecoord[2] * halfExtents[2] + center[2]
-			};
+			/* position */
+			v[0] = (edgecoord[0] * halfExtents[0] + center[0]) / 1;
+			v[1] = (edgecoord[1] * halfExtents[1] + center[1]) / 1;
+			v[2] = (edgecoord[2] * halfExtents[2] + center[2]) / 1;
+
+			/* color */
+			v[3] = color[0];
+			v[4] = color[1];
+			v[5] = color[2];
+			v[6] = color[3];
 
 			int othercoord = j % 3;
 			edgecoord[othercoord] *= -1.f;
 
-			float pb[3] = {
-				edgecoord[0] * halfExtents[0] + center[0],
-				edgecoord[1] * halfExtents[1] + center[1],
-				edgecoord[2] * halfExtents[2] + center[2]
-			};
-			draw_line(pa, pb, color, color);
+			/* position */
+			v[7] = (edgecoord[0] * halfExtents[0] + center[0]) / 1;
+			v[8] = (edgecoord[1] * halfExtents[1] + center[1]) / 1;
+			v[9] = (edgecoord[2] * halfExtents[2] + center[2]) / 1;
+
+			/* color */
+			v[10] = color[0];
+			v[11] = color[1];
+			v[12] = color[2];
+			v[13] = color[3];
+
+			v = v + 14;
 		}
 		edgecoord[0] = -1;
 		edgecoord[1] = -1;
@@ -747,6 +643,27 @@ static void draw_aabb(const float from[3], const float to[3], const float color[
 		if (i < 3)
 			edgecoord[i] *= -1;
 	}
+
+	GLuint vbo = 0;
+	glGenBuffers( 1, &vbo );
+	glBindBuffer( GL_ARRAY_BUFFER, vbo );
+	glBufferData( GL_ARRAY_BUFFER, (7 * 2 * 12) * sizeof( float ), vertexes, GL_STATIC_DRAW );
+
+	GLuint vao = 0;
+	glGenVertexArrays( 1, &vao );
+	glBindVertexArray( vao );
+
+	glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof (GLfloat), NULL );
+	glEnableVertexAttribArray( 0 );
+
+	glVertexAttribPointer (1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof (GLfloat), (void *)(3 * sizeof (GLfloat)) );
+	glEnableVertexAttribArray( 1 );
+
+	// Draw points 0-3 from the currently bound VAO with current in-use shader.
+	glDrawArrays (GL_LINES, 0, 2 * 12);
+
+	glDeleteBuffers(1, &vbo);
+	glDeleteVertexArrays(1, &vao);
 }
 
 static void
@@ -754,7 +671,7 @@ hkl_gui_3d_draw_aabb_object(const Hkl3DObject *self)
 {
 	GLfloat from[3];
 	GLfloat to[3];
-	GLfloat color[3] = {1, 0, 0};
+	GLfloat color[4] = {1, 0, 0, 0.8};
 
 	if(self->hide)
 		return;
@@ -766,77 +683,91 @@ hkl_gui_3d_draw_aabb_object(const Hkl3DObject *self)
 void
 hkl_gui_3d_draw_aabb(HklGui3D *self)
 {
-	int i;
-	int j;
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
-
-	for(i=0; i<priv->hkl3d->config->len; i++)
-		for(j=0; j<priv->hkl3d->config->models[i]->len; j++)
-			hkl_gui_3d_draw_aabb_object(priv->hkl3d->config->models[i]->objects[j]);
-	glFlush();
+	for(int i=0; i<self->hkl3d->config->len; i++)
+		for(int j=0; j<self->hkl3d->config->models[i]->len; j++)
+			hkl_gui_3d_draw_aabb_object(self->hkl3d->config->models[i]->objects[j]);
 }
 
 
-/* void hkl_gui_3d_draw_bullet_object(const Hkl3DObject *self) */
-/* { */
-/*	int i; */
-/*	int j; */
-/*	btScalar m[16]; */
-/*	btVector3 worldBoundsMin; */
-/*	btVector3 worldBoundsMax; */
-/*	btVector3 aabbMin,aabbMax; */
+void
+hkl_gui_3d_draw_model(HklGui3D *self)
+{
+	int i;
+	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
 
-/*	/\* get the bounding box from bullet *\/ */
-/*	hkl3d_get_bounding_boxes(_hkl3d, &worldBoundsMin, &worldBoundsMax); */
+	for(i=0; i<priv->n_buffers; ++i){
+		BufferToDraw *buffer = &priv->buffers[i];
+		CGLM_ALIGN_MAT mat4s model = GLMS_MAT4_IDENTITY_INIT;
+		CGLM_ALIGN_MAT vec3s ambient;
+		CGLM_ALIGN_MAT vec3s diffuse;
+		CGLM_ALIGN_MAT vec3s specular;
+		GLfloat shininess = 12;
+		GLfloat alpha = buffer->object->is_colliding == 0 ? 1.0 : 0.5;;
 
-/*	object = _hkl3d->config->models[i]->objects[j]; */
-/*	if(!object->hide){ */
-/*		btCollisionObject *btObject; */
+		/* extract values from the object */
 
-/*		btObject = object->btObject; */
-/*		btObject->getWorldTransform().getOpenGLMatrix( m ); */
-/*		m_shapeDrawer.drawOpenGL(m, */
-/*					 btObject->getCollisionShape(), */
-/*					 *object->color, */
-/*					 0, /\* debug mode *\/ */
-/*					 worldBoundsMin, */
-/*					 worldBoundsMax); */
-/*	} */
-/*	glFlush(); */
-/* } */
+		/* TODO move in the hkl3d object use cglm */
+		if(buffer->object->g3d->transformation){
+			memcpy(model.raw, buffer->object->g3d->transformation->matrix, 16 * sizeof(float));
+		}
 
-/* void */
-/* hkl_gui_3d_draw_bullet(const HklGui3D *self) */
-/* { */
-/*	int i; */
-/*	int j; */
-/*	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self); */
+		memcpy(ambient.raw, &buffer->object->g3d->_materials[0]->r, 3 * sizeof (float));
+		memcpy(diffuse.raw, &buffer->object->g3d->_materials[0]->r, 3 * sizeof (float));
+		memcpy(specular.raw, &buffer->object->g3d->_materials[0]->specular, 3 * sizeof (float));
 
-/*	for(i=0; i<priv->hkl3d->config->len; i++) */
-/*		for(j=0; j<priv->hkl3d->config->models[i]->len; j++) */
-/*			hkl_gui_3d_draw_bullet_object(priv->hkl3d->config->models[i]->objects[j]); */
-/*	glFlush(); */
-/* } */
+		glUseProgram (priv->shader.program);
 
-gboolean
+		/* set the uniforms */
+		set_uniform_mat4s(&priv->shader, "model", model);
+		set_uniform_vec3sv(&priv->shader, "material.ambient", ambient);
+		set_uniform_vec3sv(&priv->shader, "material.diffuse", diffuse);
+		set_uniform_vec3sv(&priv->shader, "material.specular", specular);
+		set_uniform_float(&priv->shader, "material.shininess", shininess);
+		set_uniform_float(&priv->shader, "alpha", alpha);
+
+		glBindVertexArray (buffer->vao);
+		glDrawElements (GL_TRIANGLES, buffer->object->g3d->_num_faces * 3, GL_UNSIGNED_INT, 0);
+		glBindVertexArray (0);
+
+		glUseProgram (0);
+	}
+}
+
+
+static gboolean
 hkl_gui_3d_gl_area_render_cb(GtkGLArea *area,
 			     GdkGLContext *context,
 			     gpointer user_data)
 {
-	HklGui3D *self = HKL_GUI_3D(user_data);
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
+	HklGui3D *self = HKL_GUI_3D (user_data);
 
-	hkl_gui_3d_draw_g3dmodel(self);
-	hkl_gui_3d_draw_selected(self);
-	hkl_gui_3d_draw_collisions(self);
-	if(priv->aabb)
-		hkl_gui_3d_draw_aabb(self);
-	/* hkl_gui_3d_draw_bullet(self); */
+	gtk_gl_area_make_current (area);
+
+	if (gtk_gl_area_get_error (area) != NULL)
+		return FALSE;
+
+
+	/* Clear the viewport */
+	glClearColor (0.9, 0.8, 0.6, 1.0); /* black */
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	/* Draw our object */
+
+	hkl_gui_3d_draw_model(self);
+/*	hkl_gui_3d_draw_g3dmodel(user_data); */
+/* 	hkl_gui_3d_draw_selected(self); */
+/* 	hkl_gui_3d_draw_collisions(self); */
+/* 	if(priv->aabb) */
+/* 		hkl_gui_3d_draw_aabb(self); */
+	/* hkl_gui_3d_draw_aabb(self); */
+
+	/* Flush the contents of the pipeline */
+	glFlush ();
 
 	return TRUE;
 }
 
-gboolean
+static gboolean
 hkl_gui_3d_gl_area_resize_cb(GtkGLArea *area,
 			     gint width,
 			     gint height,
@@ -844,13 +775,40 @@ hkl_gui_3d_gl_area_resize_cb(GtkGLArea *area,
 {
 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
 
-	glViewport(0, 0, width, height);
-	priv->renderoptions.aspect = (gfloat)width / (gfloat)height;
+	gtk_gl_area_make_current (area);
 
-	return TRUE;
+	if (gtk_gl_area_get_error (area) != NULL)
+		return FALSE;
+
+	glUseProgram (priv->shader.program);
+
+	glViewport(0, 0, width, height);
+
+	/* TODO store the lovation in the class */
+	CGLM_ALIGN_MAT mat4s projection = GLMS_MAT4_IDENTITY_INIT;
+	projection = glms_perspective (glm_rad(45), (GLfloat)width / (GLfloat)height, 0.1, 100);
+	glUniformMatrix4fv(glGetUniformLocation (priv->shader.program, "projection"),
+			   1, GL_FALSE, projection.raw[0]);
+
+	glUseProgram (0);
+
+	return true;
 }
 
-/* gboolean */
+void hkl_gui_3d_invalidate(HklGui3D *self)
+{
+	/* queue a redraw on the GtkGLArea */
+
+	/* hkl_gui_3d_gl_area_render_cb(self->gl_area, */
+	/* 			     gtk_gl_area_get_context (self->gl_area), */
+	/* 			     self); */
+	/* apply the transformation */
+
+	gtk_gl_area_queue_render (self->gl_area);
+}
+
+
+/* static gboolean */
 /* hkl_gui_3d_gl_area_button_press_event_cb(GtkWidget *gl_area, */
 /* 					 GdkEventButton* event, */
 /* 					 gpointer user_data) */
@@ -987,7 +945,7 @@ hkl_gui_3d_class_init (HklGui3DClass *class)
 	gobject_class->get_property = get_property;
 
 	/* properties */
-	obj_properties[PROP_FILENAME] =
+	props[PROP_FILENAME] =
 		g_param_spec_string ("filename",
 				     "Filename",
 				     "The confuration filename",
@@ -996,7 +954,7 @@ hkl_gui_3d_class_init (HklGui3DClass *class)
 				     G_PARAM_READWRITE |
 				     G_PARAM_STATIC_STRINGS);
 
-	obj_properties[PROP_GEOMETRY] =
+	props[PROP_GEOMETRY] =
 		g_param_spec_pointer ("geometry",
 				      "Geometry",
 				      "The Hkl Geometry used underneath",
@@ -1006,63 +964,384 @@ hkl_gui_3d_class_init (HklGui3DClass *class)
 
 	g_object_class_install_properties (gobject_class,
 					   N_PROPERTIES,
-					   obj_properties);
+					   props);
 
+}
+
+static Shader init_shader()
+{
+	GLuint p;
+
+	const char* vertex_shader =
+		"#version 300 es\n"
+		"\n"
+		"out vec3 FragPos;\n"
+		"out vec4 objectColor;\n"
+		"smooth out vec3 Normal;\n"
+		"\n"
+		"layout (location = 0) in vec3 aPos;\n"
+		"layout (location = 1) in vec4 aColor;\n"
+		"layout (location = 2) in vec3 aNormal;\n"
+		"\n"
+		"uniform mat4 projection;\n"
+		"uniform mat4 view;\n"
+		"uniform mat4 model;\n"
+		"\n"
+		"void main() {\n"
+		"  gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+		"  FragPos = vec3(model * vec4(aPos, 1.0));\n"
+		"  objectColor = aColor;\n"
+		"  Normal = mat3(transpose(inverse(model))) * aNormal;\n"
+		"}\n";
+
+	const char* fragment_shader =
+		"#version 300 es\n"
+		"precision mediump float;\n"
+		"\n"
+		"out vec4 FragColor;\n"
+		"\n"
+		"struct Material {\n"
+		"  vec3 ambient;\n"
+		"  vec3 diffuse;\n"
+		"  vec3 specular;\n"
+		"  float shininess;\n"
+		"};\n"
+		"\n"
+		"struct DirLight {\n"
+		"    vec3 direction;\n"
+		"\n"
+		"    vec3 ambient;\n"
+		"    vec3 diffuse;\n"
+		"    vec3 specular;\n"
+		"};\n"
+		"\n"
+		"struct PointLight {\n"
+		"    vec3 position;\n"
+		"\n"
+		"    float constant;\n"
+		"    float linear;\n"
+		"    float quadratic;\n"
+		"\n"
+		"    vec3 ambient;\n"
+		"    vec3 diffuse;\n"
+		"    vec3 specular;\n"
+		"};\n"
+		"#define NR_POINT_LIGHTS 4\n"
+		"\n"
+		"in vec3 FragPos;\n"
+		"in vec4 objectColor;\n"
+		"in vec3 Normal;\n"
+		"\n"
+		"uniform float alpha;\n"
+		"uniform vec3 viewPos;\n"
+		"uniform DirLight dirLight;\n"
+		"uniform PointLight pointLights[NR_POINT_LIGHTS];\n"
+		"uniform Material material;\n"
+		"\n"
+		"// function prototypes\n"
+		"vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);\n"
+		"vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);\n"
+		"\n"
+		"void main()\n"
+		"{\n"
+		"    // properties\n"
+		"    vec3 norm = normalize(Normal);\n"
+		"    vec3 viewDir = normalize(viewPos - FragPos);\n"
+		"\n"
+		"    // phase 1: Directional lighting\n"
+		"    vec3 result = CalcDirLight(dirLight, norm, viewDir);\n"
+		"    // phase 2: Point lights\n"
+		"    for(int i = 0; i < NR_POINT_LIGHTS; i++)\n"
+		"        result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);\n"
+		"    // phase 3: Spot light\n"
+		"    //result += CalcSpotLight(spotLight, norm, FragPos, viewDir);\n"
+		"\n"
+		"    FragColor = vec4(result, alpha);\n"
+		"}\n"
+		"vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)\n"
+		"{\n"
+		"    vec3 lightDir = normalize(light.position - fragPos);\n"
+		"    // diffuse shading\n"
+		"    float diff = max(dot(normal, lightDir), 0.0);\n"
+		"    // specular shading\n"
+		"    vec3 reflectDir = reflect(-lightDir, normal);\n"
+		"    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
+		"    // attenuation\n"
+		"    float distance    = length(light.position - fragPos);\n"
+		"    float attenuation = 1.0 / (light.constant + light.linear * distance +\n"
+		"  			     light.quadratic * (distance * distance));\n"
+		"    // combine results\n"
+		"    vec3 ambient  = light.ambient  * material.ambient;\n"
+		"    vec3 diffuse  = light.diffuse  * diff * material.diffuse;\n"
+		"    vec3 specular = light.specular * spec * material.specular;\n"
+		"    ambient  *= attenuation;\n"
+		"    diffuse  *= attenuation;\n"
+		"    specular *= attenuation;\n"
+		"    return (ambient + diffuse + specular);\n"
+		"}\n"
+		"\n"
+		"vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)\n"
+		"{\n"
+		"    vec3 lightDir = normalize(-light.direction);\n"
+		"    // diffuse shading\n"
+		"    float diff = max(dot(normal, lightDir), 0.0);\n"
+		"    // specular shading\n"
+		"    vec3 reflectDir = reflect(-lightDir, normal);\n"
+		"    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
+		"    // combine results\n"
+		"    vec3 ambient  = light.ambient  * material.ambient;\n"
+		"    vec3 diffuse  = light.diffuse  * diff * material.diffuse;\n"
+		"    vec3 specular = light.specular * spec * material.specular;\n"
+		"    return (ambient + diffuse + specular);\n"
+		"}\n";
+
+	GLuint vs = glCreateShader (GL_VERTEX_SHADER);
+	glShaderSource (vs, 1, &vertex_shader, NULL );
+	glCompileShader (vs);
+
+	GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
+	glShaderSource (fs, 1, &fragment_shader, NULL );
+	glCompileShader (fs);
+
+	p = glCreateProgram();
+	glAttachShader (p, vs);
+	glAttachShader (p, fs);
+	glLinkProgram (p);
+
+	Shader shader = {
+		.program = p
+	};
+
+	glDeleteShader (fs);
+	glDeleteShader (vs);
+
+	glUseProgram (p);
+
+	/* projection */
+	CGLM_ALIGN_MAT mat4s projection = GLMS_MAT4_IDENTITY_INIT;
+	projection = glms_perspective (glm_rad(45), 1, 0.1, 100);
+	set_uniform_mat4s(&shader, "projection", projection);
+
+	/* view position */
+	CGLM_ALIGN_MAT vec3s viewPos = {{0, 0, -5}};
+	set_uniform_vec3sv(&shader, "viewPos", viewPos);
+
+	/* view */
+	CGLM_ALIGN_MAT mat4s view = GLMS_MAT4_IDENTITY_INIT;
+	view = glms_translate_make (viewPos);
+	set_uniform_mat4s(&shader, "view", view);
+
+	/* dir light */
+	set_uniform_make_vec3s(&shader, "dirLight.direction", -0.2, -1.0, -0.3);
+        set_uniform_make_vec3s(&shader, "dirLight.ambient", 0.05, 0.05, 0.05);
+        set_uniform_make_vec3s(&shader, "dirLight.diffuse", 0.4, 0.4, 0.4);
+        set_uniform_make_vec3s(&shader, "dirLight.specular", 0.5, 0.5, 0.5);
+
+        /* point light 0 */
+        set_uniform_make_vec3s(&shader, "pointLights[0].position", 0, 5, -5);
+        set_uniform_make_vec3s(&shader, "pointLights[0].ambient", 0.05, 0.05, 0.05);
+        set_uniform_make_vec3s(&shader, "pointLights[0].diffuse", 0.8, 0.8, 0.8);
+        set_uniform_make_vec3s(&shader, "pointLights[0].specular", 1.0, 1.0, 1.0);
+        set_uniform_float(&shader, "pointLights[0].constant", 1.0);
+        set_uniform_float(&shader, "pointLights[0].linear", 0.09);
+        set_uniform_float(&shader, "pointLights[0].quadratic", 0.032);
+
+        /* point light 1 */
+        set_uniform_make_vec3s(&shader, "pointLights[1].position", 5, 5, 0);
+        set_uniform_make_vec3s(&shader, "pointLights[1].ambient", 0.05, 0.05, 0.05);
+        set_uniform_make_vec3s(&shader, "pointLights[1].diffuse", 0.8, 0.8, 0.8);
+        set_uniform_make_vec3s(&shader, "pointLights[1].specular", 1.0, 1.0, 1.0);
+        set_uniform_float(&shader, "pointLights[1].constant", 1.0);
+        set_uniform_float(&shader, "pointLights[1].linear", 0.09);
+        set_uniform_float(&shader, "pointLights[1].quadratic", 0.032);
+
+        /* point light 2 */
+        set_uniform_make_vec3s(&shader, "pointLights[2].position", -5, 5, 0);
+        set_uniform_make_vec3s(&shader, "pointLights[2].ambient", 0.05, 0.05, 0.05);
+        set_uniform_make_vec3s(&shader, "pointLights[2].diffuse", 0.8, 0.8, 0.8);
+        set_uniform_make_vec3s(&shader, "pointLights[2].specular", 1.0, 1.0, 1.0);
+        set_uniform_float(&shader, "pointLights[2].constant", 1.0);
+        set_uniform_float(&shader, "pointLights[2].linear", 0.09);
+        set_uniform_float(&shader, "pointLights[2].quadratic", 0.032);
+
+        /* point light 3 */
+        set_uniform_make_vec3s(&shader, "pointLights[3].position", 0, 5, 5);
+        set_uniform_make_vec3s(&shader, "pointLights[3].ambient", 0.05, 0.05, 0.05);
+        set_uniform_make_vec3s(&shader, "pointLights[3].diffuse", 0.8, 0.8, 0.8);
+        set_uniform_make_vec3s(&shader, "pointLights[3].specular", 1.0, 1.0, 1.0);
+        set_uniform_float(&shader, "pointLights[3].constant", 1.0);
+        set_uniform_float(&shader, "pointLights[3].linear", 0.09);
+        set_uniform_float(&shader, "pointLights[3].quadratic", 0.032);
+
+	glUseProgram (0);
+
+	return shader;
+}
+
+BufferToDraw *
+init_buffers(HklGui3D *self, size_t *n_buffers)
+{
+	int i;
+	int j;
+	int len = 0;
+
+	/* models */
+
+	for(i=0; i<self->hkl3d->config->len; i++)
+		for(j=0; j<self->hkl3d->config->models[i]->len; j++)
+			len++;
+
+	BufferToDraw *buffers = g_new0(BufferToDraw, len);
+	*n_buffers = len;
+
+	len = 0;
+	for(i=0; i<self->hkl3d->config->len; i++)
+		for(j=0; j<self->hkl3d->config->models[i]->len; j++){
+			Hkl3DObject *hobject = self->hkl3d->config->models[i]->objects[j];
+			G3DObject *object = hobject->g3d;
+			GSList *faces;
+
+			/* neede to update the g3d object internals */
+			/* _xxx variables */
+			g3d_object_optimize(object);
+
+			GLuint vao = 0;
+			glGenVertexArrays (1, &vao);
+			glBindVertexArray (vao);
+
+			/* positions */
+			GLuint vbo = 0;
+			size_t size_vertex = object->vertex_count * 3 * sizeof (float);
+			glGenBuffers (1, &vbo );
+			glBindBuffer (GL_ARRAY_BUFFER, vbo );
+			glBufferData (GL_ARRAY_BUFFER, size_vertex, object->vertex_data, GL_STATIC_DRAW);
+
+			glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), NULL);
+			glEnableVertexAttribArray (0);
+
+			/* colors */
+			GLuint vbo_colors = 0;
+			size_t size_colors = object->vertex_count * 4 * sizeof (float);
+			GLfloat *colors = g_new(GLfloat, object->vertex_count * 4);
+			faces = object->faces;
+			while(faces){
+				G3DFace *face = faces->data;
+				memcpy(&colors[4 * face->vertex_indices[0]], &face->material->r, 4 * sizeof(GLfloat));
+				memcpy(&colors[4 * face->vertex_indices[1]], &face->material->r, 4 * sizeof(GLfloat));
+				memcpy(&colors[4 * face->vertex_indices[2]], &face->material->r, 4 * sizeof(GLfloat));
+
+				faces = g_slist_next(faces);
+			}
+			glGenBuffers (1, &vbo_colors );
+			glBindBuffer (GL_ARRAY_BUFFER, vbo_colors );
+			glBufferData (GL_ARRAY_BUFFER, size_colors, colors, GL_STATIC_DRAW);
+
+			glVertexAttribPointer (1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof (GLfloat), NULL);
+			glEnableVertexAttribArray (1);
+
+			/* normals */
+			GLuint vbo_normals = 0;
+			size_t size_normals = object->vertex_count * 3 * sizeof (float);
+			GLfloat *normals = g_new(GLfloat, object->vertex_count * 3);
+			faces = object->faces;
+			while(faces){
+				G3DFace *face = faces->data;
+				memcpy(&normals[3 * face->vertex_indices[0]], &face->normals, 3 * sizeof(GLfloat));
+				memcpy(&normals[3 * face->vertex_indices[1]], &face->normals[3], 3 * sizeof(GLfloat));
+				memcpy(&normals[3 * face->vertex_indices[2]], &face->normals[6], 3 * sizeof(GLfloat));
+
+				faces = g_slist_next(faces);
+			}
+			glGenBuffers (1, &vbo_normals );
+			glBindBuffer (GL_ARRAY_BUFFER, vbo_normals );
+			glBufferData (GL_ARRAY_BUFFER, size_normals, normals, GL_STATIC_DRAW);
+
+			glVertexAttribPointer (2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), NULL);
+			glEnableVertexAttribArray (2);
+
+			/* indices */
+			GLuint ebo = 0;
+			size_t size_indices = object->_num_faces * 2 * sizeof(object->_indices);
+			glGenBuffers (1, &ebo);
+			glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, ebo);
+			glBufferData (GL_ELEMENT_ARRAY_BUFFER, size_indices, object->_indices, GL_STATIC_DRAW);
+
+			BufferToDraw buffer = {
+				.vao = vao,
+				.object = hobject,
+			};
+
+			buffers[len++] = buffer;
+		}
+	return buffers;
+}
+
+
+static void
+gl_area_on_realize_cb (GtkGLArea *area,
+		       gpointer user_data)
+{
+	HklGui3D *self = HKL_GUI_3D (user_data);
+	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
+
+	gtk_gl_area_make_current (area);
+
+	if (gtk_gl_area_get_error (area) != NULL)
+		return;
+
+
+	priv->shader = init_shader();
+	priv->buffers = init_buffers(user_data, &priv->n_buffers);
+
+	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
 }
 
 static void hkl_gui_3d_init (HklGui3D * self)
 {
 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
-	GtkBuilder *builder;
 
 	/* properties */
 	priv->filename = NULL;
 	priv->geometry = NULL;
+	priv->buffers = NULL;
+	priv->n_buffers = 0;
 
-	priv->builder = builder = gtk_builder_new ();
-
-	/* get_ui(builder, "3d-4.ui"); */
-
-	// widgets
-	/* get_object(builder, GTK_FRAME, priv, frame1); */
-	/* get_object(builder, GTK_BOX, priv, vbox1); */
-	/* get_object(builder, GTK_TREE_VIEW, priv, treeview1); */
-	/* get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton1); */
-	/* get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton2); */
-	/* get_object(builder, GTK_TOOL_BUTTON, priv, toolbutton3); */
-	/* get_object(builder, GTK_FILE_CHOOSER_DIALOG, priv, filechooserdialog1); */
-	/* get_object(builder, GTK_BUTTON, priv, button1); */
-	/* get_object(builder, GTK_BUTTON, priv, button2); */
-	/* get_object(builder, GTK_TREE_STORE, priv, treestore1); */
-
-	/* gtk_builder_connect_signals (builder, self); */
-
-	/* OPENGL */
-
-	/* renderoptions */
-	reset_3d(&priv->renderoptions);
 	priv->aabb = FALSE;
+	priv->frame1 = GTK_FRAME (gtk_frame_new("3d"));
+	self->gl_area = GTK_GL_AREA (gtk_gl_area_new ());
 
-	/* attache the GtkGLArea widget */
-	priv->gl_area = GTK_GL_AREA(gtk_gl_area_new());
-	gtk_gl_area_set_has_depth_buffer(priv->gl_area, TRUE);
-	/* gtk_box_pack_end(priv->vbox1, GTK_WIDGET(priv->gl_area), TRUE, TRUE, 0); */
+	/* frame1 */
+	gtk_frame_set_child(priv->frame1, GTK_WIDGET (self->gl_area));
+
+	/* gl_area */
+	gtk_gl_area_set_has_depth_buffer (self->gl_area, true);
+	gtk_gl_area_set_auto_render (self->gl_area, true);
+	gtk_widget_set_hexpand( GTK_WIDGET (self->gl_area), true);
+	gtk_widget_set_vexpand( GTK_WIDGET (self->gl_area), true);
+	gtk_widget_set_can_focus (GTK_WIDGET (self->gl_area), true);
+	g_signal_connect(self->gl_area, "realize",
+			 G_CALLBACK(gl_area_on_realize_cb), self);
+	g_signal_connect(self->gl_area, "resize",
+			 G_CALLBACK(hkl_gui_3d_gl_area_resize_cb), self);
+	g_signal_connect(self->gl_area, "render",
+			 G_CALLBACK(hkl_gui_3d_gl_area_render_cb), self);
+
+	/* gtk_box_pack_end(priv->vbox1, GTK_WIDGET(self->gl_area), TRUE, TRUE, 0); */
 
 	/* add events to the GtkGLArea */
-	gtk_widget_set_can_focus(GTK_WIDGET(priv->gl_area), TRUE);
-	/* gtk_widget_add_events(GTK_WIDGET(priv->gl_area), */
+	/* gtk_widget_add_events(GTK_WIDGET(self->gl_area), */
 	/* 		      GDK_BUTTON1_MOTION_MASK | */
 	/* 		      GDK_BUTTON2_MOTION_MASK | */
 	/* 		      GDK_BUTTON_PRESS_MASK | */
 	/* 		      GDK_VISIBILITY_NOTIFY_MASK); */
 
 	/* connect the GL callbacks */
-	g_signal_connect(priv->gl_area, "render",
-			 G_CALLBACK(hkl_gui_3d_gl_area_render_cb), self);
-	g_signal_connect(priv->gl_area, "resize",
-			 G_CALLBACK(hkl_gui_3d_gl_area_resize_cb), self);
-	/* g_signal_connect(priv->gl_area, "button-press-event", */
+	/* g_signal_connect(self->gl_area, "button-press-event", */
 	/* 		 G_CALLBACK(hkl_gui_3d_gl_area_button_press_event_cb), self); */
-	/* g_signal_connect(priv->gl_area, "motion-notify-event", */
+	/* g_signal_connect(self->gl_area, "motion-notify-event", */
 	/* 		 G_CALLBACK(hkl_gui_3d_gl_area_motion_notify_event_cb), self); */
+	/* gtk_widget_set_visible (GTK_WIDGET (priv->frame1), true); */
 }

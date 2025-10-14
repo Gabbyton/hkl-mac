@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -24,18 +24,22 @@
 
 #include <gtk/gtk.h>
 
+#include "hkl.h"
+
 G_BEGIN_DECLS
 
-/* HklGui3D */
 #define HKL_GUI_TYPE_3D (hkl_gui_3d_get_type ())
-G_DECLARE_FINAL_TYPE (HklGui3D, hkl_gui_3d, HKL_GUI, 3D, GObject)
 
-	HklGui3D *hkl_gui_3d_new (const char *filename, HklGeometry *geometry);
+G_DECLARE_FINAL_TYPE (HklGui3D, hkl_gui_3d, HKL_GUI, 3D, GObject);
 
-void hkl_gui_3d_is_colliding(HklGui3D *self);
+HklGui3D *hkl_gui_3d_new (const char *filename, HklGeometry *geometry);
+
+void hkl_gui_3d_update(HklGui3D *self);
 
 void hkl_gui_3d_invalidate(HklGui3D *self);
 
-GtkFrame *hkl_gui_3d_frame_get(HklGui3D *self);
+GtkFrame *hkl_gui_3d_get_frame(HklGui3D *self);
+
+G_END_DECLS
 
 #endif // __HKL_GUI_3D_H__

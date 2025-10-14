@@ -39,8 +39,6 @@ ghkl_SOURCES = \
 	hkl-gui.c \
 	hkl-gui.h
 
-dist_pkgdata_DATA = ghkl.ui ghkl-4.ui
-
 appldir = ${datadir}/applications
 dist_appl_DATA = ghkl.desktop
 
@@ -50,15 +48,13 @@ AM_CFLAGS += \
 	-I$(top_srcdir)/hkl3d \
 	-I$(top_srcdir)/hkl3d/bullet/src \
 	-DHKL3D \
+	$(EPOXY_CFLAGS) \
 	$(G3D_CFLAGS) \
-	$(GL_CFLAGS) \
-	$(GLU_CFLAGS) \
 	$(BULLET_CFLAGS)
 
 AM_LDFLAGS += -lstdc++\
+	$(EPOXY_LIBS) \
 	$(G3D_LIBS) \
-	$(GL_LIBS) \
-	$(GLU_LIBS) \
 	$(BULLET_LIBS)
 
 # force linkage using g++ for libhkl3d.la
@@ -68,12 +64,8 @@ ghkl_LDADD += \
 	$(top_builddir)/hkl3d/libhkl3d.la
 
 ghkl_SOURCES += \
-	hkl-gui-3d-gl.c \
-	hkl-gui-3d-gl.h \
 	hkl-gui-3d.c \
 	hkl-gui-3d.h
-
-dist_pkgdata_DATA += 3d.ui 3d-4.ui
 
 endif
 

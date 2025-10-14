@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2010      Synchrotron SOLEIL
+ * Copyright (C) 2010, 2025      Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -256,14 +256,11 @@ static void hkl3d_object_set_axis_name(Hkl3DObject *self, const char *name)
 
 static void matrix_fprintf(FILE *f, const float matrix[])
 {
-	fprintf(f, "transformation : ");
 	for(uint i=0; i<4; ++i){
-		if(i)
-			fprintf(f, "                 ");
+		fprintf(f, "\n ");
 		for(uint j=0; j<4; ++j){
 			fprintf(f, " %6.3f", matrix[4 * i + j]);
 		}
-		fprintf(f, "\n");
 	}
 }
 
@@ -288,20 +285,23 @@ void hkl3d_object_fprintf(FILE *f, const Hkl3DObject *self)
 
 	faces = self->g3d->faces;
 	material = ((G3DFace *)faces->data)->material;
-	fprintf(f, "id : %d\n", self->id);
-	fprintf(f, "name : %s (%p)\n", self->axis_name, self->axis_name);
-	fprintf(f, "axis : %p\n", self->axis);
+	fprintf(f, "\nHkl3dObject (%p):", self);
+	fprintf(f, "\n id : %d", self->id);
+	fprintf(f, "\n name : %s (%p)", self->axis_name, self->axis_name);
+	fprintf(f, "\n axis (%p):", self->axis);
+	fprintf(f, "\n transformation (%p):", self->transformation);
 	matrix_fprintf(f, self->transformation);
-	fprintf(f, "btObject : %p\n", self->btObject);
-	fprintf(f, "g3d : %p\n", self->g3d);
+	fprintf(f, "\n btObject : %p", self->btObject);
+	fprintf(f, "\n g3d : %p", self->g3d);
+	fprintf(f, "\n g3d transformation (%p):", self->g3d->transformation);
 	matrix_fprintf(f, self->g3d->transformation->matrix);
-	fprintf(f, "btShape : %p\n", self->btShape);
-	fprintf(f, "meshes : %p\n", self->meshes);
-	fprintf(f, "color : %f, %f, %f\n", material->r, material->g, material->b);
-	fprintf(f, "is_colliding : %d\n", self->is_colliding);
-	fprintf(f, "hide : %d\n", self->hide);
-	fprintf(f, "added : %d\n", self->added);
-	fprintf(f, "selected : %d\n", self->selected);
+	fprintf(f, "\n btShape : %p", self->btShape);
+	fprintf(f, "\n meshes : %p", self->meshes);
+	fprintf(f, "\n color : %f, %f, %f", material->r, material->g, material->b);
+	fprintf(f, "\n is_colliding : %d", self->is_colliding);
+	fprintf(f, "\n hide : %d", self->hide);
+	fprintf(f, "\n added : %d", self->added);
+	fprintf(f, "\n selected : %d", self->selected);
 }
 
 /**************/
@@ -617,8 +617,10 @@ static void hkl3d_geometry_fprintf(FILE *f, const Hkl3DGeometry *self)
 
 	fprintf(f, "Hkl3DGeometry : \n");
 	hkl_geometry_fprintf(f, self->geometry);
-	for(size_t i=0; i<darray_size(self->geometry->axes); ++i)
+	for(size_t i=0; i<darray_size(self->geometry->axes); ++i){
+		fprintf(f, "\n");
 		hkl3d_axis_fprintf(f, self->axes[i]);
+	}
 }
 
 static Hkl3DAxis *hkl3d_geometry_axis_get(Hkl3DGeometry *self, const char *name)
@@ -1206,19 +1208,18 @@ void hkl3d_get_collision_coordinates(Hkl3D *self, int manifold, int contact,
 
 void hkl3d_fprintf(FILE *f, const Hkl3D *self)
 {
-
-	fprintf(f, "filename : %s\n", self->filename);
+	fprintf(f, "\nhkl3d (%p):", self);
+	fprintf(f, "\nfilename: %s", self->filename);
 	hkl3d_geometry_fprintf(f, self->geometry);
-	fprintf(f, "\n");
-	fprintf(f, "model : %p\n", self->model);
+	fprintf(f, "\nmodel (%p):", self->model);
 	hkl3d_stats_fprintf(f, &self->stats);
 	hkl3d_config_fprintf(f, self->config);
 
-	fprintf(f, "_btCollisionConfiguration : %p\n", self->_btCollisionConfiguration);
-	fprintf(f, "_btBroadphase : %p\n", self->_btBroadphase);
-	fprintf(f, "_btWorld : %p\n", self->_btWorld);
-	fprintf(f, "_btDispatcher : %p\n", self->_btDispatcher);
+	fprintf(f, "\n_btCollisionConfiguration (%p)", self->_btCollisionConfiguration);
+	fprintf(f, "\n_btBroadphase (%p)", self->_btBroadphase);
+	fprintf(f, "\n_btWorld (%p)", self->_btWorld);
+	fprintf(f, "\n_btDispatcher (%p)", self->_btDispatcher);
 #ifdef USE_PARALLEL_DISPATCHER
-	fprintf(f, "_btThreadSupportInterface : %p\n", self->_btThreadSupportInterface);
+	fprintf(f, "\n_btThreadSupportInterface (%p)", self->_btThreadSupportInterface);
 #endif
 }

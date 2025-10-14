@@ -116,6 +116,8 @@ HKLAPI void hkl_gui_factory_set_sample(HklGuiFactory *self, HklGuiSample *sample
 
 HKLAPI void hkl_gui_factory_set_wavelength(HklGuiFactory *self, gdouble wavelength);
 
+HKLAPI void hkl_gui_factory_setup_3d(HklGuiFactory *old, HklGuiFactory *new, GtkBox *box);
+
 HKLAPI void hkl_gui_factory_setup_column_view_sample_reflections(HklGuiFactory *self,
 								 GtkSingleSelection *samples,
 								 GtkColumnView *column_view);

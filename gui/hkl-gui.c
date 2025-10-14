@@ -35,9 +35,6 @@
 #include "hkl-gui.h"
 #include "hkl-gui-diffractometer-private.h"
 #include "hkl-gui-macros.h"
-#if HKL3D
-# include "hkl-gui-3d.h"
-#endif
 
 /****************/
 /* HklGuiWindow */
@@ -69,6 +66,7 @@ GListStore *liststore_samples;
 	GtkWidget *flowbox_engines;
 	GtkWidget *notebook1;
 	GtkWidget *spinbutton_wavelength;
+	GtkWidget *vbox_3d;
 	GtkWidget *window1;
 
 	HklGuiFactory *factory; /* not owned */
@@ -123,39 +121,6 @@ raise_error(HklGuiWindow *self, GError *error)
 /* #endif */
 /* } */
 
-
-/* static void */
-/* set_up_3D (HklGuiWindow* self) */
-/* { */
-/* #if HKL3D */
-
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
-/* 	char *filename = NULL; */
-/* 	const char *name = hkl_factory_name_get(priv->diffractometer->factory); */
-
-/* 	if(!strcmp("K6C", name)) */
-/* 		filename = get_model("diffabs.yaml"); */
-/* 	else if (!strcmp("K4CV", name)) */
-/* 		filename = get_model("cristal4C.yaml"); */
-
-/* 	if(priv->frame3d){ */
-/* 		gtk_widget_destroy(GTK_WIDGET(hkl_gui_3d_frame_get(priv->frame3d))); */
-/* 		g_object_unref(priv->frame3d); */
-/* 		priv->frame3d = NULL; */
-/* 	} */
-
-/* 	if (filename){ */
-/* 		priv->frame3d = hkl_gui_3d_new(filename, priv->diffractometer->geometry); */
-
-/* 		gtk_box_pack_start (GTK_BOX(priv->vbox7), */
-/* 				    GTK_WIDGET(hkl_gui_3d_frame_get(priv->frame3d)), */
-/* 				    TRUE, TRUE, (guint) 0); */
-
-/* 		gtk_widget_show_all (GTK_WIDGET(priv->vbox7)); */
-/* 	} */
-/* #endif */
-/* } */
-
 static void
 factory_notify_error_cb(HklGuiFactory *factory,
 			GParamSpec* pspec,
@@ -200,7 +165,7 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		guint n_items;
 		GListStore *liststore;
 		HklGuiSample *gsample;
-
+		HklGuiFactory *old_factory = self->factory;
 
 		self->factory = factory;
 
@@ -253,9 +218,9 @@ dropdown1_notify_selected_item_cb(GtkDropDown *dropdown,
 		gtk_multi_selection_set_model (self->multi_selection_sample_reflections,
 					       G_LIST_MODEL (liststore));
 
-		/* set_up_3D(self); */
+		/* setup the 3d part when relevant */
+		hkl_gui_factory_setup_3d(old_factory, factory, GTK_BOX (self->vbox_3d));
 	}
-
 }
 
 /* select sample */
@@ -792,6 +757,7 @@ new_window (GApplication *app,
 	self->flowbox_engines = gtk_flow_box_new();
 	self->notebook1 = gtk_notebook_new();
 	self->spinbutton_wavelength = gtk_spin_button_new(self->adjustment_wavelength, 0.0001, 4);
+	self->vbox_3d = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	self->window1 = gtk_application_window_new (GTK_APPLICATION (app));
 
 	button_add_sample = gtk_button_new();
@@ -948,7 +914,12 @@ new_window (GApplication *app,
 	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
 				  vbox3,
 				  label);
-
+#if HKL3D
+	label =  gtk_label_new("Diffractometer 3D");
+	gtk_notebook_append_page (GTK_NOTEBOOK (self->notebook1),
+				  self->vbox_3d,
+				  label);
+#endif
 	/* scrolledwindow1 */
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow1),
 				       GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);

@@ -218,10 +218,9 @@ OPTION_DEFAULT_ON([gui], [do not compile the gui interface])
 
 AM_CONDITIONAL([GUI], [test x$enable_gui = xyes])
 AM_COND_IF([GUI],
-	[PKG_CHECK_MODULES([GTK], [gtk4 >= 4.8])
+	[PKG_CHECK_MODULES([GTK], [gtk4 >= 4.12])
 	AM_COND_IF([HKL3D],
-                   [PKG_CHECK_MODULES([GL], [gl >= 1.0.0])
-                    PKG_CHECK_MODULES([GLU], [glu >= 7.7.1])
+                   [PKG_CHECK_MODULES([EPOXY], [epoxy >= 1.5.10])
 	])
 ])
 
