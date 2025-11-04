@@ -977,7 +977,7 @@ static Shader init_shader()
 		"\n"
 		"out vec3 FragPos;\n"
 		"out vec4 objectColor;\n"
-		"smooth out vec3 Normal;\n"
+		"out vec3 Normal;\n"
 		"\n"
 		"layout (location = 0) in vec3 aPos;\n"
 		"layout (location = 1) in vec4 aColor;\n"
@@ -1138,7 +1138,7 @@ static Shader init_shader()
         set_uniform_make_vec3s(&shader, "dirLight.specular", 0.5, 0.5, 0.5);
 
         /* point light 0 */
-        set_uniform_make_vec3s(&shader, "pointLights[0].position", 0, 5, -5);
+        set_uniform_make_vec3s(&shader, "pointLights[0].position", 5, 5, 0);
         set_uniform_make_vec3s(&shader, "pointLights[0].ambient", 0.05, 0.05, 0.05);
         set_uniform_make_vec3s(&shader, "pointLights[0].diffuse", 0.8, 0.8, 0.8);
         set_uniform_make_vec3s(&shader, "pointLights[0].specular", 1.0, 1.0, 1.0);
@@ -1147,7 +1147,7 @@ static Shader init_shader()
         set_uniform_float(&shader, "pointLights[0].quadratic", 0.032);
 
         /* point light 1 */
-        set_uniform_make_vec3s(&shader, "pointLights[1].position", 5, 5, 0);
+        set_uniform_make_vec3s(&shader, "pointLights[1].position", -5, 5, 0);
         set_uniform_make_vec3s(&shader, "pointLights[1].ambient", 0.05, 0.05, 0.05);
         set_uniform_make_vec3s(&shader, "pointLights[1].diffuse", 0.8, 0.8, 0.8);
         set_uniform_make_vec3s(&shader, "pointLights[1].specular", 1.0, 1.0, 1.0);
@@ -1156,7 +1156,7 @@ static Shader init_shader()
         set_uniform_float(&shader, "pointLights[1].quadratic", 0.032);
 
         /* point light 2 */
-        set_uniform_make_vec3s(&shader, "pointLights[2].position", -5, 5, 0);
+        set_uniform_make_vec3s(&shader, "pointLights[2].position", 5, -5, 0);
         set_uniform_make_vec3s(&shader, "pointLights[2].ambient", 0.05, 0.05, 0.05);
         set_uniform_make_vec3s(&shader, "pointLights[2].diffuse", 0.8, 0.8, 0.8);
         set_uniform_make_vec3s(&shader, "pointLights[2].specular", 1.0, 1.0, 1.0);
@@ -1165,7 +1165,7 @@ static Shader init_shader()
         set_uniform_float(&shader, "pointLights[2].quadratic", 0.032);
 
         /* point light 3 */
-        set_uniform_make_vec3s(&shader, "pointLights[3].position", 0, 5, 5);
+        set_uniform_make_vec3s(&shader, "pointLights[3].position", -5, -5, 0);
         set_uniform_make_vec3s(&shader, "pointLights[3].ambient", 0.05, 0.05, 0.05);
         set_uniform_make_vec3s(&shader, "pointLights[3].diffuse", 0.8, 0.8, 0.8);
         set_uniform_make_vec3s(&shader, "pointLights[3].specular", 1.0, 1.0, 1.0);
