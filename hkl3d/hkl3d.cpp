@@ -56,21 +56,6 @@ static float identity[] = {1, 0, 0, 0,
 	0, 0, 1 ,0,
 	0, 0, 0, 1};
 
-static void *_hkl3d_malloc(int size, const char *error)
-{
-	void *tmp;
-
-	tmp = calloc(1, size);
-	if(!tmp){
-		fprintf(stderr, "%s", error);
-		exit(128);
-	}
-
-	return tmp;
-}
-/* malloc method */
-#define HKL3D_MALLOC(type) (type *)_hkl3d_malloc(sizeof(type), "Can not allocate memory for a " #type)
-
 /***************/
 /* Hkl3DObject */
 /***************/
@@ -152,7 +137,7 @@ static Hkl3DObject *hkl3d_object_new(Hkl3DModel *model, G3DObject *object, int i
 	G3DMaterial* material;
 	Hkl3DObject *self = NULL;
 
-	self = HKL3D_MALLOC(Hkl3DObject);
+	self = g_new0 (Hkl3DObject, 1);
 
 	/* extract the color from the first face */
 	/* this is usefull for the bullet GL draw method */
@@ -312,7 +297,7 @@ static Hkl3DModel *hkl3d_model_new(void)
 {
 	Hkl3DModel *self = NULL;
 
-	self = HKL3D_MALLOC(Hkl3DModel);
+	self = g_new0 (Hkl3DModel, 1);
 
 	self->filename = NULL;
 	self->objects = NULL;
@@ -486,7 +471,7 @@ static Hkl3DAxis *hkl3d_axis_new(void)
 {
 	Hkl3DAxis *self = NULL;
 
-	self = HKL3D_MALLOC(Hkl3DAxis);
+	self = g_new0 (Hkl3DAxis, 1);
 
 	self->objects = NULL; /* do not own the objects */
 	self->len = 0;
@@ -551,7 +536,7 @@ static Hkl3DGeometry *hkl3d_geometry_new(HklGeometry *geometry)
 	uint i;
 	Hkl3DGeometry *self = NULL;
 
-	self = HKL3D_MALLOC(Hkl3DGeometry);
+	self = g_new0 (Hkl3DGeometry, 1);
 
 	self->geometry = geometry;
 	self->axes = (Hkl3DAxis **)malloc(darray_size(geometry->axes) * sizeof(*self->axes));
@@ -671,7 +656,7 @@ Hkl3D *hkl3d_new(const char *filename, HklGeometry *geometry)
 {
 	Hkl3D *self = NULL;
 
-	self = HKL3D_MALLOC(Hkl3D);
+	self = g_new0 (Hkl3D, 1);
 
 	self->geometry = hkl3d_geometry_new(geometry);
 	self->config = hkl3d_config_new();
