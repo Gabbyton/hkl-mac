@@ -711,7 +711,6 @@ new_window (GApplication *app,
 	/* liststore samples */
 	self->liststore_samples = g_list_store_new (HKL_GUI_TYPE_SAMPLE);
 	g_list_store_append(self->liststore_samples, hkl_gui_sample_new("default"));
-	g_list_store_append(self->liststore_samples, hkl_gui_sample_new("tutu"));
 
 	/*********************/
 	/* ListItemFactories */

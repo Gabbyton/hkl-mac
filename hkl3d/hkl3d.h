@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2010-2019 Synchrotron SOLEIL
+ * Copyright (C) 2010-2019, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -24,7 +24,9 @@
 #ifndef __HKL3D_H__
 #define __HKL3D_H__
 
-#include <g3d/types.h>
+#include <assimp/scene.h>
+#include <cglm/struct.h>
+
 #include "hkl.h"
 
 // forward declaration due to bullet static linking
@@ -69,20 +71,18 @@ extern "C" {
 	struct _Hkl3DObject
 	{
 		Hkl3DModel *model; /* weak reference */
-		int id;
 		Hkl3DAxis *axis; /* weak reference */
-		G3DObject *g3d; /* weak reference */
+		unsigned int mesh;
 		struct btCollisionObject *btObject;
 		struct btCollisionShape *btShape;
 		struct btTriangleMesh *meshes;
-		struct btVector3 *color;
 		int is_colliding;
 		int hide;
 		int added;
 		int selected;
 		int movable;
 		char *axis_name;
-		float transformation[16];
+		CGLM_ALIGN_MAT mat4s transformation;
 	};
 
 	extern void hkl3d_object_aabb_get(const Hkl3DObject *self, float from[3], float to[3]);
@@ -95,7 +95,7 @@ extern "C" {
 	struct _Hkl3DModel
 	{
 		char *filename;
-		G3DModel *g3d;
+		const struct aiScene *scene;
 		Hkl3DObject **objects;
 		size_t len;
 	};
@@ -124,6 +124,8 @@ extern "C" {
 		size_t len;
 	};
 
+	extern void hkl3d_axis_fprintf(FILE *f, const Hkl3DAxis *self);
+
 	/*****************/
 	/* HKL3DGeometry */
 	/*****************/
@@ -134,6 +136,8 @@ extern "C" {
 		Hkl3DAxis **axes;
 	};
 
+	extern void hkl3d_geometry_fprintf(FILE *f, const Hkl3DGeometry *self);
+
 	/*********/
 	/* HKL3D */
 	/*********/
@@ -142,7 +146,6 @@ extern "C" {
 	{
 		char const *filename; /* config filename */
 		Hkl3DGeometry *geometry;
-		G3DModel *model;
 		Hkl3DStats stats;
 		Hkl3DConfig *config;
 

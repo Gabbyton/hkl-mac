@@ -20,10 +20,13 @@
  * Authors: Picca Frédéric-Emmanuel <picca@synchrotron-soleil.fr>
  *	    Oussama Sboui <oussama.sboui@synchrotron-soleil.fr>
  */
+#include <assimp/cexport.h>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
 #include <cglm/struct.h>
 #include <epoxy/gl.h>
 #include <g3d/object.h>
-#include <g3d/quat.h>
+
 
 #include "hkl3d.h"
 #include "hkl/ccan/compiler/compiler.h"
@@ -79,6 +82,7 @@ enum {
 
 	PROP_FILENAME,
 	PROP_GEOMETRY,
+	PROP_AABB,
 
 	N_PROPERTIES
 };
@@ -133,6 +137,7 @@ struct _HklGui3D {
 	Hkl3D *hkl3d;
 
 	GtkGLArea *gl_area;
+	GtkWidget *toggle_button_aabb;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (HklGui3D, hkl_gui_3d, G_TYPE_OBJECT);
@@ -187,6 +192,14 @@ hkl_gui_3d_get_geometry(HklGui3D *self)
 	return priv->geometry;
 }
 
+static gboolean
+hkl_gui_3d_get_aabb(HklGui3D *self)
+{
+	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
+
+	return priv->aabb;
+}
+
 static void _filename_and_geometry(HklGui3D *self)
 {
 
@@ -222,6 +235,20 @@ hkl_gui_3d_set_geometry(HklGui3D *self, HklGeometry *geometry)
 }
 
 static void
+hkl_gui_3d_set_aabb(HklGui3D *self, gboolean aabb)
+{
+	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
+
+	g_return_if_fail(aabb != priv->aabb);
+
+	priv->aabb = aabb;
+
+	hkl_gui_3d_invalidate(self);
+
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_AABB]);
+}
+
+static void
 set_property (GObject *object, guint prop_id,
 	      const GValue *value, GParamSpec *pspec)
 {
@@ -233,6 +260,9 @@ set_property (GObject *object, guint prop_id,
 		break;
 	case PROP_GEOMETRY:
 		hkl_gui_3d_set_geometry(self, g_value_get_pointer (value));
+		break;
+	case PROP_AABB:
+		hkl_gui_3d_set_aabb(self, g_value_get_boolean (value));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -253,6 +283,9 @@ get_property (GObject *object, guint prop_id,
 		break;
 	case PROP_GEOMETRY:
 		g_value_set_pointer (value, hkl_gui_3d_get_geometry (self));
+		break;
+	case PROP_AABB:
+		g_value_set_boolean (value, hkl_gui_3d_get_aabb (self));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -656,8 +689,8 @@ draw_aabb(const float from[3], const float to[3], const float color[4])
 	glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof (GLfloat), NULL );
 	glEnableVertexAttribArray( 0 );
 
-	glVertexAttribPointer (1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof (GLfloat), (void *)(3 * sizeof (GLfloat)) );
-	glEnableVertexAttribArray( 1 );
+	/* glVertexAttribPointer (1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof (GLfloat), (void *)(3 * sizeof (GLfloat)) ); */
+	/* glEnableVertexAttribArray( 1 ); */
 
 	// Draw points 0-3 from the currently bound VAO with current in-use shader.
 	glDrawArrays (GL_LINES, 0, 2 * 12);
@@ -683,9 +716,15 @@ hkl_gui_3d_draw_aabb_object(const Hkl3DObject *self)
 void
 hkl_gui_3d_draw_aabb(HklGui3D *self)
 {
+	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
+
+	glUseProgram (priv->shader.program);
+
 	for(int i=0; i<self->hkl3d->config->len; i++)
 		for(int j=0; j<self->hkl3d->config->models[i]->len; j++)
 			hkl_gui_3d_draw_aabb_object(self->hkl3d->config->models[i]->objects[j]);
+
+	glUseProgram (0);
 }
 
 
@@ -693,32 +732,30 @@ void
 hkl_gui_3d_draw_model(HklGui3D *self)
 {
 	int i;
+	static unsigned int n_vec3 = 3;
+
 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
 
 	for(i=0; i<priv->n_buffers; ++i){
 		BufferToDraw *buffer = &priv->buffers[i];
-		CGLM_ALIGN_MAT mat4s model = GLMS_MAT4_IDENTITY_INIT;
+		const struct aiScene *scene = buffer->object->model->scene;
+		const struct aiMesh *mesh = scene->mMeshes[buffer->object->mesh];
 		CGLM_ALIGN_MAT vec3s ambient;
 		CGLM_ALIGN_MAT vec3s diffuse;
 		CGLM_ALIGN_MAT vec3s specular;
 		GLfloat shininess = 12;
 		GLfloat alpha = buffer->object->is_colliding == 0 ? 1.0 : 0.5;;
 
-		/* extract values from the object */
-
-		/* TODO move in the hkl3d object use cglm */
-		if(buffer->object->g3d->transformation){
-			memcpy(model.raw, buffer->object->g3d->transformation->matrix, 16 * sizeof(float));
-		}
-
-		memcpy(ambient.raw, &buffer->object->g3d->_materials[0]->r, 3 * sizeof (float));
-		memcpy(diffuse.raw, &buffer->object->g3d->_materials[0]->r, 3 * sizeof (float));
-		memcpy(specular.raw, &buffer->object->g3d->_materials[0]->specular, 3 * sizeof (float));
+		const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+		aiGetMaterialFloatArray(material, AI_MATKEY_COLOR_AMBIENT, ambient.raw, &n_vec3);
+		aiGetMaterialFloatArray(material, AI_MATKEY_COLOR_DIFFUSE, diffuse.raw, &n_vec3);
+		aiGetMaterialFloatArray(material, AI_MATKEY_COLOR_SPECULAR, specular.raw, &n_vec3);
+		aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, specular.raw);
 
 		glUseProgram (priv->shader.program);
 
 		/* set the uniforms */
-		set_uniform_mat4s(&priv->shader, "model", model);
+		set_uniform_mat4s(&priv->shader, "model", buffer->object->transformation);
 		set_uniform_vec3sv(&priv->shader, "material.ambient", ambient);
 		set_uniform_vec3sv(&priv->shader, "material.diffuse", diffuse);
 		set_uniform_vec3sv(&priv->shader, "material.specular", specular);
@@ -726,7 +763,7 @@ hkl_gui_3d_draw_model(HklGui3D *self)
 		set_uniform_float(&priv->shader, "alpha", alpha);
 
 		glBindVertexArray (buffer->vao);
-		glDrawElements (GL_TRIANGLES, buffer->object->g3d->_num_faces * 3, GL_UNSIGNED_INT, 0);
+		glDrawElements (GL_TRIANGLES, mesh->mNumFaces * 3, GL_UNSIGNED_INT, 0);
 		glBindVertexArray (0);
 
 		glUseProgram (0);
@@ -740,6 +777,7 @@ hkl_gui_3d_gl_area_render_cb(GtkGLArea *area,
 			     gpointer user_data)
 {
 	HklGui3D *self = HKL_GUI_3D (user_data);
+	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
 
 	gtk_gl_area_make_current (area);
 
@@ -754,12 +792,10 @@ hkl_gui_3d_gl_area_render_cb(GtkGLArea *area,
 	/* Draw our object */
 
 	hkl_gui_3d_draw_model(self);
-/*	hkl_gui_3d_draw_g3dmodel(user_data); */
 /* 	hkl_gui_3d_draw_selected(self); */
 /* 	hkl_gui_3d_draw_collisions(self); */
-/* 	if(priv->aabb) */
-/* 		hkl_gui_3d_draw_aabb(self); */
-	/* hkl_gui_3d_draw_aabb(self); */
+	if(priv->aabb)
+		hkl_gui_3d_draw_aabb(self);
 
 	/* Flush the contents of the pipeline */
 	glFlush ();
@@ -962,6 +998,14 @@ hkl_gui_3d_class_init (HklGui3DClass *class)
 				      G_PARAM_READWRITE |
 				      G_PARAM_STATIC_STRINGS);
 
+	props[PROP_AABB] =
+		g_param_spec_boolean ("aabb",
+				      "Aabb",
+				      "Draw the aabb boxes",
+				      false,
+				      G_PARAM_READWRITE |
+				      G_PARAM_STATIC_STRINGS);
+
 	g_object_class_install_properties (gobject_class,
 					   N_PROPERTIES,
 					   props);
@@ -976,12 +1020,10 @@ static Shader init_shader()
 		"#version 300 es\n"
 		"\n"
 		"out vec3 FragPos;\n"
-		"out vec4 objectColor;\n"
 		"out vec3 Normal;\n"
 		"\n"
 		"layout (location = 0) in vec3 aPos;\n"
-		"layout (location = 1) in vec4 aColor;\n"
-		"layout (location = 2) in vec3 aNormal;\n"
+		"layout (location = 1) in vec3 aNormal;\n"
 		"\n"
 		"uniform mat4 projection;\n"
 		"uniform mat4 view;\n"
@@ -990,7 +1032,6 @@ static Shader init_shader()
 		"void main() {\n"
 		"  gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
 		"  FragPos = vec3(model * vec4(aPos, 1.0));\n"
-		"  objectColor = aColor;\n"
 		"  Normal = mat3(transpose(inverse(model))) * aNormal;\n"
 		"}\n";
 
@@ -1029,7 +1070,6 @@ static Shader init_shader()
 		"#define NR_POINT_LIGHTS 4\n"
 		"\n"
 		"in vec3 FragPos;\n"
-		"in vec4 objectColor;\n"
 		"in vec3 Normal;\n"
 		"\n"
 		"uniform float alpha;\n"
@@ -1119,16 +1159,18 @@ static Shader init_shader()
 
 	/* projection */
 	CGLM_ALIGN_MAT mat4s projection = GLMS_MAT4_IDENTITY_INIT;
-	projection = glms_perspective (glm_rad(45), 1, 0.1, 100);
+	/* projection = glms_perspective (glm_rad(45), 1, 0.1, 100); */
 	set_uniform_mat4s(&shader, "projection", projection);
 
 	/* view position */
-	CGLM_ALIGN_MAT vec3s viewPos = {{0, 0, -5}};
+	CGLM_ALIGN_MAT vec3s viewPos = {{0, 5, 0}};
 	set_uniform_vec3sv(&shader, "viewPos", viewPos);
 
 	/* view */
 	CGLM_ALIGN_MAT mat4s view = GLMS_MAT4_IDENTITY_INIT;
-	view = glms_translate_make (viewPos);
+	CGLM_ALIGN_MAT vec3s center = GLMS_VEC3_ZERO_INIT;
+	CGLM_ALIGN_MAT vec3s up = {{0, 0, 1}};
+	view = glms_lookat(viewPos, center, up);
 	set_uniform_mat4s(&shader, "view", view);
 
 	/* dir light */
@@ -1178,32 +1220,108 @@ static Shader init_shader()
 	return shader;
 }
 
+void ai_mesh_fprintf(FILE *f, const struct aiMesh *mesh, int i)
+{
+	fprintf(f, "\n meshe %d \"%s\" (%p) (type %d) (%d vertices) (%d faces) (normales %p)",
+		i,
+		mesh->mName.data,
+		mesh,
+		mesh->mPrimitiveTypes,
+		mesh->mNumVertices,
+		mesh->mNumFaces,
+		mesh->mNormals);
+}
+
+void ai_node_fprintf(FILE *f, const struct aiNode *node, int level)
+{
+	unsigned int i;
+
+	fprintf(f, "\n%*s - (node) %s (%d meshes) (%d child)",
+		level, "",
+		node->mName.data,
+		node->mNumMeshes,
+		node->mNumChildren);
+	fprintf(f, "\n%*s   transformation: %f %f %f %f",
+		level, "",
+		node->mTransformation.a1,
+		node->mTransformation.a2,
+		node->mTransformation.a3,
+		node->mTransformation.a4);
+	fprintf(f, "\n%*s                   %f %f %f %f",
+		level, "",
+		node->mTransformation.b1,
+		node->mTransformation.b2,
+		node->mTransformation.b3,
+		node->mTransformation.b4);
+	fprintf(f, "\n%*s                   %f %f %f %f",
+		level, "",
+		node->mTransformation.c1,
+		node->mTransformation.c2,
+		node->mTransformation.c3,
+		node->mTransformation.c4);
+	fprintf(f, "\n%*s                   %f %f %f %f",
+		level, "",
+		node->mTransformation.d1,
+		node->mTransformation.d2,
+		node->mTransformation.d3,
+		node->mTransformation.d4);
+
+	for(i=0; i<node->mNumMeshes; ++i){
+		fprintf(f, "\n%*s   meshes %d",
+			level, "",
+			node->mMeshes[i]);
+	}
+
+	for(i=0; i<node->mNumChildren; ++i){
+		ai_node_fprintf(f, node->mChildren[i], level+2);
+	}
+}
+
+void ai_scene_fprintf(FILE *f, const struct aiScene *scene)
+{
+	unsigned int i;
+
+	fprintf(f, "\nscene: (%p)", scene);
+	fprintf(f, "\n%d animations", scene->mNumAnimations);
+	fprintf(f, "\n%d cameras", scene->mNumCameras);
+	fprintf(f, "\n%d lights", scene->mNumLights);
+	fprintf(f, "\n%d materials", scene->mNumMaterials);
+	fprintf(f, "\n%d meshes", scene->mNumMeshes);
+	fprintf(f, "\n%d skeletons", scene->mNumSkeletons);
+	fprintf(f, "\n%d textures", scene->mNumTextures);
+
+	/* nodes */
+	ai_node_fprintf(f, scene->mRootNode, 0);
+
+	/* models */
+	for(i=0; i<scene->mNumMeshes; ++i){
+		const struct aiMesh *mesh = scene->mMeshes[i];
+		ai_mesh_fprintf(f, mesh, i);
+	}
+}
+
 BufferToDraw *
 init_buffers(HklGui3D *self, size_t *n_buffers)
 {
 	int i;
 	int j;
-	int len = 0;
-
-	/* models */
-
-	for(i=0; i<self->hkl3d->config->len; i++)
-		for(j=0; j<self->hkl3d->config->models[i]->len; j++)
-			len++;
-
-	BufferToDraw *buffers = g_new0(BufferToDraw, len);
-	*n_buffers = len;
+	unsigned int len = 0;
+	BufferToDraw *buffers = NULL;
 
 	len = 0;
 	for(i=0; i<self->hkl3d->config->len; i++)
-		for(j=0; j<self->hkl3d->config->models[i]->len; j++){
-			Hkl3DObject *hobject = self->hkl3d->config->models[i]->objects[j];
-			G3DObject *object = hobject->g3d;
-			GSList *faces;
+		len += self->hkl3d->config->models[i]->len;
 
-			/* neede to update the g3d object internals */
-			/* _xxx variables */
-			g3d_object_optimize(object);
+	buffers = g_new0(BufferToDraw, len);
+	*n_buffers = len;
+
+	len = 0;
+	for(i=0; i<self->hkl3d->config->len; i++){
+		for(j=0; j<self->hkl3d->config->models[i]->len; j++){
+			int k;
+			const struct aiScene *scene = self->hkl3d->config->models[i]->scene;
+			Hkl3DObject *object = self->hkl3d->config->models[i]->objects[j];
+			const struct aiMesh *mesh = scene->mMeshes[object->mesh];
 
 			GLuint vao = 0;
 			glGenVertexArrays (1, &vao);
@@ -1211,68 +1329,54 @@ init_buffers(HklGui3D *self, size_t *n_buffers)
 
 			/* positions */
 			GLuint vbo = 0;
-			size_t size_vertex = object->vertex_count * 3 * sizeof (float);
+			size_t size_vertex = mesh->mNumVertices * 3 * sizeof (float);
+			GLfloat *vertices = g_new(GLfloat,  mesh->mNumVertices * 3);
+			for(k=0; k<mesh->mNumVertices; ++k){
+				vertices[k * 3 + 0] = mesh->mVertices[k].x;
+				vertices[k * 3 + 1] = mesh->mVertices[k].y;
+				vertices[k * 3 + 2] = mesh->mVertices[k].z;
+			}
 			glGenBuffers (1, &vbo );
 			glBindBuffer (GL_ARRAY_BUFFER, vbo );
-			glBufferData (GL_ARRAY_BUFFER, size_vertex, object->vertex_data, GL_STATIC_DRAW);
+			glBufferData (GL_ARRAY_BUFFER, size_vertex, vertices, GL_STATIC_DRAW);
 
 			glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), NULL);
 			glEnableVertexAttribArray (0);
 
-			/* colors */
-			GLuint vbo_colors = 0;
-			size_t size_colors = object->vertex_count * 4 * sizeof (float);
-			GLfloat *colors = g_new(GLfloat, object->vertex_count * 4);
-			faces = object->faces;
-			while(faces){
-				G3DFace *face = faces->data;
-				memcpy(&colors[4 * face->vertex_indices[0]], &face->material->r, 4 * sizeof(GLfloat));
-				memcpy(&colors[4 * face->vertex_indices[1]], &face->material->r, 4 * sizeof(GLfloat));
-				memcpy(&colors[4 * face->vertex_indices[2]], &face->material->r, 4 * sizeof(GLfloat));
-
-				faces = g_slist_next(faces);
-			}
-			glGenBuffers (1, &vbo_colors );
-			glBindBuffer (GL_ARRAY_BUFFER, vbo_colors );
-			glBufferData (GL_ARRAY_BUFFER, size_colors, colors, GL_STATIC_DRAW);
-
-			glVertexAttribPointer (1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof (GLfloat), NULL);
-			glEnableVertexAttribArray (1);
-
 			/* normals */
 			GLuint vbo_normals = 0;
-			size_t size_normals = object->vertex_count * 3 * sizeof (float);
-			GLfloat *normals = g_new(GLfloat, object->vertex_count * 3);
-			faces = object->faces;
-			while(faces){
-				G3DFace *face = faces->data;
-				memcpy(&normals[3 * face->vertex_indices[0]], &face->normals, 3 * sizeof(GLfloat));
-				memcpy(&normals[3 * face->vertex_indices[1]], &face->normals[3], 3 * sizeof(GLfloat));
-				memcpy(&normals[3 * face->vertex_indices[2]], &face->normals[6], 3 * sizeof(GLfloat));
-
-				faces = g_slist_next(faces);
-			}
+			size_t size_normals = mesh->mNumVertices * 3 * sizeof (float);
 			glGenBuffers (1, &vbo_normals );
 			glBindBuffer (GL_ARRAY_BUFFER, vbo_normals );
-			glBufferData (GL_ARRAY_BUFFER, size_normals, normals, GL_STATIC_DRAW);
+			glBufferData (GL_ARRAY_BUFFER, size_normals, mesh->mNormals, GL_STATIC_DRAW);
 
-			glVertexAttribPointer (2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), NULL);
-			glEnableVertexAttribArray (2);
+			glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), NULL);
+			glEnableVertexAttribArray (1);
 
 			/* indices */
 			GLuint ebo = 0;
-			size_t size_indices = object->_num_faces * 2 * sizeof(object->_indices);
+			size_t size_indices = mesh->mNumFaces * 3 * sizeof(unsigned int);
+			unsigned int *indices = g_new(unsigned int, mesh->mNumFaces * 3);
+			unsigned int idx=0;
+			for(k=0; k<mesh->mNumFaces; ++k){
+				const struct aiFace face = mesh->mFaces[k];
+
+				indices[idx++] = face.mIndices[0];
+				indices[idx++] = face.mIndices[1];
+				indices[idx++] = face.mIndices[2];
+			}
 			glGenBuffers (1, &ebo);
 			glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, ebo);
-			glBufferData (GL_ELEMENT_ARRAY_BUFFER, size_indices, object->_indices, GL_STATIC_DRAW);
+			glBufferData (GL_ELEMENT_ARRAY_BUFFER, size_indices, indices, GL_STATIC_DRAW);
 
 			BufferToDraw buffer = {
 				.vao = vao,
-				.object = hobject,
+				.object = object,
 			};
 
 			buffers[len++] = buffer;
 		}
+	}
 	return buffers;
 }
 
@@ -1299,22 +1403,44 @@ gl_area_on_realize_cb (GtkGLArea *area,
 	glDisable(GL_STENCIL_TEST);
 }
 
+static void
+aabb_activated (GtkToggleButton *button,
+		gpointer user_data)
+{
+	HklGui3D *self = HKL_GUI_3D(user_data);
+	gboolean aabb;
+
+	aabb = gtk_toggle_button_get_active (button);
+
+	hkl_gui_3d_set_aabb(self, aabb);
+}
+
 static void hkl_gui_3d_init (HklGui3D * self)
 {
 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
+	GtkWidget *vbox;
+	GtkWidget *hbox;
 
 	/* properties */
 	priv->filename = NULL;
 	priv->geometry = NULL;
 	priv->buffers = NULL;
 	priv->n_buffers = 0;
-
 	priv->aabb = FALSE;
+
+	/* widgets instances */
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	priv->frame1 = GTK_FRAME (gtk_frame_new("3d"));
 	self->gl_area = GTK_GL_AREA (gtk_gl_area_new ());
+	self->toggle_button_aabb = gtk_toggle_button_new_with_label("aabb");
 
 	/* frame1 */
-	gtk_frame_set_child(priv->frame1, GTK_WIDGET (self->gl_area));
+	gtk_frame_set_child(priv->frame1, vbox);
+
+	/* button_aabb */
+	g_signal_connect (self->toggle_button_aabb, "toggled",
+			  G_CALLBACK (aabb_activated), self);
 
 	/* gl_area */
 	gtk_gl_area_set_has_depth_buffer (self->gl_area, true);
@@ -1328,6 +1454,13 @@ static void hkl_gui_3d_init (HklGui3D * self)
 			 G_CALLBACK(hkl_gui_3d_gl_area_resize_cb), self);
 	g_signal_connect(self->gl_area, "render",
 			 G_CALLBACK(hkl_gui_3d_gl_area_render_cb), self);
+
+	/* hbox */
+	gtk_box_append (GTK_BOX (hbox), self->toggle_button_aabb);
+
+	/* vbox */
+	gtk_box_append (GTK_BOX (vbox), GTK_WIDGET (self->gl_area));
+	gtk_box_append (GTK_BOX (vbox), hbox);
 
 	/* gtk_box_pack_end(priv->vbox1, GTK_WIDGET(self->gl_area), TRUE, TRUE, 0); */
 

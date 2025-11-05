@@ -137,8 +137,8 @@ dnl ***************
 OPTION_DEFAULT_OFF([logging], [enable the glib logging])
 AM_CONDITIONAL([LOGGING], [test x$enable_logging != xno])
 AM_COND_IF([LOGGING],
-	AC_DEFINE([LOGGING], [1], [activate the logging or not])
-	)
+        AC_DEFINE([LOGGING], [1], [activate the logging or not])
+        )
 
 dnl ***********
 dnl *** doc ***
@@ -147,15 +147,15 @@ dnl ***********
 OPTION_DEFAULT_ON([hkl-doc], [build documentation])
 AM_CONDITIONAL([HKL_DOC], [test x$enable_hkl_doc = xyes])
 AM_COND_IF([HKL_DOC],
-	   [dnl *** asymptote ***
-	    AC_PATH_PROG([ASY], [asy], [echo])
-	    dnl *** emacs ***
-	    AC_PATH_PROG([EMACS], [emacs], [no])
-	    dnl *** gnuplot ***
-	    AC_PATH_PROG([GNUPLOT], [gnuplot], [echo])
+           [dnl *** asymptote ***
+            AC_PATH_PROG([ASY], [asy], [echo])
+            dnl *** emacs ***
+            AC_PATH_PROG([EMACS], [emacs], [no])
+            dnl *** gnuplot ***
+            AC_PATH_PROG([GNUPLOT], [gnuplot], [echo])
             dnl *** xvfb-run ***
             AC_PATH_PROG([XVFB_RUN], [xvfb-run], [echo])
-	   ])
+           ])
 
 dnl *** mathkjax ***
 AC_ARG_WITH([mathjax],
@@ -195,20 +195,20 @@ OPTION_DEFAULT_OFF([hkl3d], [compile the hkl3d library])
 
 AM_CONDITIONAL([HKL3D], [test x$enable_hkl3d != xno])
 AM_COND_IF([HKL3D],
-	   [PKG_CHECK_MODULES([G3D], [libg3d >= 0.0.8])
-	    PKG_CHECK_MODULES([BULLET], [bullet >= 2.82])
-	   dnl check for yaml
-	   AC_SEARCH_LIBS([yaml_get_version], [yaml],
-			  [AC_CHECK_HEADERS([yaml.h], [],
-					    [AC_MSG_ERROR([Could not find the yaml headers, please install yaml developement files])]
-			  )],
-			  [AC_MSG_ERROR([Could not find the libyaml runtime, please install yaml])]
-           )
-	   YAML_CFLAGS=""
-	   AC_SUBST(YAML_CFLAGS)
-	   YAML_LIBS="-lyaml"
-	   AC_SUBST(YAML_LIBS)
-])
+           [PKG_CHECK_MODULES([ASSIMP], [assimp >= 0])
+            PKG_CHECK_MODULES([BULLET], [bullet >= 2.82])
+            dnl *** blender ***
+            AC_PATH_PROG([BLENDER], [blender], [no])
+            dnl check for yaml
+            AC_SEARCH_LIBS([yaml_get_version], [yaml],
+                           [AC_CHECK_HEADERS([yaml.h], [],
+                            [AC_MSG_ERROR([Could not find the yaml headers, please install yaml developement files])]
+                           )],
+                           [AC_MSG_ERROR([Could not find the libyaml runtime, please install yaml])])
+            YAML_CFLAGS=""
+            AC_SUBST(YAML_CFLAGS)
+            YAML_LIBS="-lyaml"
+            AC_SUBST(YAML_LIBS)])
 
 dnl ****************************************
 dnl *** add an option for the ghkl build ***
@@ -218,10 +218,10 @@ OPTION_DEFAULT_ON([gui], [do not compile the gui interface])
 
 AM_CONDITIONAL([GUI], [test x$enable_gui = xyes])
 AM_COND_IF([GUI],
-	[PKG_CHECK_MODULES([GTK], [gtk4 >= 4.12])
-	AM_COND_IF([HKL3D],
+        [PKG_CHECK_MODULES([GTK], [gtk4 >= 4.12])
+        AM_COND_IF([HKL3D],
                    [PKG_CHECK_MODULES([EPOXY], [epoxy >= 1.5.10])
-	])
+        ])
 ])
 
 dnl *********************
@@ -231,7 +231,7 @@ dnl *********************
 GOBJECT_INTROSPECTION_CHECK([0.6.7])
 
 AM_COND_IF([HAVE_INTROSPECTION],
-	[PKG_CHECK_MODULES([GOBJECT], [gobject-2.0])])
+        [PKG_CHECK_MODULES([GOBJECT], [gobject-2.0])])
 
 
 dnl ***************
@@ -269,30 +269,30 @@ AC_CONFIG_FILES([Makefile
                  binoculars-ng/binoculars/Makefile
                  binoculars-ng/hkl.cabal
                  binoculars-ng/Makefile
-		 hkl/Makefile
-		 hkl/api2/Makefile
-		 hkl/ccan/Makefile
+                 hkl/Makefile
+                 hkl/api2/Makefile
+                 hkl/ccan/Makefile
                  hkl.h
-		 hkl.pc
-		 hkl3d/Makefile
-		 hkl3d.pc
-		 tests/Makefile
-		 tests/bindings/Makefile
-		 tests/tap/Makefile
+                 hkl.pc
+                 hkl3d/Makefile
+                 hkl3d.pc
+                 tests/Makefile
+                 tests/bindings/Makefile
+                 tests/tap/Makefile
                  third-party/Makefile
-		 Documentation/Makefile
-		 Documentation/hkl.org
-		 Documentation/api/Makefile
-		 Documentation/figures/Makefile
-		 Documentation/sphinx/Makefile
-		 Documentation/sphinx/source/conf.py
-		 gui/Makefile
-		 data/Makefile
-		 contrib/Makefile
-		 contrib/cristal/Makefile
-		 contrib/cristal/xrays/Makefile
-		 contrib/sixs/Makefile
-		 contrib/petra3/Makefile
+                 Documentation/Makefile
+                 Documentation/hkl.org
+                 Documentation/api/Makefile
+                 Documentation/figures/Makefile
+                 Documentation/sphinx/Makefile
+                 Documentation/sphinx/source/conf.py
+                 gui/Makefile
+                 data/Makefile
+                 contrib/Makefile
+                 contrib/cristal/Makefile
+                 contrib/cristal/xrays/Makefile
+                 contrib/sixs/Makefile
+                 contrib/petra3/Makefile
 ])
 
 AC_OUTPUT

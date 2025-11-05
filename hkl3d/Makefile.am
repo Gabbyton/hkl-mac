@@ -7,14 +7,16 @@ AM_CXXFLAGS = \
 	-I$(top_srcdir)/hkl \
 	-I$(top_srcdir)/hkl3d \
 	-I$(top_srcdir)/hkl3d/bullet/src\
+	$(ASSIMP_CFLAGS) \
 	$(BULLET_CFLAGS) \
 	$(DATATYPE99_CFLAGS) \
-	$(G3D_CFLAGS) \
+	$(GLIB_CFLAGS) \
 	$(YAML_CFLAGS)
 
 AM_LDFLAGS = -version-info 0:0:0 \
+	$(ASSIMP_LIBS) \
 	$(BULLET_LIBS) \
-	$(G3D_LIBS) \
+	$(GLIB_LIBS) \
 	$(YAML_LIBS)
 
 noinst_LTLIBRARIES = libhkl3d.la
