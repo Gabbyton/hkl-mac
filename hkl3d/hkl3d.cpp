@@ -180,14 +180,16 @@ static void hkl3d_object_set_movable(Hkl3DObject *self, int movable)
 	}
 }
 
-static void hkl3d_object_set_axis_name(Hkl3DObject *self, const char *name)
+void hkl3d_object_axis_name_set(Hkl3DObject *self, const char *name)
 {
-	if(!self || !name || self->axis_name == name)
-		return;
+	g_return_if_fail (NULL != self);
+	g_return_if_fail (NULL != name);
 
-	if(self->axis_name)
-		free(self->axis_name);
-	self->axis_name = strdup(name);
+	/* TODO ugly... */
+	if (name != self->axis_name){
+		g_clear_pointer(&self->axis_name, g_free);
+		self->axis_name = g_strdup(name);
+	}
 }
 
 static void matrix_fprintf(FILE *f, const float matrix[])
@@ -219,61 +221,85 @@ void hkl3d_object_draw_aabb_set(Hkl3DObject *self, bool draw_aabb)
 	self->draw_aabb = draw_aabb;
 }
 
+void hkl3d_object_transformation_set(Hkl3DObject *self, mat4s transformation)
+{
+	g_return_if_fail (NULL != self);
+
+	self->transformation = transformation;
+}
+
 bool hkl3d_object_hide_get(const Hkl3DObject *self)
 {
 	return self->hide;
+}
+
+void hkl3d_object_hide_set(Hkl3DObject *self, bool hide)
+{
+	g_return_if_fail (nullptr != self);
+
+	self->hide = hide;
 }
 
 void hkl3d_object_fprintf(FILE *f, const Hkl3DObject *self)
 {
 	GSList *faces;
 
-	fprintf(f, "\nHkl3dObject (%p):", self);
-	fprintf(f, "\n name : %s (%p)", self->axis_name, self->axis_name);
-	fprintf(f, "\n axis (%p):", self->axis);
-	fprintf(f, "\n model (%p)", self->model);
-	fprintf(f, "\n mesh: %d", self->mesh);
-	fprintf(f, "\n transformation:\n");
-	glms_mat4_print (self->transformation, f);
-	fprintf(f, "btObject : %p", self->btObject);
-	fprintf(f, "\n btShape : %p", self->btShape);
-	fprintf(f, "\n meshes : %p", self->meshes);
-	fprintf(f, "\n is_colliding : %d", self->is_colliding);
-	fprintf(f, "\n hide : %d", self->hide);
-	fprintf(f, "\n added : %d", self->added);
-	fprintf(f, "\n selected : %d", self->selected);
+	fprintf(f, "Hkl3dObject (", self);
+	fprintf(f, "axis_name=%s, ", self->axis_name);
+	fprintf(f, "axis=%p, ", self->axis);
+	fprintf(f, "model=%p, ", self->model);
+	fprintf(f, "mesh=%d, ", self->mesh);
+	fprintf(f, "transformation=[TODO], ");
+	/* glms_mat4_print (self->transformation, f); */
+	fprintf(f, "btObject=%p, ", self->btObject);
+	fprintf(f, "btShape=%p, ", self->btShape);
+	fprintf(f, "meshes=%p, ", self->meshes);
+	fprintf(f, "is_colliding=%d, ", self->is_colliding);
+	fprintf(f, "hide=%d, ", self->hide);
+	fprintf(f, "added=%d, ", self->added);
+	fprintf(f, "selected=%d)", self->selected);
 }
 
 /**************/
 /* Hkl3DModel */
 /**************/
 
-static Hkl3DModel *hkl3d_model_new(void)
+static Hkl3DModel *hkl3d_model_new(const char *filename)
 {
+	g_return_val_if_fail (NULL != filename, nullptr);
+
 	Hkl3DModel *self = nullptr;
 
 	self = g_new0 (Hkl3DModel, 1);
 
-	self->filename = nullptr;
+	self->filename = strdup(filename); /* TODO load the scene from here */
 	self->scene = nullptr;
 	darray_init(self->objects);
 
 	return self;
 }
 
-static void hkl3d_model_free(Hkl3DModel *self)
+const char *
+hkl3d_model_filename_get(const Hkl3DModel *self)
 {
-	Hkl3DObject **object;
+	g_return_val_if_fail(nullptr != self, nullptr);
 
+	return self->filename;
+}
+
+void hkl3d_model_free(Hkl3DModel *self)
+{
 	g_return_if_fail (nullptr != self);
 
-	free(self->filename);
-	darray_foreach(object, self->objects){
-		hkl3d_object_free(*object);
+	Hkl3DObject **object;
+
+	darray_foreach (object, self->objects){
+		hkl3d_object_free (*object);
 	}
-	darray_free(self->objects);
+	darray_free (self->objects);
 	aiReleaseImport (self->scene);
-	free(self);
+	free (self->filename);
+	free (self);
 }
 
 static void hkl3d_model_delete_object(Hkl3DModel *self, Hkl3DObject *object)
@@ -295,12 +321,13 @@ static void hkl3d_model_delete_object(Hkl3DModel *self, Hkl3DObject *object)
 
 void hkl3d_model_fprintf(FILE *f, const Hkl3DModel *self)
 {
-	fprintf(f, "Hkl3DModel([", darray_size(self->objects));
+	fprintf(f,"Hkl3DModel (filename=[%s], scene=%p, objects[",
+		self->filename, self->scene);
 	for(size_t i=0; i<darray_size(self->objects); ++i){
 		if(i) fprintf(f, ", ");
 		hkl3d_object_fprintf(f, darray_item(self->objects, i));
 	}
-	fprintf(f, ")");
+	fprintf(f, "])");
 }
 
 /*
@@ -330,7 +357,7 @@ static Hkl3DModel *hkl3d_model_new_from_file(const char *filename)
 
 	//aiExportScene(scene, "gltf2", "test.gltf", 0);
 
-	self = hkl3d_model_new();
+	self = hkl3d_model_new(filename);
 	if (nullptr == self)
 		goto out;
 
@@ -352,45 +379,6 @@ out:
 	return nullptr;
 }
 
-/***************/
-/* Hkl3DConfig */
-/***************/
-
-static Hkl3DConfig* hkl3d_config_new(void)
-{
-	Hkl3DConfig* self = nullptr;
-
-	self = g_new(Hkl3DConfig, 1);
-	if(!self)
-		return nullptr;
-
-	darray_init(self->models);
-
-	return self;
-}
-
-static void hkl3d_config_free(Hkl3DConfig *self)
-{
-	Hkl3DModel **model;
-
-	g_return_if_fail(NULL != self);
-
-	darray_foreach(model, self->models){
-		hkl3d_model_free(*model);
-	}
-	darray_free(self->models);
-	g_free(self);
-}
-
-void hkl3d_config_fprintf(FILE *f, const Hkl3DConfig *self)
-{
-	Hkl3DModel **model;
-	fprintf(f, "models (%zd):\n", darray_size(self->models));
-	darray_foreach(model, self->models){
-		hkl3d_model_fprintf(f, *model);
-	}
-}
-
 /**************/
 /* Hkl3DStats */
 /**************/
@@ -402,7 +390,7 @@ double hkl3d_stats_get_collision_ms(const Hkl3DStats *self)
 
 void hkl3d_stats_fprintf(FILE *f, const Hkl3DStats *self)
 {
-	fprintf(f, "transformation : %f ms collision : %f ms \n",
+	fprintf(f, "Hkl3DStats (transformation=%f ms, collision=%f ms)",
 		self->transformation.tv_sec*1000. + self->transformation.tv_usec/1000.,
 		hkl3d_stats_get_collision_ms(self));
 }
@@ -466,10 +454,12 @@ void hkl3d_axis_fprintf(FILE *f, const Hkl3DAxis *self)
 	g_return_if_fail (nullptr != f);
 	g_return_if_fail (nullptr != self);
 
-	fprintf(f, "\nHkl3DAxis (%p) %zd connected objets:", self, self->len);
+	fprintf(f, "Hkl3DAxis (objects=[");
 	for(size_t i=0; i<self->len; ++i){
-		fprintf (f, " %p", self->objects[i]);
+		if(i) fprintf (f, ", ");
+		fprintf (f, "%p", self->objects[i]);
 	}
+	fprintf(f, "])");
 }
 
 /*****************/
@@ -544,11 +534,13 @@ void hkl3d_geometry_fprintf(FILE *f, const Hkl3DGeometry *self)
 	g_return_if_fail (NULL != f);
 	g_return_if_fail (NULL != self);
 
-	fprintf(f, "\nHkl3DGeometry (%p):\n", self);
-	hkl_geometry_fprintf(f, self->geometry);
+	fprintf(f, "Hkl3DGeometry (geometry=%p, axes=[", self->geometry);
+	// TODO hkl_geometry_fprintf(f, self->geometry);
 	for(size_t i=0; i<darray_size(self->geometry->axes); ++i){
+		if(i) fprintf(f, ", ");
 		hkl3d_axis_fprintf(f, self->axes[i]);
 	}
+	fprintf(f, "])");
 }
 
 static Hkl3DAxis *hkl3d_geometry_axis_get(Hkl3DGeometry *self, const char *name)
@@ -718,298 +710,7 @@ void hkl3d_connect_object_to_axis(Hkl3D *self, Hkl3DObject *object, const char *
 			}
 		}
 	}
-	hkl3d_object_set_axis_name(object, name);
-}
-
-void hkl3d_load_config(Hkl3D *self, const char *filename)
-{
-	int j = 0;
-	int l;
-	int m;
-	int endEvent = 0;
-	yaml_parser_t parser;
-	yaml_event_t input_event;
-	FILE *file;
-	char *dirc;
-	char *dir;
-	Hkl3DModel *model = nullptr;
-
-	/* Clear the objects. */
-	memset(&parser, 0, sizeof(parser));
-	memset(&input_event, 0, sizeof(input_event));
-
-	file = fopen(filename, "rb");
-	if (!file){
-		fprintf(stderr, "Could not open the %s config file\n", filename);
-		return;
-	}
-
-	if (!yaml_parser_initialize(&parser))
-		fprintf(stderr, "Could not initialize the parser object\n");
-	yaml_parser_set_input_file(&parser, file);
-
-	/* compute the dirname of the config file as all model files */
-	/* will be relative to this directory */
-	dirc = strdup(filename);
-	dir = dirname(dirc);
-
-	while(!endEvent){
-		/* Get the next event. */
-		yaml_parser_parse(&parser, &input_event);
-
-		/* Check if this is the stream end. */
-		if(input_event.type == YAML_STREAM_END_EVENT)
-			endEvent = 1;
-		if(input_event.type == YAML_DOCUMENT_START_EVENT){
-			j=0;
-			/* skip 4 events */
-			// DOCUMENT-START
-			// SEQUENCE-START
-			// MAPPING-START
-			// SCALAR fileName key
-			for(l=0;l<4;l++){
-				yaml_event_delete(&input_event);
-				yaml_parser_parse(&parser, &input_event);
-			}
-
-			/* the add form file method create a default Hkl3DModel and add it to the HKL3D */
-			/* we just need to update this config with the values from the configuration file */
-			model = hkl3d_add_model_from_file(self, (const char *)input_event.data.scalar.value, dir);
-			/* skip 3 events */
-			// SCALAR objects key
-			// SEQUENCE-START
-			// MAPPING-START
-			for(l=0;l<3;l++){
-				yaml_event_delete(&input_event);
-				yaml_parser_parse(&parser, &input_event);
-			}
-		}
-
-		if((input_event.type==YAML_MAPPING_START_EVENT) && model){
-			j++;
-			/* skip 2 events */
-			// MAPPING-START
-			// SCALAR iD key
-			for(l=0;l<2;l++){
-				yaml_event_delete(&input_event);
-				yaml_parser_parse(&parser, &input_event);
-			}
-
-			/* get the object id */
-			/* fprintf(stdout,  "load config (before): %d\n", darray_item(model->objects, j-1)->mesh); */
-			darray_item(model->objects, j-1)->mesh = atoi((const char *)input_event.data.scalar.value);
-			/* fprintf(stdout,  "load config (after): %d\n", darray_item(model->objects, j-1)->mesh); */
-
-			/* skip 2 more events */
-			// SCALAR valueId
-			// SCALAR Name key
-			for(l=0;l<2;l++){
-				yaml_event_delete(&input_event);
-				yaml_parser_parse(&parser, &input_event);
-			}
-
-			/* get the name of the object from the config file */
-			hkl3d_object_set_axis_name(darray_item(model->objects, j-1), (const char *)input_event.data.scalar.value);
-			/*  skip 3 events */
-			// SCALAR NameValue
-			// SCALAR transformation key
-			// SEQUENCE-START
-			for(l=0;l<3;l++){
-				yaml_event_delete(&input_event);
-				yaml_parser_parse(&parser, &input_event);
-			}
-
-			/* get the 16 values of the transformation */
-			for(l=0;l<4;l++){
-				for(m=0; m<4; ++m){
-					darray_item(model->objects, j-1)->transformation.raw[l][m] = atof((const char *)input_event.data.scalar.value);
-					yaml_event_delete(&input_event);
-					yaml_parser_parse(&parser, &input_event);
-				}
-			}
-
-			/* skip 2 events */
-			// SEQUENCE-END
-			// SCALAR hide key
-			for(l=0;l<2;l++){
-				yaml_event_delete(&input_event);
-				yaml_parser_parse(&parser, &input_event);
-			}
-
-			/* get the hide value */
-			darray_item(model->objects, j-1)->hide = strcmp((const char *)input_event.data.scalar.value, "no");
-		}
-		yaml_event_delete(&input_event);
-	}
-
-	free(dirc);
-	yaml_parser_delete(&parser);
-	fclose(file);
-
-	/* now that everythings goes fine we can save the filename */
-	self->filename = filename;
-
-	hkl3d_connect_all_axes(self);
-}
-
-void hkl3d_save_config(Hkl3D *self, const char *filename)
-{
-	Hkl3DModel **model;
-
-	darray_foreach(model, self->config->models){
-		char number[64];
-		int properties1, key1, value1,seq0;
-		int root;
-		time_t now;
-		yaml_emitter_t emitter;
-		yaml_document_t output_document;
-		yaml_event_t output_event;
-		FILE * file;
-		Hkl3DObject **object;
-
-		memset(&emitter, 0, sizeof(emitter));
-		memset(&output_document, 0, sizeof(output_document));
-		memset(&output_event, 0, sizeof(output_event));
-
-		if (!yaml_emitter_initialize(&emitter))
-			fprintf(stderr, "Could not inialize the emitter object\n");
-
-		/* Set the emitter parameters */
-		file = fopen(filename, "a+");
-		if(!file){
-			fprintf(stderr, "Could not open the config file %s to save\n", filename);
-			return;
-		}
-		yaml_emitter_set_output_file(&emitter, file);
-		yaml_emitter_open(&emitter);
-
-		/* Create an output_document object */
-		if (!yaml_document_initialize(&output_document, nullptr, nullptr, nullptr, 0, 0))
-			fprintf(stderr, "Could not create a output_document object\n");
-
-		/* Create the root of the config file */
-		time(&now);
-		root = yaml_document_add_sequence(&output_document,
-						  (yaml_char_t *)ctime(&now),
-						  YAML_BLOCK_SEQUENCE_STYLE);
-
-		/* create the property of the root sequence */
-		properties1 = yaml_document_add_mapping(&output_document,
-							(yaml_char_t *)YAML_MAP_TAG,
-							YAML_BLOCK_MAPPING_STYLE);
-
-		yaml_document_append_sequence_item(&output_document, root, properties1);
-
-		/* add the map key1 : value1 to the property */
-		key1 = yaml_document_add_scalar(&output_document,
-						nullptr,
-						(yaml_char_t *)"FileName",
-						-1,
-						YAML_PLAIN_SCALAR_STYLE);
-		value1 = yaml_document_add_scalar(&output_document,
-						  nullptr,
-						  (yaml_char_t *)(*model)->filename,
-						  -1,
-						  YAML_PLAIN_SCALAR_STYLE);
-		yaml_document_append_mapping_pair(&output_document, properties1, key1, value1);
-
-		/* add the map key1 : seq0 to the first property */
-		key1 = yaml_document_add_scalar(&output_document,
-						nullptr,
-						(yaml_char_t *)"Objects",
-						-1,
-						YAML_PLAIN_SCALAR_STYLE);
-		/* create the sequence of objects */
-		seq0 = yaml_document_add_sequence(&output_document,
-						  (yaml_char_t *)YAML_SEQ_TAG,
-						  YAML_BLOCK_SEQUENCE_STYLE);
-		darray_foreach(object, (*model)->objects){
-			int k;
-			int l;
-			int properties;
-			int key;
-			int value;
-			int seq1;
-
-			properties = yaml_document_add_mapping(&output_document,
-							       (yaml_char_t *)YAML_MAP_TAG,
-							       YAML_BLOCK_MAPPING_STYLE);
-			yaml_document_append_sequence_item(&output_document,seq0, properties);
-
-			key = yaml_document_add_scalar(&output_document,
-						       nullptr,
-						       (yaml_char_t *)"Id", -1,
-						       YAML_PLAIN_SCALAR_STYLE);
-
-			sprintf(number, "%d", (*object)->mesh);
-			value = yaml_document_add_scalar(&output_document,
-							 nullptr,
-							 (yaml_char_t *)number,
-							 -1,
-							 YAML_PLAIN_SCALAR_STYLE);
-			yaml_document_append_mapping_pair(&output_document,properties,key,value);
-
-			key = yaml_document_add_scalar(&output_document,
-						       nullptr,
-						       (yaml_char_t *)"Name",
-						       -1,
-						       YAML_PLAIN_SCALAR_STYLE);
-			value = yaml_document_add_scalar(&output_document,
-							 nullptr,
-							 (yaml_char_t *)(*object)->axis_name,
-							 -1,
-							 YAML_PLAIN_SCALAR_STYLE);
-			yaml_document_append_mapping_pair(&output_document,properties,key,value);
-
-			key = yaml_document_add_scalar(&output_document,
-						       nullptr,
-						       (yaml_char_t *)"Transformation",
-						       -1,
-						       YAML_PLAIN_SCALAR_STYLE);
-			seq1 = yaml_document_add_sequence(&output_document,
-							  (yaml_char_t *)YAML_SEQ_TAG,
-							  YAML_FLOW_SEQUENCE_STYLE);
-			yaml_document_append_mapping_pair(&output_document,properties, key, seq1);
-			for(k=0; k<4; k++){
-				for(l=0; l<4; l++){
-					sprintf(number, "%f", (*object)->transformation.raw[k][l]);
-					value = yaml_document_add_scalar(&output_document,
-									 nullptr,
-									 (yaml_char_t *)number,
-									 -1,
-									 YAML_PLAIN_SCALAR_STYLE);
-					yaml_document_append_sequence_item(&output_document,seq1,value);
-				}
-			}
-
-			key = yaml_document_add_scalar(&output_document,
-						       nullptr,
-						       (yaml_char_t *)"Hide",
-						       -1,
-						       YAML_PLAIN_SCALAR_STYLE);
-			if((*object)->hide)
-				value = yaml_document_add_scalar(&output_document,
-								 nullptr,
-								 (yaml_char_t *)"yes",
-								 -1,
-								 YAML_PLAIN_SCALAR_STYLE);
-			else
-				value = yaml_document_add_scalar(&output_document,
-								 nullptr,
-								 (yaml_char_t *)"no",
-								 -1,
-								 YAML_PLAIN_SCALAR_STYLE);
-			yaml_document_append_mapping_pair(&output_document,properties,key,value);
-		}
-		yaml_document_append_mapping_pair(&output_document, properties1, key1, seq0);
-
-		/* flush the document */
-		yaml_emitter_dump(&emitter, &output_document);
-		fclose(file);
-
-		yaml_document_delete(&output_document);
-		yaml_emitter_delete(&emitter);
-	}
+	hkl3d_object_axis_name_set(object, name);
 }
 
 /**
@@ -1122,15 +823,50 @@ void hkl3d_get_collision_coordinates(Hkl3D *self, int manifold, int contact,
 	*zb = ptB.z();
 }
 
+bool hkl3d_contains_model(const Hkl3D *self, const char *filename)
+{
+	g_return_val_if_fail(nullptr != self, false);
+	g_return_val_if_fail(nullptr != filename, false);
+
+	Hkl3DModel **model;
+
+	darray_foreach(model, self->config->models){
+		if (0 == strcmp(filename, hkl3d_model_filename_get(*model)))
+			return true;
+	}
+
+	return false;
+}
+
+Hkl3DObject *
+hkl3d_get_object_by_id(const Hkl3D *self, const char *filename, int id)
+{
+	g_return_val_if_fail(nullptr != self, nullptr);
+	g_return_val_if_fail(nullptr != filename, nullptr);
+
+	Hkl3DModel **model;
+
+	darray_foreach (model, self->config->models){
+		if (id < darray_size((*model)->objects)
+		    && 0 == strcmp((*model)->filename, filename)){
+			return darray_item((*model)->objects, id);
+		}
+	}
+
+	return nullptr;
+}
+
 void hkl3d_fprintf(FILE *f, const Hkl3D *self)
 {
-	fprintf(f, "\nhkl3d (%p):", self);
-	fprintf(f, "\nfilename: %s", self->filename);
+	fprintf(f, "Hkl3d (filename=[%s]", self->filename);
+	fprintf(f, ", geometry=");
 	hkl3d_geometry_fprintf(f, self->geometry);
+	fprintf(f, ", stats=");
 	hkl3d_stats_fprintf(f, &self->stats);
+	fprintf(f, ", config=");
 	hkl3d_config_fprintf(f, self->config);
-	fprintf(f, "\n_btCollisionConfiguration (%p)", self->_btCollisionConfiguration);
-	fprintf(f, "\n_btBroadphase (%p)", self->_btBroadphase);
-	fprintf(f, "\n_btWorld (%p)", self->_btWorld);
-	fprintf(f, "\n_btDispatcher (%p)", self->_btDispatcher);
+	fprintf(f, ", _btCollisionConfiguration=%p", self->_btCollisionConfiguration);
+	fprintf(f, ", _btBroadphase=%p", self->_btBroadphase);
+	fprintf(f, ", _btWorld=%p", self->_btWorld);
+	fprintf(f, ", _btDispatcher=%p)", self->_btDispatcher);
 }

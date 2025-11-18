@@ -75,7 +75,7 @@ extern "C" {
 		int draw_aabb;
 		int selected;
 		int movable;
-		char *axis_name;
+		char *axis_name; /* TODO remove */
 		GLuint vao;
 		CGLM_ALIGN_MAT mat4s transformation;
 	};
@@ -138,6 +138,9 @@ extern "C" {
 
 		Shader shader;
 	};
+
+	bool hkl3d_contains_model(const Hkl3D *self, const char * filename);
+	Hkl3DObject *hkl3d_get_object_by_id(const Hkl3D *self, const char *filename, int id);
 
 #ifdef __cplusplus
 }

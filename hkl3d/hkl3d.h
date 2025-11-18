@@ -56,22 +56,26 @@ extern "C" {
 	/***************/
 
 	HKLAPI extern void hkl3d_object_aabb_get(const Hkl3DObject *self, float from[3], float to[3]);
+	HKLAPI extern void hkl3d_object_axis_name_set(Hkl3DObject *self, const char *axis_name); /* TODO remove not a good idea */
 	HKLAPI extern void hkl3d_object_draw_aabb_set(Hkl3DObject *self, bool aabb);
 	HKLAPI extern bool hkl3d_object_hide_get(const Hkl3DObject *self);
+	HKLAPI extern void hkl3d_object_hide_set(Hkl3DObject *self, bool hide);
+	HKLAPI extern void hkl3d_object_transformation_set(Hkl3DObject *self, mat4s transformation);
 	HKLAPI extern void hkl3d_object_fprintf(FILE *f, const Hkl3DObject *self);
 
 	/**************/
 	/* Hkl3DModel */
 	/**************/
 
-	HKLAPI darray_object *hkl3d_model_objects_get(const Hkl3DModel *self);
+	HKLAPI extern void hkl3d_model_free(Hkl3DModel *self);
 	HKLAPI extern void hkl3d_model_fprintf(FILE *f, const Hkl3DModel *self);
 
 	/***************/
 	/* Hkl3DConfig */
 	/***************/
 
-	HKLAPI darray_model *hkl3d_config_models_get(const Hkl3DConfig *self);
+	HKLAPI extern void hkl3d_config_free(Hkl3DConfig *self); // TODO private
+	HKLAPI extern Hkl3DConfig *hkl3d_config_new(); // TODO private
 	HKLAPI extern void hkl3d_config_fprintf(FILE *f, const Hkl3DConfig *self);
 
 	/*************/
@@ -90,13 +94,11 @@ extern "C" {
 	/* HKL3D */
 	/*********/
 
-	HKLAPI extern Hkl3DConfig *hkl3d_config_get(const Hkl3D *self);
-
 	HKLAPI extern Hkl3D* hkl3d_new(const char *filename, HklGeometry *geometry) HKL_ARG_NONNULL(2);
 	HKLAPI extern void hkl3d_free(Hkl3D *self) HKL_ARG_NONNULL(1);
 
 	HKLAPI extern int hkl3d_is_colliding(Hkl3D *self) HKL_ARG_NONNULL(1);
-	HKLAPI extern void hkl3d_load_config(Hkl3D *self, const char *filename) HKL_ARG_NONNULL(1, 2);
+	HKLAPI extern int hkl3d_load_config(Hkl3D *self, const char *filename) HKL_ARG_NONNULL(1, 2);
 	HKLAPI extern void hkl3d_save_config(Hkl3D *self, const char *filename) HKL_ARG_NONNULL(1, 2);
 	HKLAPI extern Hkl3DModel *hkl3d_add_model_from_file(Hkl3D *self,
 							    const char *filename,
