@@ -14,6 +14,10 @@
   geometries. It is used at the SOLEIL, Desy and Alba synchrotron with
   the Tango control system and at the ESRF with the BLISS control system
   to pilot diffractometers.
+
+  #+CAPTION: hkl library GUI interface
+  [[./figures/ghkl.png]]
+
 ** Features
    - mode computation (aka PseudoAxis).
    - item for different diffractometer geometries.
@@ -564,7 +568,7 @@
    system and do:
 
    #+BEGIN_SRC sh
-git clone git://repo.or.cz/hkl.git
+     git clone git://repo.or.cz/hkl.git
    #+END_SRC
 
    or:
@@ -573,39 +577,41 @@ git clone git://repo.or.cz/hkl.git
     git clone http://repo.or.cz/r/hkl.git (slower)
    #+END_SRC
 
-   Then checkout the next branch like this:
-
-   #+BEGIN_SRC sh
-    cd hkl
-    git checkout -b next origin/next
-   #+END_SRC
-
 ** Building hkl
 
-   To build hkl you need [[http://www.python.org][Python 2.3+]] the
-   [[http://www.gnu.org/software/gsl/][GNU Scientific Library 1.12]] and
-   [[https://developer.gnome.org/glib/][GLib-2.0 >= 2.3.4]]:
+   To build a minimal hkl library you need:
+   - [[http://www.python.org][Python 2.3+]]
+   - [[http://www.gnu.org/software/gsl/][GNU Scientific Library 1.12]]
+   - [[https://developer.gnome.org/glib/][GLib-2.0 >= 2.3.4]]
 
+   First you need to generate the autotools files via
+   
    #+BEGIN_SRC sh
-    ./configure --disable-gui
-    make
-    sudo make install
+     ./autogen.sh
    #+END_SRC
 
-   you can also build a GUI interface which uses
-   [[http://www.gtk.org][gtk]]:
-
+   Then you can compile the minimal library with thses commands
+   
    #+BEGIN_SRC sh
-    ./configure
-    make
-    sudo make install
+     ./configure --disable-gui
+     make
+     sudo make install
    #+END_SRC
 
-   Optionally you can build an experimental /libhkl3d/ library (no public
-   API for now) which is used by the GUI to display and compute
-   diffractometer collisions (only the /K6C/ model). To build it, you also
-   need [[https://projects.gnome.org/gtkglext/][gtkglext]] and
-   [[http://bulletphysics.org/wordpress/][bullet 2.82]]:
+   If you want also the gui part, you need one more dependency.
+   - [[https://developer.gnome.org/gtk/][Gtk4 >= 4.12]]
+
+   #+BEGIN_SRC sh
+     ./configure
+     make
+     sudo make install
+   #+END_SRC
+
+   To enable the anticollision system you need to activate the hkl3d library and a few more dependencies.
+   - [[https://www.assimp.org/][assimp]]
+   - [[https://github.com/anholt/libepoxy][libepoxy]]
+   - [[https://pyyaml.org/wiki/LibYAML][yaml]]
+   - [[http://bulletphysics.org/][bulletphysics]]
 
    #+BEGIN_SRC sh
     ./configure --enable-hkl3d

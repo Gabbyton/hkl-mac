@@ -35,6 +35,7 @@ ghkl
 ghkl3d
 *-t
 /Documentation/figures/*.png
+!/Documentation/figures/ghkl*.png
 /Documentation/sphinx/source/conf.py
 /hkl/Hkl-5.0.typelib
 /hkl/stamp-hkl-type-builtins.h

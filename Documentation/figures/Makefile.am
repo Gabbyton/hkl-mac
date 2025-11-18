@@ -69,6 +69,8 @@ dist_noinst_DATA = \
 	4S+2D_reciprocal2.png \
 	4S+2D_reciprocal3.png \
 	4S+2D_reciprocal4.png \
+	ghkl.png \
+	ghkl-collision.png \
 	k4cv.png \
 	k6c.png \
 	med2_3_slits.png \
@@ -96,6 +98,8 @@ EXTRA_DIST = \
 	4S+2D_reciprocal2.asy \
 	4S+2D_reciprocal3.asy \
 	4S+2D_reciprocal4.asy \
+	ghkl.png \
+	ghkl-collision.png \
 	k4cv.asy \
 	k6c.asy \
 	med2_3_slits.asy \
