@@ -29,8 +29,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <vector>
-
 #include <assimp/cexport.h>
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
@@ -39,7 +37,7 @@
 #include <libgen.h>
 #include <yaml.h>
 
-#include "hkl3d.h"
+#include "hkl3d-private.h"
 #include "hkl-geometry-private.h"
 
 #include "btBulletCollisionCommon.h"
@@ -121,18 +119,24 @@ static Hkl3DObject *hkl3d_object_new(Hkl3DModel *model, unsigned int mesh)
 	self = g_new0 (Hkl3DObject, 1);
 
 	/* fill the hkl3d object structure. */
-	self->model = model;
+	self->added = false;
 	self->axis = nullptr;
+	self->draw_aabb = false;
+	self->hide = false;
+	self->is_colliding = false;
 	self->mesh = mesh;
-	self->meshes = trimesh_from_aiMesh(model->scene->mMeshes[mesh]);
+	self->model = model;
+	self->movable = false;
+	self->selected = false;
+	self->transformation = GLMS_MAT4_IDENTITY; /* todo importe from the node */
+
+	/* bullet */
+	self->meshes = trimesh_from_aiMesh(model->scene->mMeshes[self->mesh]);
 	self->btShape = shape_from_trimesh(self->meshes, false);
 	self->btObject = btObject_from_shape(self->btShape);
-	self->hide = false;
-	self->added = false;
-	self->selected = false;
-	self->movable = false;
-	self->transformation = GLMS_MAT4_IDENTITY; /* todo importe from the node */
-	self->is_colliding = false;
+
+	/* OpenGL */
+	self->vao = 0;
 
 	return self;
 }
@@ -210,6 +214,16 @@ void hkl3d_object_aabb_get(const Hkl3DObject *self, float from[3], float to[3])
 	to[2] = max.getZ();
 }
 
+void hkl3d_object_draw_aabb_set(Hkl3DObject *self, bool draw_aabb)
+{
+	self->draw_aabb = draw_aabb;
+}
+
+bool hkl3d_object_hide_get(const Hkl3DObject *self)
+{
+	return self->hide;
+}
+
 void hkl3d_object_fprintf(FILE *f, const Hkl3DObject *self)
 {
 	GSList *faces;
@@ -242,34 +256,24 @@ static Hkl3DModel *hkl3d_model_new(void)
 
 	self->filename = nullptr;
 	self->scene = nullptr;
-	self->objects = nullptr;
-	self->len = 0;
+	darray_init(self->objects);
 
 	return self;
 }
 
 static void hkl3d_model_free(Hkl3DModel *self)
 {
-	size_t i;
+	Hkl3DObject **object;
 
-	if(!self)
-		return;
+	g_return_if_fail (nullptr != self);
 
 	free(self->filename);
-	for(i=0; i<self->len; ++i)
-		hkl3d_object_free(self->objects[i]);
-	free(self->objects);
+	darray_foreach(object, self->objects){
+		hkl3d_object_free(*object);
+	}
+	darray_free(self->objects);
 	aiReleaseImport (self->scene);
 	free(self);
-}
-
-static void hkl3d_model_add_object(Hkl3DModel *self, Hkl3DObject *object)
-{
-	if(!self || !object)
-		return;
-
-	self->objects = (typeof(self->objects))realloc(self->objects, sizeof(*self->objects) * (self->len + 1));
-	self->objects[self->len++] = object;
 }
 
 static void hkl3d_model_delete_object(Hkl3DModel *self, Hkl3DObject *object)
@@ -283,21 +287,18 @@ static void hkl3d_model_delete_object(Hkl3DModel *self, Hkl3DObject *object)
 		return;
 
 	/* find the index of the object */
-	for(i=0; self->objects[i] != object; ++i);
+	for(i=0; darray_item(self->objects, i) != object; ++i);
 
 	hkl3d_object_free(object);
-	self->len--;
-	/* move all above objects of 1 position */
-	if(i < self->len)
-		memmove(object, object + 1, sizeof(object) * (self->len - i));
+	darray_remove(self->objects, i);
 }
 
 void hkl3d_model_fprintf(FILE *f, const Hkl3DModel *self)
 {
-	fprintf(f, "Hkl3DModel([", self->len);
-	for(size_t i=0; i<self->len; ++i){
+	fprintf(f, "Hkl3DModel([", darray_size(self->objects));
+	for(size_t i=0; i<darray_size(self->objects); ++i){
 		if(i) fprintf(f, ", ");
-		hkl3d_object_fprintf(f, self->objects[i]);
+		hkl3d_object_fprintf(f, darray_item(self->objects, i));
 	}
 	fprintf(f, ")");
 }
@@ -339,10 +340,10 @@ static Hkl3DModel *hkl3d_model_new_from_file(const char *filename)
 	for(i=0; i<scene->mNumMeshes; ++i){
 		const struct aiMesh *mesh = scene->mMeshes[i];
 		if (mesh->mPrimitiveTypes == aiPrimitiveType_TRIANGLE){
-			Hkl3DObject *hkl3dObject = hkl3d_object_new(self, i);
+			Hkl3DObject *object = hkl3d_object_new(self, i);
 
-			if (nullptr != hkl3dObject)
-				hkl3d_model_add_object(self, hkl3dObject);
+			if (nullptr != object)
+				darray_append(self->objects, object);
 		}
 	}
 
@@ -363,37 +364,31 @@ static Hkl3DConfig* hkl3d_config_new(void)
 	if(!self)
 		return nullptr;
 
-	self->models = nullptr;
-	self->len = 0;
+	darray_init(self->models);
 
 	return self;
 }
 
 static void hkl3d_config_free(Hkl3DConfig *self)
 {
+	Hkl3DModel **model;
+
 	g_return_if_fail(NULL != self);
 
-	for(size_t i=0; i<self->len; ++i)
-		hkl3d_model_free(self->models[i]);
-	g_free(self->models);
-	g_free(self);
-}
-
-static void hkl3d_config_add_model(Hkl3DConfig *self,
-				   Hkl3DModel *model)
-{
-	self->models = (Hkl3DModel **)g_realloc(self->models, sizeof(*self->models) * (self->len + 1));
-	if (self->models){
-		self->models[self->len] = model;
-		self->len = self->len + 1;
+	darray_foreach(model, self->models){
+		hkl3d_model_free(*model);
 	}
+	darray_free(self->models);
+	g_free(self);
 }
 
 void hkl3d_config_fprintf(FILE *f, const Hkl3DConfig *self)
 {
-	fprintf(f, "models (%zd):\n", self->len);
-	for(size_t i=0; i<self->len; ++i)
-		hkl3d_model_fprintf(f, self->models[i]);
+	Hkl3DModel **model;
+	fprintf(f, "models (%zd):\n", darray_size(self->models));
+	darray_foreach(model, self->models){
+		hkl3d_model_fprintf(f, *model);
+	}
 }
 
 /**************/
@@ -583,12 +578,15 @@ static void hkl3d_apply_transformations(Hkl3D *self)
 
 void hkl3d_connect_all_axes(Hkl3D *self)
 {
+	Hkl3DModel **model;
+	Hkl3DObject **object;
+
 	/* connect use the axes names */
-	for(size_t i=0;i<self->config->len;i++)
-		for(size_t j=0;j<self->config->models[i]->len;j++)
-			hkl3d_connect_object_to_axis(self,
-						     self->config->models[i]->objects[j],
-						     self->config->models[i]->objects[j]->axis_name);
+	darray_foreach(model, self->config->models){
+		darray_foreach(object, (*model)->objects){
+			hkl3d_connect_object_to_axis(self, *object, (*object)->axis_name);
+		}
+	}
 }
 
 /**
@@ -632,11 +630,16 @@ Hkl3D *hkl3d_new(const char *filename, HklGeometry *geometry)
 
 void hkl3d_free(Hkl3D *self)
 {
+	Hkl3DModel **model;
+	Hkl3DObject **object;
+
 	/* remove all objects from the collision world */
-	for(size_t i=0; i<self->config->len; ++i)
-		for(size_t j=0; j<self->config->models[i]->len; ++j)
-			if(self->config->models[i]->objects[j]->added)
-				self->_btWorld->removeCollisionObject(self->config->models[i]->objects[j]->btObject);
+	darray_foreach(model, self->config->models){
+		darray_foreach(object, (*model)->objects){
+			if((*object)->added)
+				self->_btWorld->removeCollisionObject((*object)->btObject);
+		}
+	}
 
 	hkl3d_geometry_free(self->geometry);
 	hkl3d_config_free(self->config);
@@ -673,7 +676,7 @@ Hkl3DModel *hkl3d_add_model_from_file(Hkl3D *self,
 
 	model = hkl3d_model_new_from_file(filename);
 	if(model)
-		hkl3d_config_add_model(self->config, model);
+		darray_append(self->config->models, model);
 
 	/* restore the current directory */
 	res = fchdir(current);
@@ -793,9 +796,9 @@ void hkl3d_load_config(Hkl3D *self, const char *filename)
 			}
 
 			/* get the object id */
-			fprintf(stdout,  "load config (before): %d\n", model->objects[j-1]->mesh);
-			model->objects[j-1]->mesh = atoi((const char *)input_event.data.scalar.value);
-			fprintf(stdout,  "load config (after): %d\n", model->objects[j-1]->mesh);
+			/* fprintf(stdout,  "load config (before): %d\n", darray_item(model->objects, j-1)->mesh); */
+			darray_item(model->objects, j-1)->mesh = atoi((const char *)input_event.data.scalar.value);
+			/* fprintf(stdout,  "load config (after): %d\n", darray_item(model->objects, j-1)->mesh); */
 
 			/* skip 2 more events */
 			// SCALAR valueId
@@ -806,7 +809,7 @@ void hkl3d_load_config(Hkl3D *self, const char *filename)
 			}
 
 			/* get the name of the object from the config file */
-			hkl3d_object_set_axis_name(model->objects[j-1], (const char *)input_event.data.scalar.value);
+			hkl3d_object_set_axis_name(darray_item(model->objects, j-1), (const char *)input_event.data.scalar.value);
 			/*  skip 3 events */
 			// SCALAR NameValue
 			// SCALAR transformation key
@@ -819,7 +822,7 @@ void hkl3d_load_config(Hkl3D *self, const char *filename)
 			/* get the 16 values of the transformation */
 			for(l=0;l<4;l++){
 				for(m=0; m<4; ++m){
-					model->objects[j-1]->transformation.raw[l][m] = atof((const char *)input_event.data.scalar.value);
+					darray_item(model->objects, j-1)->transformation.raw[l][m] = atof((const char *)input_event.data.scalar.value);
 					yaml_event_delete(&input_event);
 					yaml_parser_parse(&parser, &input_event);
 				}
@@ -834,7 +837,7 @@ void hkl3d_load_config(Hkl3D *self, const char *filename)
 			}
 
 			/* get the hide value */
-			model->objects[j-1]->hide = strcmp((const char *)input_event.data.scalar.value, "no");
+			darray_item(model->objects, j-1)->hide = strcmp((const char *)input_event.data.scalar.value, "no");
 		}
 		yaml_event_delete(&input_event);
 	}
@@ -851,7 +854,9 @@ void hkl3d_load_config(Hkl3D *self, const char *filename)
 
 void hkl3d_save_config(Hkl3D *self, const char *filename)
 {
-	for(size_t i=0; i<self->config->len; i++){
+	Hkl3DModel **model;
+
+	darray_foreach(model, self->config->models){
 		char number[64];
 		int properties1, key1, value1,seq0;
 		int root;
@@ -860,6 +865,7 @@ void hkl3d_save_config(Hkl3D *self, const char *filename)
 		yaml_document_t output_document;
 		yaml_event_t output_event;
 		FILE * file;
+		Hkl3DObject **object;
 
 		memset(&emitter, 0, sizeof(emitter));
 		memset(&output_document, 0, sizeof(output_document));
@@ -902,7 +908,7 @@ void hkl3d_save_config(Hkl3D *self, const char *filename)
 						YAML_PLAIN_SCALAR_STYLE);
 		value1 = yaml_document_add_scalar(&output_document,
 						  nullptr,
-						  (yaml_char_t *)self->config->models[i]->filename,
+						  (yaml_char_t *)(*model)->filename,
 						  -1,
 						  YAML_PLAIN_SCALAR_STYLE);
 		yaml_document_append_mapping_pair(&output_document, properties1, key1, value1);
@@ -917,7 +923,7 @@ void hkl3d_save_config(Hkl3D *self, const char *filename)
 		seq0 = yaml_document_add_sequence(&output_document,
 						  (yaml_char_t *)YAML_SEQ_TAG,
 						  YAML_BLOCK_SEQUENCE_STYLE);
-		for(size_t j=0; j<self->config->models[i]->len; j++){
+		darray_foreach(object, (*model)->objects){
 			int k;
 			int l;
 			int properties;
@@ -935,7 +941,7 @@ void hkl3d_save_config(Hkl3D *self, const char *filename)
 						       (yaml_char_t *)"Id", -1,
 						       YAML_PLAIN_SCALAR_STYLE);
 
-			sprintf(number, "%d", self->config->models[i]->objects[j]->mesh);
+			sprintf(number, "%d", (*object)->mesh);
 			value = yaml_document_add_scalar(&output_document,
 							 nullptr,
 							 (yaml_char_t *)number,
@@ -950,7 +956,7 @@ void hkl3d_save_config(Hkl3D *self, const char *filename)
 						       YAML_PLAIN_SCALAR_STYLE);
 			value = yaml_document_add_scalar(&output_document,
 							 nullptr,
-							 (yaml_char_t *)self->config->models[i]->objects[j]->axis_name,
+							 (yaml_char_t *)(*object)->axis_name,
 							 -1,
 							 YAML_PLAIN_SCALAR_STYLE);
 			yaml_document_append_mapping_pair(&output_document,properties,key,value);
@@ -966,7 +972,7 @@ void hkl3d_save_config(Hkl3D *self, const char *filename)
 			yaml_document_append_mapping_pair(&output_document,properties, key, seq1);
 			for(k=0; k<4; k++){
 				for(l=0; l<4; l++){
-					sprintf(number, "%f", self->config->models[i]->objects[j]->transformation.raw[k][l]);
+					sprintf(number, "%f", (*object)->transformation.raw[k][l]);
 					value = yaml_document_add_scalar(&output_document,
 									 nullptr,
 									 (yaml_char_t *)number,
@@ -981,7 +987,7 @@ void hkl3d_save_config(Hkl3D *self, const char *filename)
 						       (yaml_char_t *)"Hide",
 						       -1,
 						       YAML_PLAIN_SCALAR_STYLE);
-			if(self->config->models[i]->objects[j]->hide)
+			if((*object)->hide)
 				value = yaml_document_add_scalar(&output_document,
 								 nullptr,
 								 (yaml_char_t *)"yes",
@@ -1042,6 +1048,8 @@ int hkl3d_is_colliding(Hkl3D *self)
 {
 	int numManifolds;
 	struct timeval debut, fin;
+	Hkl3DModel **model;
+	Hkl3DObject **object;
 
 	/* apply geometry transformation */
 	hkl3d_apply_transformations(self);
@@ -1058,14 +1066,13 @@ int hkl3d_is_colliding(Hkl3D *self)
 	numManifolds = self->_btDispatcher->getNumManifolds();
 
 	/* update Hkl3DObject collision from manifolds */
-	for(size_t i=0; i<self->config->len; i++){
-		for(size_t j=0; j<self->config->models[i]->len; j++){
-			Hkl3DObject *object = self->config->models[i]->objects[j];
-			object->is_colliding = FALSE;
+	darray_foreach(model, self->config->models){
+		darray_foreach(object, (*model)->objects){
+			(*object)->is_colliding = FALSE;
 			for(int k=0; k<numManifolds; ++k){
 				btPersistentManifold *manifold = self->_btDispatcher->getManifoldByIndexInternal(k);
-				object->is_colliding |= object->btObject == manifold->getBody0();
-				object->is_colliding |= object->btObject == manifold->getBody1();
+				(*object)->is_colliding |= (*object)->btObject == manifold->getBody0();
+				(*object)->is_colliding |= (*object)->btObject == manifold->getBody1();
 			}
 		}
 	}

@@ -199,6 +199,7 @@ AM_COND_IF([HKL3D],
             PKG_CHECK_MODULES([BULLET], [bullet >= 2.82])
             dnl *** blender ***
             AC_PATH_PROG([BLENDER], [blender], [no])
+            AC_PATH_PROG([BLENDER_THUMBNAILER], [blender-thumbnailer], [no])
             dnl check for yaml
             AC_SEARCH_LIBS([yaml_get_version], [yaml],
                            [AC_CHECK_HEADERS([yaml.h], [],

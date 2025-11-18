@@ -25,8 +25,6 @@
 #include <assimp/scene.h>
 #include <cglm/struct.h>
 #include <epoxy/gl.h>
-#include <g3d/object.h>
-
 
 #include "hkl3d.h"
 #include "hkl/ccan/compiler/compiler.h"
@@ -34,44 +32,6 @@
 #include "hkl-gui-macros.h"
 #include "hkl-gui-3d.h"
 
-
-/**********/
-/* Shader */
-/**********/
-
-
-typedef struct _Shader {
-	GLuint program;
-} Shader;
-
-static void set_uniform_mat4s (Shader *s, const char *name, mat4s m)
-{
-	GLuint loc = glGetUniformLocation (s->program, name);
-	glUniformMatrix4fv(loc, 1, GL_FALSE, m.raw[0]);
-}
-
-static void set_uniform_vec3sv (Shader *s, const char *name, vec3s v)
-{
-	GLuint loc = glGetUniformLocation (s->program, name);
-	glUniform3fv(loc, 1, v.raw);
-}
-
-static void set_uniform_make_vec3s (Shader *s, const char *name, float x, float y, float z)
-{
-	CGLM_ALIGN_MAT vec3s v = {{x, y, z}};
-	set_uniform_vec3sv(s, name, v);
-}
-
-static void set_uniform_float(Shader *s, const char *name, float x)
-{
-	GLuint loc = glGetUniformLocation (s->program, name);
-	glUniform1f(loc, x);
-}
-
-typedef struct _BufferToDraw {
-	GLuint vao;
-	Hkl3DObject *object;
-} BufferToDraw;
 
 /************/
 /* HklGui3d */
@@ -125,10 +85,6 @@ struct _HklGui3DPrivate {
 		gint32 beginy;
 	} mouse;
 	gboolean aabb;
-
-	Shader shader;
-	BufferToDraw *buffers;
-	size_t n_buffers;
 };
 
 struct _HklGui3D {
@@ -242,6 +198,7 @@ hkl_gui_3d_set_aabb(HklGui3D *self, gboolean aabb)
 	g_return_if_fail(aabb != priv->aabb);
 
 	priv->aabb = aabb;
+	hkl3d_gl_draw_aabb_set(self->hkl3d, aabb);
 
 	hkl_gui_3d_invalidate(self);
 
@@ -620,156 +577,6 @@ void hkl_gui_3d_update(HklGui3D *self)
 /* 	glFlush(); */
 /* } */
 
-static void
-draw_aabb(const float from[3], const float to[3], const float color[4])
-{
-	GLfloat vertexes[7 * 2 * 12]; /* position, color(RGB) */
-	GLfloat *v;
-
-	float halfExtents[3] = {
-		(to[0] - from[0]) * .5,
-		(to[1] - from[1]) * .5,
-		(to[2] - from[2]) * .5
-	};
-	float center[3] = {
-		(to[0] + from[0]) * .5,
-		(to[1] + from[1]) * .5,
-		(to[2] + from[2]) * .5
-	};
-	int i, j;
-
-	float edgecoord[3] = {1., 1., 1.};
-
-	v = &vertexes[0];
-	for (i=0;i<4;i++){
-		for (j=0;j<3;j++){
-			/* position */
-			v[0] = (edgecoord[0] * halfExtents[0] + center[0]) / 1;
-			v[1] = (edgecoord[1] * halfExtents[1] + center[1]) / 1;
-			v[2] = (edgecoord[2] * halfExtents[2] + center[2]) / 1;
-
-			/* color */
-			v[3] = color[0];
-			v[4] = color[1];
-			v[5] = color[2];
-			v[6] = color[3];
-
-			int othercoord = j % 3;
-			edgecoord[othercoord] *= -1.f;
-
-			/* position */
-			v[7] = (edgecoord[0] * halfExtents[0] + center[0]) / 1;
-			v[8] = (edgecoord[1] * halfExtents[1] + center[1]) / 1;
-			v[9] = (edgecoord[2] * halfExtents[2] + center[2]) / 1;
-
-			/* color */
-			v[10] = color[0];
-			v[11] = color[1];
-			v[12] = color[2];
-			v[13] = color[3];
-
-			v = v + 14;
-		}
-		edgecoord[0] = -1;
-		edgecoord[1] = -1;
-		edgecoord[2] = -1;
-		if (i < 3)
-			edgecoord[i] *= -1;
-	}
-
-	GLuint vbo = 0;
-	glGenBuffers( 1, &vbo );
-	glBindBuffer( GL_ARRAY_BUFFER, vbo );
-	glBufferData( GL_ARRAY_BUFFER, (7 * 2 * 12) * sizeof( float ), vertexes, GL_STATIC_DRAW );
-
-	GLuint vao = 0;
-	glGenVertexArrays( 1, &vao );
-	glBindVertexArray( vao );
-
-	glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof (GLfloat), NULL );
-	glEnableVertexAttribArray( 0 );
-
-	/* glVertexAttribPointer (1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof (GLfloat), (void *)(3 * sizeof (GLfloat)) ); */
-	/* glEnableVertexAttribArray( 1 ); */
-
-	// Draw points 0-3 from the currently bound VAO with current in-use shader.
-	glDrawArrays (GL_LINES, 0, 2 * 12);
-
-	glDeleteBuffers(1, &vbo);
-	glDeleteVertexArrays(1, &vao);
-}
-
-static void
-hkl_gui_3d_draw_aabb_object(const Hkl3DObject *self)
-{
-	GLfloat from[3];
-	GLfloat to[3];
-	GLfloat color[4] = {1, 0, 0, 0.8};
-
-	if(self->hide)
-		return;
-
-	hkl3d_object_aabb_get(self, from, to);
-	draw_aabb(from, to, color);
-}
-
-void
-hkl_gui_3d_draw_aabb(HklGui3D *self)
-{
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
-
-	glUseProgram (priv->shader.program);
-
-	for(int i=0; i<self->hkl3d->config->len; i++)
-		for(int j=0; j<self->hkl3d->config->models[i]->len; j++)
-			hkl_gui_3d_draw_aabb_object(self->hkl3d->config->models[i]->objects[j]);
-
-	glUseProgram (0);
-}
-
-
-void
-hkl_gui_3d_draw_model(HklGui3D *self)
-{
-	int i;
-	static unsigned int n_vec3 = 3;
-
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
-
-	for(i=0; i<priv->n_buffers; ++i){
-		BufferToDraw *buffer = &priv->buffers[i];
-		const struct aiScene *scene = buffer->object->model->scene;
-		const struct aiMesh *mesh = scene->mMeshes[buffer->object->mesh];
-		CGLM_ALIGN_MAT vec3s ambient;
-		CGLM_ALIGN_MAT vec3s diffuse;
-		CGLM_ALIGN_MAT vec3s specular;
-		GLfloat shininess = 12;
-		GLfloat alpha = buffer->object->is_colliding == 0 ? 1.0 : 0.5;;
-
-		const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-		aiGetMaterialFloatArray(material, AI_MATKEY_COLOR_AMBIENT, ambient.raw, &n_vec3);
-		aiGetMaterialFloatArray(material, AI_MATKEY_COLOR_DIFFUSE, diffuse.raw, &n_vec3);
-		aiGetMaterialFloatArray(material, AI_MATKEY_COLOR_SPECULAR, specular.raw, &n_vec3);
-		aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, specular.raw);
-
-		glUseProgram (priv->shader.program);
-
-		/* set the uniforms */
-		set_uniform_mat4s(&priv->shader, "model", buffer->object->transformation);
-		set_uniform_vec3sv(&priv->shader, "material.ambient", ambient);
-		set_uniform_vec3sv(&priv->shader, "material.diffuse", diffuse);
-		set_uniform_vec3sv(&priv->shader, "material.specular", specular);
-		set_uniform_float(&priv->shader, "material.shininess", shininess);
-		set_uniform_float(&priv->shader, "alpha", alpha);
-
-		glBindVertexArray (buffer->vao);
-		glDrawElements (GL_TRIANGLES, mesh->mNumFaces * 3, GL_UNSIGNED_INT, 0);
-		glBindVertexArray (0);
-
-		glUseProgram (0);
-	}
-}
-
 
 static gboolean
 hkl_gui_3d_gl_area_render_cb(GtkGLArea *area,
@@ -777,7 +584,6 @@ hkl_gui_3d_gl_area_render_cb(GtkGLArea *area,
 			     gpointer user_data)
 {
 	HklGui3D *self = HKL_GUI_3D (user_data);
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
 
 	gtk_gl_area_make_current (area);
 
@@ -789,13 +595,8 @@ hkl_gui_3d_gl_area_render_cb(GtkGLArea *area,
 	glClearColor (0.9, 0.8, 0.6, 1.0); /* black */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	/* Draw our object */
-
-	hkl_gui_3d_draw_model(self);
-/* 	hkl_gui_3d_draw_selected(self); */
-/* 	hkl_gui_3d_draw_collisions(self); */
-	if(priv->aabb)
-		hkl_gui_3d_draw_aabb(self);
+	/* Draw scenes */
+	hkl3d_gl_draw_models(self->hkl3d);
 
 	/* Flush the contents of the pipeline */
 	glFlush ();
@@ -809,24 +610,14 @@ hkl_gui_3d_gl_area_resize_cb(GtkGLArea *area,
 			     gint height,
 			     gpointer user_data)
 {
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(user_data);
+	HklGui3D *self = HKL_GUI_3D (user_data);
 
 	gtk_gl_area_make_current (area);
 
 	if (gtk_gl_area_get_error (area) != NULL)
 		return FALSE;
 
-	glUseProgram (priv->shader.program);
-
-	glViewport(0, 0, width, height);
-
-	/* TODO store the lovation in the class */
-	CGLM_ALIGN_MAT mat4s projection = GLMS_MAT4_IDENTITY_INIT;
-	projection = glms_perspective (glm_rad(45), (GLfloat)width / (GLfloat)height, 0.1, 100);
-	glUniformMatrix4fv(glGetUniformLocation (priv->shader.program, "projection"),
-			   1, GL_FALSE, projection.raw[0]);
-
-	glUseProgram (0);
+	hkl3d_gl_resize(self->hkl3d, width, height);
 
 	return true;
 }
@@ -1012,214 +803,6 @@ hkl_gui_3d_class_init (HklGui3DClass *class)
 
 }
 
-static Shader init_shader()
-{
-	GLuint p;
-
-	const char* vertex_shader =
-		"#version 300 es\n"
-		"\n"
-		"out vec3 FragPos;\n"
-		"out vec3 Normal;\n"
-		"\n"
-		"layout (location = 0) in vec3 aPos;\n"
-		"layout (location = 1) in vec3 aNormal;\n"
-		"\n"
-		"uniform mat4 projection;\n"
-		"uniform mat4 view;\n"
-		"uniform mat4 model;\n"
-		"\n"
-		"void main() {\n"
-		"  gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
-		"  FragPos = vec3(model * vec4(aPos, 1.0));\n"
-		"  Normal = mat3(transpose(inverse(model))) * aNormal;\n"
-		"}\n";
-
-	const char* fragment_shader =
-		"#version 300 es\n"
-		"precision mediump float;\n"
-		"\n"
-		"out vec4 FragColor;\n"
-		"\n"
-		"struct Material {\n"
-		"  vec3 ambient;\n"
-		"  vec3 diffuse;\n"
-		"  vec3 specular;\n"
-		"  float shininess;\n"
-		"};\n"
-		"\n"
-		"struct DirLight {\n"
-		"    vec3 direction;\n"
-		"\n"
-		"    vec3 ambient;\n"
-		"    vec3 diffuse;\n"
-		"    vec3 specular;\n"
-		"};\n"
-		"\n"
-		"struct PointLight {\n"
-		"    vec3 position;\n"
-		"\n"
-		"    float constant;\n"
-		"    float linear;\n"
-		"    float quadratic;\n"
-		"\n"
-		"    vec3 ambient;\n"
-		"    vec3 diffuse;\n"
-		"    vec3 specular;\n"
-		"};\n"
-		"#define NR_POINT_LIGHTS 4\n"
-		"\n"
-		"in vec3 FragPos;\n"
-		"in vec3 Normal;\n"
-		"\n"
-		"uniform float alpha;\n"
-		"uniform vec3 viewPos;\n"
-		"uniform DirLight dirLight;\n"
-		"uniform PointLight pointLights[NR_POINT_LIGHTS];\n"
-		"uniform Material material;\n"
-		"\n"
-		"// function prototypes\n"
-		"vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);\n"
-		"vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);\n"
-		"\n"
-		"void main()\n"
-		"{\n"
-		"    // properties\n"
-		"    vec3 norm = normalize(Normal);\n"
-		"    vec3 viewDir = normalize(viewPos - FragPos);\n"
-		"\n"
-		"    // phase 1: Directional lighting\n"
-		"    vec3 result = CalcDirLight(dirLight, norm, viewDir);\n"
-		"    // phase 2: Point lights\n"
-		"    for(int i = 0; i < NR_POINT_LIGHTS; i++)\n"
-		"        result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);\n"
-		"    // phase 3: Spot light\n"
-		"    //result += CalcSpotLight(spotLight, norm, FragPos, viewDir);\n"
-		"\n"
-		"    FragColor = vec4(result, alpha);\n"
-		"}\n"
-		"vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)\n"
-		"{\n"
-		"    vec3 lightDir = normalize(light.position - fragPos);\n"
-		"    // diffuse shading\n"
-		"    float diff = max(dot(normal, lightDir), 0.0);\n"
-		"    // specular shading\n"
-		"    vec3 reflectDir = reflect(-lightDir, normal);\n"
-		"    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
-		"    // attenuation\n"
-		"    float distance    = length(light.position - fragPos);\n"
-		"    float attenuation = 1.0 / (light.constant + light.linear * distance +\n"
-		"  			     light.quadratic * (distance * distance));\n"
-		"    // combine results\n"
-		"    vec3 ambient  = light.ambient  * material.ambient;\n"
-		"    vec3 diffuse  = light.diffuse  * diff * material.diffuse;\n"
-		"    vec3 specular = light.specular * spec * material.specular;\n"
-		"    ambient  *= attenuation;\n"
-		"    diffuse  *= attenuation;\n"
-		"    specular *= attenuation;\n"
-		"    return (ambient + diffuse + specular);\n"
-		"}\n"
-		"\n"
-		"vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)\n"
-		"{\n"
-		"    vec3 lightDir = normalize(-light.direction);\n"
-		"    // diffuse shading\n"
-		"    float diff = max(dot(normal, lightDir), 0.0);\n"
-		"    // specular shading\n"
-		"    vec3 reflectDir = reflect(-lightDir, normal);\n"
-		"    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
-		"    // combine results\n"
-		"    vec3 ambient  = light.ambient  * material.ambient;\n"
-		"    vec3 diffuse  = light.diffuse  * diff * material.diffuse;\n"
-		"    vec3 specular = light.specular * spec * material.specular;\n"
-		"    return (ambient + diffuse + specular);\n"
-		"}\n";
-
-	GLuint vs = glCreateShader (GL_VERTEX_SHADER);
-	glShaderSource (vs, 1, &vertex_shader, NULL );
-	glCompileShader (vs);
-
-	GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
-	glShaderSource (fs, 1, &fragment_shader, NULL );
-	glCompileShader (fs);
-
-	p = glCreateProgram();
-	glAttachShader (p, vs);
-	glAttachShader (p, fs);
-	glLinkProgram (p);
-
-	Shader shader = {
-		.program = p
-	};
-
-	glDeleteShader (fs);
-	glDeleteShader (vs);
-
-	glUseProgram (p);
-
-	/* projection */
-	CGLM_ALIGN_MAT mat4s projection = GLMS_MAT4_IDENTITY_INIT;
-	/* projection = glms_perspective (glm_rad(45), 1, 0.1, 100); */
-	set_uniform_mat4s(&shader, "projection", projection);
-
-	/* view position */
-	CGLM_ALIGN_MAT vec3s viewPos = {{0, 5, 0}};
-	set_uniform_vec3sv(&shader, "viewPos", viewPos);
-
-	/* view */
-	CGLM_ALIGN_MAT mat4s view = GLMS_MAT4_IDENTITY_INIT;
-	CGLM_ALIGN_MAT vec3s center = GLMS_VEC3_ZERO_INIT;
-	CGLM_ALIGN_MAT vec3s up = {{0, 0, 1}};
-	view = glms_lookat(viewPos, center, up);
-	set_uniform_mat4s(&shader, "view", view);
-
-	/* dir light */
-	set_uniform_make_vec3s(&shader, "dirLight.direction", -0.2, -1.0, -0.3);
-        set_uniform_make_vec3s(&shader, "dirLight.ambient", 0.05, 0.05, 0.05);
-        set_uniform_make_vec3s(&shader, "dirLight.diffuse", 0.4, 0.4, 0.4);
-        set_uniform_make_vec3s(&shader, "dirLight.specular", 0.5, 0.5, 0.5);
-
-        /* point light 0 */
-        set_uniform_make_vec3s(&shader, "pointLights[0].position", 5, 5, 0);
-        set_uniform_make_vec3s(&shader, "pointLights[0].ambient", 0.05, 0.05, 0.05);
-        set_uniform_make_vec3s(&shader, "pointLights[0].diffuse", 0.8, 0.8, 0.8);
-        set_uniform_make_vec3s(&shader, "pointLights[0].specular", 1.0, 1.0, 1.0);
-        set_uniform_float(&shader, "pointLights[0].constant", 1.0);
-        set_uniform_float(&shader, "pointLights[0].linear", 0.09);
-        set_uniform_float(&shader, "pointLights[0].quadratic", 0.032);
-
-        /* point light 1 */
-        set_uniform_make_vec3s(&shader, "pointLights[1].position", -5, 5, 0);
-        set_uniform_make_vec3s(&shader, "pointLights[1].ambient", 0.05, 0.05, 0.05);
-        set_uniform_make_vec3s(&shader, "pointLights[1].diffuse", 0.8, 0.8, 0.8);
-        set_uniform_make_vec3s(&shader, "pointLights[1].specular", 1.0, 1.0, 1.0);
-        set_uniform_float(&shader, "pointLights[1].constant", 1.0);
-        set_uniform_float(&shader, "pointLights[1].linear", 0.09);
-        set_uniform_float(&shader, "pointLights[1].quadratic", 0.032);
-
-        /* point light 2 */
-        set_uniform_make_vec3s(&shader, "pointLights[2].position", 5, -5, 0);
-        set_uniform_make_vec3s(&shader, "pointLights[2].ambient", 0.05, 0.05, 0.05);
-        set_uniform_make_vec3s(&shader, "pointLights[2].diffuse", 0.8, 0.8, 0.8);
-        set_uniform_make_vec3s(&shader, "pointLights[2].specular", 1.0, 1.0, 1.0);
-        set_uniform_float(&shader, "pointLights[2].constant", 1.0);
-        set_uniform_float(&shader, "pointLights[2].linear", 0.09);
-        set_uniform_float(&shader, "pointLights[2].quadratic", 0.032);
-
-        /* point light 3 */
-        set_uniform_make_vec3s(&shader, "pointLights[3].position", -5, -5, 0);
-        set_uniform_make_vec3s(&shader, "pointLights[3].ambient", 0.05, 0.05, 0.05);
-        set_uniform_make_vec3s(&shader, "pointLights[3].diffuse", 0.8, 0.8, 0.8);
-        set_uniform_make_vec3s(&shader, "pointLights[3].specular", 1.0, 1.0, 1.0);
-        set_uniform_float(&shader, "pointLights[3].constant", 1.0);
-        set_uniform_float(&shader, "pointLights[3].linear", 0.09);
-        set_uniform_float(&shader, "pointLights[3].quadratic", 0.032);
-
-	glUseProgram (0);
-
-	return shader;
-}
-
 void ai_mesh_fprintf(FILE *f, const struct aiMesh *mesh, int i)
 {
 	fprintf(f, "\n meshe %d \"%s\" (%p) (type %d) (%d vertices) (%d faces) (normales %p)",
@@ -1300,102 +883,18 @@ void ai_scene_fprintf(FILE *f, const struct aiScene *scene)
 	}
 }
 
-BufferToDraw *
-init_buffers(HklGui3D *self, size_t *n_buffers)
-{
-	int i;
-	int j;
-	unsigned int len = 0;
-	BufferToDraw *buffers = NULL;
-
-	len = 0;
-	for(i=0; i<self->hkl3d->config->len; i++)
-		len += self->hkl3d->config->models[i]->len;
-
-	buffers = g_new0(BufferToDraw, len);
-	*n_buffers = len;
-
-	len = 0;
-	for(i=0; i<self->hkl3d->config->len; i++){
-		for(j=0; j<self->hkl3d->config->models[i]->len; j++){
-			int k;
-			const struct aiScene *scene = self->hkl3d->config->models[i]->scene;
-			Hkl3DObject *object = self->hkl3d->config->models[i]->objects[j];
-			const struct aiMesh *mesh = scene->mMeshes[object->mesh];
-
-			GLuint vao = 0;
-			glGenVertexArrays (1, &vao);
-			glBindVertexArray (vao);
-
-			/* positions */
-			GLuint vbo = 0;
-			size_t size_vertex = mesh->mNumVertices * 3 * sizeof (float);
-			GLfloat *vertices = g_new(GLfloat,  mesh->mNumVertices * 3);
-			for(k=0; k<mesh->mNumVertices; ++k){
-				vertices[k * 3 + 0] = mesh->mVertices[k].x;
-				vertices[k * 3 + 1] = mesh->mVertices[k].y;
-				vertices[k * 3 + 2] = mesh->mVertices[k].z;
-			}
-			glGenBuffers (1, &vbo );
-			glBindBuffer (GL_ARRAY_BUFFER, vbo );
-			glBufferData (GL_ARRAY_BUFFER, size_vertex, vertices, GL_STATIC_DRAW);
-
-			glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), NULL);
-			glEnableVertexAttribArray (0);
-
-			/* normals */
-			GLuint vbo_normals = 0;
-			size_t size_normals = mesh->mNumVertices * 3 * sizeof (float);
-			glGenBuffers (1, &vbo_normals );
-			glBindBuffer (GL_ARRAY_BUFFER, vbo_normals );
-			glBufferData (GL_ARRAY_BUFFER, size_normals, mesh->mNormals, GL_STATIC_DRAW);
-
-			glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), NULL);
-			glEnableVertexAttribArray (1);
-
-			/* indices */
-			GLuint ebo = 0;
-			size_t size_indices = mesh->mNumFaces * 3 * sizeof(unsigned int);
-			unsigned int *indices = g_new(unsigned int, mesh->mNumFaces * 3);
-			unsigned int idx=0;
-			for(k=0; k<mesh->mNumFaces; ++k){
-				const struct aiFace face = mesh->mFaces[k];
-
-				indices[idx++] = face.mIndices[0];
-				indices[idx++] = face.mIndices[1];
-				indices[idx++] = face.mIndices[2];
-			}
-			glGenBuffers (1, &ebo);
-			glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, ebo);
-			glBufferData (GL_ELEMENT_ARRAY_BUFFER, size_indices, indices, GL_STATIC_DRAW);
-
-			BufferToDraw buffer = {
-				.vao = vao,
-				.object = object,
-			};
-
-			buffers[len++] = buffer;
-		}
-	}
-	return buffers;
-}
-
-
 static void
 gl_area_on_realize_cb (GtkGLArea *area,
 		       gpointer user_data)
 {
 	HklGui3D *self = HKL_GUI_3D (user_data);
-	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
 
 	gtk_gl_area_make_current (area);
 
 	if (gtk_gl_area_get_error (area) != NULL)
 		return;
 
-
-	priv->shader = init_shader();
-	priv->buffers = init_buffers(user_data, &priv->n_buffers);
+	hkl3d_gl_init(self->hkl3d);
 
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
@@ -1424,8 +923,6 @@ static void hkl_gui_3d_init (HklGui3D * self)
 	/* properties */
 	priv->filename = NULL;
 	priv->geometry = NULL;
-	priv->buffers = NULL;
-	priv->n_buffers = 0;
 	priv->aabb = FALSE;
 
 	/* widgets instances */

@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2010-2019 Synchrotron SOLEIL
+ * Copyright (C) 2010-2019, 2025 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -22,7 +22,7 @@
  */
 #include <string.h>
 
-#include "hkl3d.h"
+#include "hkl3d-private.h"
 #include "tap/basic.h"
 #include "tap/hkl-tap.h"
 
@@ -39,15 +39,16 @@ static void check_model_validity(Hkl3D *hkl3d)
 	res = TRUE;
 
 	/* imported 1 config files with 7 Hkl3DObjects */
-	res &= DIAG(hkl3d->config->len == 1);
-	res &= DIAG(hkl3d->config->models[0]->len == 7);
+	res &= DIAG(darray_size(hkl3d->config->models) == 1);
+	Hkl3DModel *model = darray_item(hkl3d->config->models, 0);
+	res &= DIAG(darray_size(model->objects) == 7);
 
 	/* all Hkl3DObjects must have a different axis_name */
-	len = hkl3d->config->models[0]->len;
+	len = darray_size(model->objects);
 	for(i=0;i<len; ++i){
-		obji = hkl3d->config->models[0]->objects[i];
+		obji = darray_item(model->objects, i);
 		for (j=1; j<len-i; ++j){
-			objj = hkl3d->config->models[0]->objects[i+j];
+			objj = darray_item(model->objects, i+j);
 			if(!(strcmp(obji->axis_name, objj->axis_name))){
 				res &= DIAG(FALSE);
 				break;
@@ -69,6 +70,8 @@ static void check_collision(Hkl3D *hkl3d)
 	char buffer[1000];
 	int res = TRUE;
 	double values[] = {23, 0., 0., 0., 0., 0.};
+	Hkl3DModel *model;
+	Hkl3DObject **object;
 
 	/* check the collision and that the right axes are colliding */
 	res &= DIAG(hkl_geometry_axis_values_set(hkl3d->geometry->geometry,
@@ -79,12 +82,13 @@ static void check_collision(Hkl3D *hkl3d)
 	strcpy(buffer, "");
 
 	/* now check that only delta and mu are colliding */
-	for(size_t i=0; i<hkl3d->config->models[0]->len; ++i){
+	model = darray_item(hkl3d->config->models, 0);
+	darray_foreach(object, model->objects){
 		const char *name;
 		int tmp;
 
-		name = hkl3d->config->models[0]->objects[i]->axis_name;
-		tmp = hkl3d->config->models[0]->objects[i]->is_colliding == TRUE;
+		name = (*object)->axis_name;
+		tmp = (*object)->is_colliding == TRUE;
 		/* add the colliding axes to the buffer */
 		if(tmp){
 			strcat(buffer, " ");

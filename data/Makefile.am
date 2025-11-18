@@ -1,17 +1,28 @@
+converter=blender_gltf_converter.py
+
+models=diffabs.yaml
+glbs=$(models:.yaml=.glb)
+blends=$(models:.yaml=.blend)
+pngs=$(models:.yaml=.png)
+
 .blend.glb:
-	$(BLENDER) -b -P blender_gltf_converter.py -- -mp ./$<
+	$(BLENDER) -b -P $(converter) -- -mp ./$<
 
-MODELS=diffabs.blend
+.blend.png:
+	$(BLENDER_THUMBNAILER) $< $@
 
-EXTRA_DIST=$(MODELS) diffabs.yaml
+EXTRA_DIST=$(converter) $(models) $(glbs) $(blends) $(pngs)
 
-CLEANFILES=diffabs.glb
+CLEANFILES=$(glbs)
 
 hkl3ddir = $(pkgdatadir)/hkl3d
-hkl3d_DATA = diffabs.glb diffabs.yaml
+hkl3d_DATA = $(EXTRA_DIST)
 
-export-model:
-	scp $(MODELS) people.debian.org:public_html/hkl3d/
+diffabs.blend:
+	wget https://people.debian.org/~picca/hkl3d/diffabs.blend -O $@
 
-import-model:
+export-all-model:
+	scp $(blends) people.debian.org:public_html/hkl3d/
+
+import-all-model:
 	scp people.debian.org:public_html/hkl3d/*.blend .

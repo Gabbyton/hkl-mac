@@ -20,11 +20,11 @@ AM_LDFLAGS = -version-info 0:0:0 \
 	$(YAML_LIBS)
 
 noinst_LTLIBRARIES = libhkl3d.la
-libhkl3d_la_SOURCES = hkl3d.cpp
+libhkl3d_la_SOURCES = hkl3d.cpp hkl3d-gl.cpp
 libhkl3d_la_LIBADD = \
 	$(top_builddir)/hkl/libhkl.la
 
-noinst_HEADERS = hkl3d.h
+noinst_HEADERS = hkl3d.h hkl3d-private.h
 
 # Support for GNU Flymake, in Emacs.
 check-syntax: AM_CXXFLAGS += -fsyntax-only -pipe

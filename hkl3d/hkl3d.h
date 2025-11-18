@@ -1,3 +1,4 @@
+#pragma once
 /* This file is part of the hkl3d library.
  *
  * The hkl library is free software: you can redistribute it and/or modify
@@ -20,24 +21,13 @@
  * Authors: Picca Frédéric-Emmanuel <picca@synchrotron-soleil.fr>
  *          Oussama SBOUI <oussama.sboui@synchrotron-soleil.fr>
  */
-
-#ifndef __HKL3D_H__
-#define __HKL3D_H__
-
 #include <assimp/scene.h>
 #include <cglm/struct.h>
 
 #include "hkl.h"
 
 // forward declaration due to bullet static linking
-struct btCollisionObject;
-struct btCollisionWorld;
-struct btCollisionConfiguration;
-struct btBroadphaseInterface;
-struct btCollisionDispatcher;
-struct btCollisionShape;
 struct btVector3;
-struct btTriangleMesh;
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,112 +41,56 @@ extern "C" {
 	typedef struct _Hkl3DGeometry Hkl3DGeometry;
 	typedef struct _Hkl3D Hkl3D;
 
+	typedef darray(Hkl3DObject *) darray_object;
+	typedef darray(Hkl3DModel *) darray_model;
+
 	/**************/
 	/* Hkl3DStats */
 	/**************/
 
-	struct _Hkl3DStats
-	{
-		struct timeval collision;
-		struct timeval transformation;
-	};
-
-	extern double hkl3d_stats_get_collision_ms(const Hkl3DStats *self);
-	extern void hkl3d_stats_fprintf(FILE *f, Hkl3DStats *self);
+	HKLAPI extern double hkl3d_stats_get_collision_ms(const Hkl3DStats *self);
+	HKLAPI extern void hkl3d_stats_fprintf(FILE *f, Hkl3DStats *self);
 
 	/***************/
 	/* Hkl3DObject */
 	/***************/
 
-	struct _Hkl3DObject
-	{
-		Hkl3DModel *model; /* weak reference */
-		Hkl3DAxis *axis; /* weak reference */
-		unsigned int mesh;
-		struct btCollisionObject *btObject;
-		struct btCollisionShape *btShape;
-		struct btTriangleMesh *meshes;
-		int is_colliding;
-		int hide;
-		int added;
-		int selected;
-		int movable;
-		char *axis_name;
-		CGLM_ALIGN_MAT mat4s transformation;
-	};
-
-	extern void hkl3d_object_aabb_get(const Hkl3DObject *self, float from[3], float to[3]);
-	extern void hkl3d_object_fprintf(FILE *f, const Hkl3DObject *self);
+	HKLAPI extern void hkl3d_object_aabb_get(const Hkl3DObject *self, float from[3], float to[3]);
+	HKLAPI extern void hkl3d_object_draw_aabb_set(Hkl3DObject *self, bool aabb);
+	HKLAPI extern bool hkl3d_object_hide_get(const Hkl3DObject *self);
+	HKLAPI extern void hkl3d_object_fprintf(FILE *f, const Hkl3DObject *self);
 
 	/**************/
 	/* Hkl3DModel */
 	/**************/
 
-	struct _Hkl3DModel
-	{
-		char *filename;
-		const struct aiScene *scene;
-		Hkl3DObject **objects;
-		size_t len;
-	};
-
-	extern void hkl3d_model_fprintf(FILE *f, const Hkl3DModel *self);
+	HKLAPI darray_object *hkl3d_model_objects_get(const Hkl3DModel *self);
+	HKLAPI extern void hkl3d_model_fprintf(FILE *f, const Hkl3DModel *self);
 
 	/***************/
 	/* Hkl3DConfig */
 	/***************/
 
-	struct _Hkl3DConfig
-	{
-		Hkl3DModel **models;
-		size_t len;
-	};
-
-	extern void hkl3d_config_fprintf(FILE *f, const Hkl3DConfig *self);
+	HKLAPI darray_model *hkl3d_config_models_get(const Hkl3DConfig *self);
+	HKLAPI extern void hkl3d_config_fprintf(FILE *f, const Hkl3DConfig *self);
 
 	/*************/
 	/* Hkl3DAxis */
 	/*************/
 
-	struct _Hkl3DAxis
-	{
-		Hkl3DObject **objects; /* connected object */
-		size_t len;
-	};
-
-	extern void hkl3d_axis_fprintf(FILE *f, const Hkl3DAxis *self);
+	HKLAPI extern void hkl3d_axis_fprintf(FILE *f, const Hkl3DAxis *self);
 
 	/*****************/
 	/* HKL3DGeometry */
 	/*****************/
 
-	struct _Hkl3DGeometry
-	{
-		HklGeometry *geometry; /* weak reference */
-		Hkl3DAxis **axes;
-	};
-
-	extern void hkl3d_geometry_fprintf(FILE *f, const Hkl3DGeometry *self);
+	HKLAPI extern void hkl3d_geometry_fprintf(FILE *f, const Hkl3DGeometry *self);
 
 	/*********/
 	/* HKL3D */
 	/*********/
 
-	struct _Hkl3D
-	{
-		char const *filename; /* config filename */
-		Hkl3DGeometry *geometry;
-		Hkl3DStats stats;
-		Hkl3DConfig *config;
-
-		struct btCollisionConfiguration *_btCollisionConfiguration;
-		struct btBroadphaseInterface *_btBroadphase;
-		struct btCollisionWorld *_btWorld;
-		struct btCollisionDispatcher *_btDispatcher;
-#ifdef USE_PARALLEL_DISPATCHER
-		struct btThreadSupportInterface *_btThreadSupportInterface;
-#endif
-	};
+	HKLAPI extern Hkl3DConfig *hkl3d_config_get(const Hkl3D *self);
 
 	HKLAPI extern Hkl3D* hkl3d_new(const char *filename, HklGeometry *geometry) HKL_ARG_NONNULL(2);
 	HKLAPI extern void hkl3d_free(Hkl3D *self) HKL_ARG_NONNULL(1);
@@ -186,8 +120,13 @@ extern "C" {
 
 	HKLAPI extern void hkl3d_fprintf(FILE *f, const Hkl3D *self) HKL_ARG_NONNULL(1, 2);
 
+	/* Opengl */
+	HKLAPI void hkl3d_gl_draw_aabb_set(Hkl3D *self, bool aabb);
+	HKLAPI void hkl3d_gl_draw_models(Hkl3D *self);
+	HKLAPI void hkl3d_gl_init(Hkl3D *self);
+	HKLAPI void hkl3d_gl_resize(Hkl3D *self, gint width, gint height);
+
+
 #ifdef __cplusplus
 }
-#endif
-
 #endif
