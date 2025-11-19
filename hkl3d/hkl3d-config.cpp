@@ -713,8 +713,6 @@ int hkl3d_load_config(Hkl3D *self, const char *filename)
 		}
 	} while (state.state != STATE_STOP);
 
-	hkl3d_connect_all_axes(self);
-
 	if (debug){
 		hkl3d_fprintf(stdout, self);
 	}

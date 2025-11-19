@@ -603,6 +603,7 @@ Hkl3D *hkl3d_new(const char *filename, HklGeometry *geometry)
 
 	self->geometry = hkl3d_geometry_new(geometry);
 	self->config = hkl3d_config_new(filename);
+	hkl3d_load_config(self, filename);
 
 	/* initialize the bullet part */
 	self->_btCollisionConfiguration = new btDefaultCollisionConfiguration();
@@ -618,8 +619,7 @@ Hkl3D *hkl3d_new(const char *filename, HklGeometry *geometry)
 					      self->_btBroadphase,
 					      self->_btCollisionConfiguration);
 
-	if (filename)
-		hkl3d_load_config(self, filename);
+	hkl3d_connect_all_axes(self);
 
 	return self;
 }
