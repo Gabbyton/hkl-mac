@@ -40,7 +40,7 @@ enum status {
 /* Hkl3DConfig */
 /***************/
 
-Hkl3DConfig* hkl3d_config_new(void)
+Hkl3DConfig* hkl3d_config_new(const char *filename)
 {
 	Hkl3DConfig* self = nullptr;
 
@@ -48,6 +48,7 @@ Hkl3DConfig* hkl3d_config_new(void)
 	if(!self)
 		return nullptr;
 
+	self->filename = filename;
 	darray_init(self->models);
 
 	return self;

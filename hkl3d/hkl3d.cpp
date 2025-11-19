@@ -592,12 +592,17 @@ void hkl3d_connect_all_axes(Hkl3D *self)
  **/
 Hkl3D *hkl3d_new(const char *filename, HklGeometry *geometry)
 {
+	g_return_val_if_fail (nullptr != filename, nullptr);
+	g_return_val_if_fail (nullptr != geometry, nullptr);
+
 	Hkl3D *self = nullptr;
 
 	self = g_new0 (Hkl3D, 1);
 
+	g_return_val_if_fail (nullptr != self, nullptr);
+
 	self->geometry = hkl3d_geometry_new(geometry);
-	self->config = hkl3d_config_new();
+	self->config = hkl3d_config_new(filename);
 
 	/* initialize the bullet part */
 	self->_btCollisionConfiguration = new btDefaultCollisionConfiguration();
@@ -613,7 +618,6 @@ Hkl3D *hkl3d_new(const char *filename, HklGeometry *geometry)
 					      self->_btBroadphase,
 					      self->_btCollisionConfiguration);
 
-	self->filename = filename;
 	if (filename)
 		hkl3d_load_config(self, filename);
 
@@ -858,8 +862,8 @@ hkl3d_get_object_by_id(const Hkl3D *self, const char *filename, int id)
 
 void hkl3d_fprintf(FILE *f, const Hkl3D *self)
 {
-	fprintf(f, "Hkl3d (filename=[%s]", self->filename);
-	fprintf(f, ", geometry=");
+	fprintf(f, "Hkl3d (");
+	fprintf(f, "geometry=");
 	hkl3d_geometry_fprintf(f, self->geometry);
 	fprintf(f, ", stats=");
 	hkl3d_stats_fprintf(f, &self->stats);

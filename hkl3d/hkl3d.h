@@ -75,7 +75,7 @@ extern "C" {
 	/***************/
 
 	HKLAPI extern void hkl3d_config_free(Hkl3DConfig *self); // TODO private
-	HKLAPI extern Hkl3DConfig *hkl3d_config_new(); // TODO private
+	HKLAPI extern Hkl3DConfig *hkl3d_config_new(const char *filename); // TODO private
 	HKLAPI extern void hkl3d_config_fprintf(FILE *f, const Hkl3DConfig *self);
 
 	/*************/

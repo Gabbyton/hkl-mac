@@ -97,6 +97,7 @@ extern "C" {
 
 	struct _Hkl3DConfig
 	{
+		char const *filename; /* config filename */
 		darray_model models;
 	};
 
@@ -126,7 +127,6 @@ extern "C" {
 
 	struct _Hkl3D
 	{
-		char const *filename; /* config filename */
 		Hkl3DGeometry *geometry;
 		Hkl3DStats stats;
 		Hkl3DConfig *config;
