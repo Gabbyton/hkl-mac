@@ -43,9 +43,12 @@
 ** Documentation
    - Updated thanks to Didier Weirmeille from the ESRF
 ** Hkl3D (Anticollision)
-  - switch from the g3d un-maintained library to assimp.
+  - switch from the g3d un-maintained library to assimp in order to
+    read model files.
+  - full rewrite of the configure file parser. (it should be more
+    robust now).
 ** Gui
-   - migrated from gtk3 to gtk4
+   - migrated from gtk3 to gtk4.
 ** Tests
    - binoculars-ng detectors tests are using sha256 in order to check
      mask and coordinates integrity. If you change a detector
