@@ -118,7 +118,7 @@ extern "C" {
 							   double *xb, double *yb, double *zb) HKL_ARG_NONNULL(1);
 	HKLAPI extern void hkl3d_connect_object_to_axis(Hkl3D *self,
 							Hkl3DObject *object,
-							const char *name) HKL_ARG_NONNULL(1, 2, 3);
+							const char *name) HKL_ARG_NONNULL(1, 2);
 
 	HKLAPI extern void hkl3d_fprintf(FILE *f, const Hkl3D *self) HKL_ARG_NONNULL(1, 2);
 

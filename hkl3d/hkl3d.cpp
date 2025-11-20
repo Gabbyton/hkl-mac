@@ -573,7 +573,7 @@ void hkl3d_connect_all_axes(Hkl3D *self)
 	Hkl3DModel **model;
 	Hkl3DObject **object;
 
-	/* connect use the axes names */
+	/* connect using the axes names */
 	darray_foreach(model, self->config->models){
 		darray_foreach(object, (*model)->objects){
 			hkl3d_connect_object_to_axis(self, *object, (*object)->axis_name);
@@ -692,29 +692,38 @@ close_current:
 /* fill movingCollisionObject and movingG3DObjects vectors for transformations */
 void hkl3d_connect_object_to_axis(Hkl3D *self, Hkl3DObject *object, const char *name)
 {
-	Hkl3DAxis *axis3d = hkl3d_geometry_axis_get(self->geometry, name);
-	if (!object->movable){
-		if(axis3d){ /* static -> movable */
-			self->_btWorld->removeCollisionObject(object->btObject);
-			hkl3d_object_set_movable(object, true);
-			self->_btWorld->addCollisionObject(object->btObject);
-			object->added = true;
-			hkl3d_axis_attach_object(axis3d, object);
-		}
-	}else{
-		if(!axis3d){ /* movable -> static */
-			self->_btWorld->removeCollisionObject(object->btObject);
-			hkl3d_object_set_movable(object, false);
-			self->_btWorld->addCollisionObject(object->btObject);
-			object->added = true;
-		}else{ /* movable -> movable */
-			if(strcmp(object->axis_name, name)){ /* not the same axis */
-				hkl3d_axis_detach_object(object->axis, object);
+	if (name != nullptr){
+		Hkl3DAxis *axis3d = hkl3d_geometry_axis_get(self->geometry, name);
+		if (!object->movable){
+			if(axis3d){ /* static -> movable */
+				self->_btWorld->removeCollisionObject(object->btObject);
+				hkl3d_object_set_movable(object, true);
+				self->_btWorld->addCollisionObject(object->btObject);
+				object->added = true;
 				hkl3d_axis_attach_object(axis3d, object);
 			}
+		}else{
+			if(!axis3d){ /* movable -> static */
+				self->_btWorld->removeCollisionObject(object->btObject);
+				hkl3d_object_set_movable(object, false);
+				self->_btWorld->addCollisionObject(object->btObject);
+				object->added = true;
+			}else{ /* movable -> movable */
+				if(strcmp(object->axis_name, name)){ /* not the same axis */
+					hkl3d_axis_detach_object(object->axis, object);
+					hkl3d_axis_attach_object(axis3d, object);
+				}
+			}
 		}
+		hkl3d_object_axis_name_set(object, name);
+	}else{
+		if (object->movable){
+			fprintf(stdout, "Requested a movable object not connected to an axis -> static \n");
+		}
+		hkl3d_object_set_movable(object, false);
+		self->_btWorld->addCollisionObject(object->btObject);
+		object->added = true;
 	}
-	hkl3d_object_axis_name_set(object, name);
 }
 
 /**
