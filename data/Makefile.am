@@ -13,7 +13,7 @@ pngs=$(models:.yaml=.png)
 
 EXTRA_DIST=$(converter) $(models) $(glbs) $(blends) $(pngs)
 
-CLEANFILES=$(glbs)
+CLEANFILES=$(glbs) $(pngs)
 
 hkl3ddir = $(pkgdatadir)/hkl3d
 hkl3d_DATA = $(EXTRA_DIST)
