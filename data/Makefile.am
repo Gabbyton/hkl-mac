@@ -26,3 +26,4 @@ export-all-model:
 
 import-all-model:
 	scp people.debian.org:public_html/hkl3d/*.blend .
+	scp -r people.debian.org:Cristal .
