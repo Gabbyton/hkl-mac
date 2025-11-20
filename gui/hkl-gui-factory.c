@@ -248,9 +248,9 @@ hkl_gui_factory_set_factory(HklGuiFactory *self,
 	const char *dname = hkl_gui_factory_get_name(self);
 
 	if(!strcmp("K6C", dname))
-		filename = get_model("diffabs.yaml");
+		filename = get_model("soleil-diffabs.yaml");
 	else if (!strcmp("K4CV", dname))
-		filename = get_model("cristal4C.yaml");
+		filename = get_model("soleil-cristal-4c.yaml");
 
 	if (filename){
 		self->gui3d = hkl_gui_3d_new(filename,

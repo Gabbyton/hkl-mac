@@ -1,6 +1,6 @@
 converter=blender_gltf_converter.py
 
-models=diffabs.yaml
+models=soleil-diffabs.yaml soleil-cristal-4c.yaml
 glbs=$(models:.yaml=.glb)
 blends=$(models:.yaml=.blend)
 pngs=$(models:.yaml=.png)
@@ -18,8 +18,11 @@ CLEANFILES=$(glbs) $(pngs)
 hkl3ddir = $(pkgdatadir)/hkl3d
 hkl3d_DATA = $(EXTRA_DIST)
 
-diffabs.blend:
-	wget https://people.debian.org/~picca/hkl3d/diffabs.blend -O $@
+soleil-diffabs.blend:
+	wget https://people.debian.org/~picca/hkl3d/$@ -O $@
+
+soleil-cristal-4c.blend:
+	wget https://people.debian.org/~picca/hkl3d/$@ -O $@
 
 export-all-model:
 	scp $(blends) people.debian.org:public_html/hkl3d/
