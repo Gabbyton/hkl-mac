@@ -349,9 +349,11 @@ static const char *state_name[] = {
 struct parser_state {
 	enum state state;      /* The current parse state */
 	Hkl3D *hkl3d;
+	Hkl3DModel *model; /* not owned */
 	char *dir;
 	char *fname;
 	int oid;
+	int n_objects;
 	char *oname;
 	mat4s otransformation;
 	bool ohide;
@@ -474,6 +476,14 @@ int consume_event(struct parser_state *s, yaml_event_t *event)
 			}
 			break;
 		case YAML_MAPPING_END_EVENT:
+			if (NULL != s->model) {
+				size_t n_expected = darray_size(s->model->objects);
+				if (s->n_objects != n_expected){
+					fprintf(stderr, "Warning: [%s] contains %d objects, only %d configured inthe config file.\n", s->fname, n_expected, s->n_objects);
+				}
+			}
+			s->n_objects = 0;
+			g_clear_pointer (&s->fname, g_free);
 			s->state = STATE_FLIST;
 			break;
 		default:
@@ -497,7 +507,7 @@ int consume_event(struct parser_state *s, yaml_event_t *event)
 				if (debug){
 					fprintf (stdout, "Adding [%s] model.\n", value);
 				}
-				hkl3d_add_model_from_file(s->hkl3d, value, s->dir);
+				s->model = hkl3d_add_model_from_file(s->hkl3d, value, s->dir);
 			}
 			s->state = STATE_FKEY;
 			break;
@@ -555,15 +565,15 @@ int consume_event(struct parser_state *s, yaml_event_t *event)
 		case YAML_MAPPING_END_EVENT:
 			object = hkl3d_get_object_by_id(s->hkl3d, s->fname, s->oid);
 			if (nullptr != object){
+				s->n_objects++; /* one more object */
 				hkl3d_object_axis_name_set(object, s->oname);
 				hkl3d_object_transformation_set(object, s->otransformation);
 				hkl3d_object_hide_set(object, s->ohide);
-				g_clear_pointer(&s->oname, g_free);
-				s->state = STATE_OVALUES;
 			} else {
 				fprintf(stderr, "Can not find the Hkl3DObject in [%s] with Id: %d\n", s->fname, s->oid);
-				return FAILURE;
 			}
+			g_clear_pointer(&s->oname, g_free);
+			s->state = STATE_OVALUES;
 			break;
 		default:
 			fprintf(stderr, "Unexpected event %d in state %d.\n", event->type, s->state);
