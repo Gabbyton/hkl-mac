@@ -26,7 +26,7 @@
 #include "tap/basic.h"
 #include "tap/hkl-tap.h"
 
-#define MODEL_FILENAME "data/diffabs.yaml"
+#define MODEL_FILENAME "data/soleil-diffabs.yaml"
 
 static void check_model_validity(Hkl3D *hkl3d)
 {

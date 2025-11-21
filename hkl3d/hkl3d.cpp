@@ -435,7 +435,7 @@ static Hkl3DModel *hkl3d_model_new_from_file(const char *filename)
 		goto out;
 	}
 
-	ai_scene_fprintf(stdout, scene);
+	/* ai_scene_fprintf(stdout, scene); */
 	/* aiExportScene(scene, "glb2", g_strdup_printf("%s.glb", filename), 0); */
 
 	self = hkl3d_model_new(filename);
