@@ -44,6 +44,87 @@
 #include "BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h"
 #include "BulletCollision/Gimpact/btGImpactShape.h"
 
+
+void ai_mesh_fprintf(FILE *f, const struct aiMesh *mesh, int i)
+{
+	fprintf(f, "\n meshe %d \"%s\" (%p) (type %d) (%d vertices) (%d faces) (normales %p)",
+		i,
+		mesh->mName.data,
+		mesh,
+		mesh->mPrimitiveTypes,
+		mesh->mNumVertices,
+		mesh->mNumFaces,
+		mesh->mNormals);
+}
+
+void ai_node_fprintf(FILE *f, const struct aiNode *node, int level)
+{
+	unsigned int i;
+
+	fprintf(f, "\n%*s - (node) %s (%d meshes) (%d child)",
+		level, "",
+		node->mName.data,
+		node->mNumMeshes,
+		node->mNumChildren);
+	fprintf(f, "\n%*s   transformation: %f %f %f %f",
+		level, "",
+		node->mTransformation.a1,
+		node->mTransformation.a2,
+		node->mTransformation.a3,
+		node->mTransformation.a4);
+	fprintf(f, "\n%*s                   %f %f %f %f",
+		level, "",
+		node->mTransformation.b1,
+		node->mTransformation.b2,
+		node->mTransformation.b3,
+		node->mTransformation.b4);
+	fprintf(f, "\n%*s                   %f %f %f %f",
+		level, "",
+		node->mTransformation.c1,
+		node->mTransformation.c2,
+		node->mTransformation.c3,
+		node->mTransformation.c4);
+	fprintf(f, "\n%*s                   %f %f %f %f",
+		level, "",
+		node->mTransformation.d1,
+		node->mTransformation.d2,
+		node->mTransformation.d3,
+		node->mTransformation.d4);
+
+	for(i=0; i<node->mNumMeshes; ++i){
+		fprintf(f, "\n%*s   meshes %d",
+			level, "",
+			node->mMeshes[i]);
+	}
+
+	for(i=0; i<node->mNumChildren; ++i){
+		ai_node_fprintf(f, node->mChildren[i], level+2);
+	}
+}
+
+void ai_scene_fprintf(FILE *f, const struct aiScene *scene)
+{
+	unsigned int i;
+
+	fprintf(f, "\nscene: (%p)", scene);
+	fprintf(f, "\n%d animations", scene->mNumAnimations);
+	fprintf(f, "\n%d cameras", scene->mNumCameras);
+	fprintf(f, "\n%d lights", scene->mNumLights);
+	fprintf(f, "\n%d materials", scene->mNumMaterials);
+	fprintf(f, "\n%d meshes", scene->mNumMeshes);
+	fprintf(f, "\n%d skeletons", scene->mNumSkeletons);
+	fprintf(f, "\n%d textures", scene->mNumTextures);
+
+	/* nodes */
+	ai_node_fprintf(f, scene->mRootNode, 0);
+
+	/* models */
+	for(i=0; i<scene->mNumMeshes; ++i){
+		const struct aiMesh *mesh = scene->mMeshes[i];
+		ai_mesh_fprintf(f, mesh, i);
+	}
+}
+
 /***************/
 /* Hkl3DObject */
 /***************/
@@ -347,14 +428,14 @@ static Hkl3DModel *hkl3d_model_new_from_file(const char *filename)
 			     aiProcess_CalcTangentSpace
 			     | aiProcess_Triangulate
 			     | aiProcess_JoinIdenticalVertices
-			     | aiProcess_SortByPType
-			     | aiProcess_PreTransformVertices);
+			     | aiProcess_SortByPType);
 
 	if (nullptr == scene) {
 		fprintf(stdout, "\n%s", aiGetErrorString());
 		goto out;
 	}
 
+	ai_scene_fprintf(stdout, scene);
 	/* aiExportScene(scene, "glb2", g_strdup_printf("%s.glb", filename), 0); */
 
 	self = hkl3d_model_new(filename);
