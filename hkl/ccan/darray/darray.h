@@ -278,14 +278,8 @@ typedef darray(unsigned long)  darray_ulong;
 		} \
 	} while(0)
 
-#define darray_realloc(arr, newAlloc) do {                              \
-                void *tmp = realloc((arr).item, (newAlloc) * sizeof(*(arr).item)); \
-                if (NULL == tmp && 0 != (newAlloc) ) {                  \
-                        abort();                                        \
-                }else{                                                  \
-                        (arr).item = tmp;                               \
-                        (arr).alloc = (newAlloc);                       \
-                }                                                       \
+#define darray_realloc(arr, newAlloc) do { \
+		(arr).item = (typeof((arr).item))realloc((arr).item, ((arr).alloc = (newAlloc)) * sizeof(*(arr).item)); \
 	} while(0)
 #define darray_growalloc(arr, need) do { \
 		size_t need_ = (need); \
@@ -353,23 +347,23 @@ Examples:
 
 	darray(int)  arr;
 	int        *i;
-	
+
 	darray_appends(arr, 0,1,2,3,4);
 	darray_appends(arr, -5,-4,-3,-2,-1);
 	darray_foreach(i, arr)
 		printf("%d ", *i);
 	printf("\n");
-	
+
 	darray_free(arr);
-	
+
 
 	typedef struct {int n,d;} Fraction;
 	darray(Fraction) fractions;
 	Fraction        *i;
-	
+
 	darray_appends(fractions, {3,4}, {3,5}, {2,1});
 	darray_foreach(i, fractions)
 		printf("%d/%d\n", i->n, i->d);
-	
+
 	darray_free(fractions);
 */
