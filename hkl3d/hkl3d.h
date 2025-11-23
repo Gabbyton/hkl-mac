@@ -26,6 +26,9 @@
 
 #include "hkl.h"
 
+#define SOLEIL_DIFFABS_MODEL "soleil-diffabs.yaml"
+#define SOLEIL_CRISTAL_4C_MODEL "soleil-cristal-4c.yaml"
+
 // forward declaration due to bullet static linking
 struct btVector3;
 

@@ -36,6 +36,7 @@
 #include "hkl-gui-diffractometer-private.h"
 #include "hkl-gui-macros.h"
 #if HKL3D
+# include "hkl3d.h"
 # include "hkl-gui-3d.h"
 #endif
 
@@ -248,9 +249,9 @@ hkl_gui_factory_set_factory(HklGuiFactory *self,
 	const char *dname = hkl_gui_factory_get_name(self);
 
 	if(!strcmp("K6C", dname))
-		filename = get_model("soleil-diffabs.yaml");
+		filename = get_model(SOLEIL_DIFFABS_MODEL);
 	else if (!strcmp("K4CV", dname))
-		filename = get_model("soleil-cristal-4c.yaml");
+		filename = get_model(SOLEIL_CRISTAL_4C_MODEL);
 
 	if (filename){
 		self->gui3d = hkl_gui_3d_new(filename,

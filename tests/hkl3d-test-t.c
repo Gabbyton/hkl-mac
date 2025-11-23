@@ -26,8 +26,6 @@
 #include "tap/basic.h"
 #include "tap/hkl-tap.h"
 
-#define MODEL_FILENAME "data/soleil-diffabs.yaml"
-
 static void check_model_validity(Hkl3D *hkl3d)
 {
 	uint i, j;
@@ -155,7 +153,7 @@ int main(void)
 	geometry = hkl_factory_create_new_geometry(factory);
 
 	/* compute the filename of the diffractometer config file */
-	filename  = test_file_path(MODEL_FILENAME);
+	filename  = test_file_path("data/" SOLEIL_DIFFABS_MODEL);
 	hkl3d = hkl3d_new(filename, geometry);
 
 	plan(3);
