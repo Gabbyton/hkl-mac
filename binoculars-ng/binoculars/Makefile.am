@@ -11,7 +11,7 @@ AM_CFLAGS = \
 	$(HDF5_CFLAGS)
 
 AM_LDFLAGS = -version-info 0:0:0 \
-	$(top_builddir)/hkl/libhkl.la \
+	$(top_builddir)/hkl/libhkl-private.la \
 	$(CGLM_LIBS) \
 	$(GLIB_LIBS) \
 	$(GSL_LIBS) \
@@ -28,19 +28,7 @@ libhkl_binoculars_la_SOURCES = \
 	hkl-binoculars-io-hdf5.c \
 	hkl-binoculars-io-img.c \
 	hkl-binoculars-io-private.h \
-	hkl-binoculars-private.h \
-	$(top_builddir)/hkl/hkl-axis.c \
-	$(top_builddir)/hkl/hkl-geometry.c \
-	$(top_builddir)/hkl/hkl-interval.c \
-	$(top_builddir)/hkl/hkl-lattice.c \
-	$(top_builddir)/hkl/hkl-macros.c \
-	$(top_builddir)/hkl/hkl-matrix.c \
-	$(top_builddir)/hkl/hkl-parameter.c \
-	$(top_builddir)/hkl/hkl-quaternion.c \
-	$(top_builddir)/hkl/hkl-sample.c \
-	$(top_builddir)/hkl/hkl-source.c \
-	$(top_builddir)/hkl/hkl-unit.c \
-	$(top_builddir)/hkl/hkl-vector.c
+	hkl-binoculars-private.h
 
 # Support for GNU Flymake, in Emacs.
 check-syntax: AM_CFLAGS += -fsyntax-only -pipe

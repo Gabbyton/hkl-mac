@@ -28,12 +28,8 @@
 
 static void check_model_validity(Hkl3D *hkl3d)
 {
-	uint i, j;
-	uint len;
 	int res;
 	Hkl3DAxis **axis;
-	Hkl3DObject *obji;
-	Hkl3DObject *objj;
 
 	res = TRUE;
 
@@ -42,23 +38,11 @@ static void check_model_validity(Hkl3D *hkl3d)
 	Hkl3DModel *model = darray_item(hkl3d->config->models, 0);
 	res &= DIAG(darray_size(model->objects) == 7);
 
-	/* all Hkl3DObjects must have a different axis_name */
-	len = darray_size(model->objects);
-	for(i=0;i<len; ++i){
-		obji = darray_item(model->objects, i);
-		for (j=1; j<len-i; ++j){
-			objj = darray_item(model->objects, i+j);
-			if(!(strcmp(obji->axis_name, objj->axis_name))){
-				res &= DIAG(FALSE);
-				break;
-			}
-		}
-		obji++;
-	}
 
-	/* check the _movingObjects validity, all Hkl3DAxis must have a size of 1 */
+	/* each moving Hkl3DAxis must have a size of 1 */
 	darray_foreach(axis, hkl3d->geometry->axes){
-		res &= DIAG(darray_size((*axis)->objects) == 1);
+		if (NULL != (*axis)->mparameter)
+			res &= DIAG(darray_size((*axis)->objects) == 1);
 	}
 
 	ok(res == TRUE, "no identical objects");
@@ -70,7 +54,7 @@ static void check_collision(Hkl3D *hkl3d)
 	char buffer[1000];
 	int res = TRUE;
 	double values[] = {23, 0., 0., 0., 0., 0.};
-	Hkl3DModel *model;
+	Hkl3DAxis **axis;
 	Hkl3DObject **object;
 
 	/* check the collision and that the right axes are colliding */
@@ -82,23 +66,23 @@ static void check_collision(Hkl3D *hkl3d)
 	strcpy(buffer, "");
 
 	/* now check that only delta and mu are colliding */
-	model = darray_item(hkl3d->config->models, 0);
-	darray_foreach(object, model->objects){
-		const char *name;
-		int tmp;
+	darray_foreach(axis, hkl3d->geometry->axes){
+		darray_foreach(object, (*axis)->objects){
 
-		name = (*object)->axis_name;
-		tmp = (*object)->is_colliding == TRUE;
-		/* add the colliding axes to the buffer */
-		if(tmp){
-			strcat(buffer, " ");
-			strcat(buffer, name);
+			const char *name = (*axis)->node->mName.data;
+			int is_colliding = (*object)->is_colliding == TRUE;
+
+			if(is_colliding){
+				strcat(buffer, " ");
+				strcat(buffer, name);
+			}
+
+			if(!strcmp(name, "mu") || !strcmp(name, "delta")){
+				res &= DIAG(is_colliding == TRUE);
+			} else {
+				res &= DIAG(is_colliding == FALSE);
+			}
 		}
-
-		if(!strcmp(name, "mu") || !strcmp(name, "delta"))
-			res &= DIAG(tmp == TRUE);
-		else
-			res &= DIAG(tmp == FALSE);
 	}
 	ok(res == TRUE,  "collision [%s]", buffer);
 }
@@ -146,6 +130,7 @@ static void check_no_collision(Hkl3D *hkl3d)
 
 int main(void)
 {
+	const char *model = "../data/" SOLEIL_DIFFABS_MODEL;
 	char* filename;
 	const HklFactory *factory;
 	HklGeometry *geometry;
@@ -155,7 +140,10 @@ int main(void)
 	geometry = hkl_factory_create_new_geometry(factory);
 
 	/* compute the filename of the diffractometer config file */
-	filename  = test_file_path("data/" SOLEIL_DIFFABS_MODEL);
+	filename  = test_file_path(model);
+	if (NULL == filename)
+		filename = strdup (model);
+
 	hkl3d = hkl3d_new(filename, geometry);
 
 	plan(3);

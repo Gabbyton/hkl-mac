@@ -18,10 +18,7 @@ CLEANFILES=$(glbs) $(pngs)
 hkl3ddir = $(pkgdatadir)/hkl3d
 hkl3d_DATA = $(EXTRA_DIST)
 
-soleil-diffabs.blend:
-	wget https://people.debian.org/~picca/hkl3d/$@ -O $@
-
-soleil-cristal-4c.blend:
+%.blend:
 	wget https://people.debian.org/~picca/hkl3d/$@ -O $@
 
 export-all-model:

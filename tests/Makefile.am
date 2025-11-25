@@ -80,7 +80,7 @@ check_PROGRAMS = runtests $(all_tests)
 ## tap tests
 
 check-local: $(check_PROGRAMS)
-	./runtests -v -s $(abs_top_srcdir) $(all_tests)
+	./runtests -v -s $(abs_srcdir) $(all_tests)
 
 valgrind:
 	G_DEBUG=gc-friendly G_SLICE=always-malloc valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes .libs/hkl-bench-t

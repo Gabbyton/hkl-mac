@@ -36,20 +36,22 @@ struct btVector3;
 extern "C" {
 #endif
 
-	typedef struct _Hkl3DStats Hkl3DStats;
-	typedef struct _Hkl3DObject Hkl3DObject;
-	typedef struct _Hkl3DModel Hkl3DModel;
-	typedef struct _Hkl3DConfig Hkl3DConfig;
-	typedef struct _Hkl3DAxis Hkl3DAxis;
-	typedef struct _Hkl3DGeometry Hkl3DGeometry;
 	typedef struct _Hkl3D Hkl3D;
+	typedef struct _Hkl3DAxis Hkl3DAxis;
+	typedef struct _Hkl3DBullet Hkl3DBullet;
+	typedef struct _Hkl3DBulletObject Hkl3DBulletObject;
+	typedef struct _Hkl3DConfig Hkl3DConfig;
+	typedef struct _Hkl3DGeometry Hkl3DGeometry;
+	typedef struct _Hkl3DModel Hkl3DModel;
+	typedef struct _Hkl3DObject Hkl3DObject;
+	typedef struct _Hkl3DStats Hkl3DStats;
 
 	/**************/
 	/* Hkl3DStats */
 	/**************/
 
 	HKLAPI extern double hkl3d_stats_get_collision_ms(const Hkl3DStats *self);
-	HKLAPI extern void hkl3d_stats_fprintf(FILE *f, Hkl3DStats *self);
+	HKLAPI extern void hkl3d_stats_fprintf(FILE *f, const Hkl3DStats *self);
 
 	/***************/
 	/* Hkl3DObject */
@@ -98,7 +100,6 @@ extern "C" {
 	HKLAPI extern void hkl3d_free(Hkl3D *self) HKL_ARG_NONNULL(1);
 
 	HKLAPI extern int hkl3d_is_colliding(Hkl3D *self) HKL_ARG_NONNULL(1);
-	HKLAPI extern int hkl3d_load_config(Hkl3D *self, const char *filename) HKL_ARG_NONNULL(1, 2);
 	HKLAPI extern void hkl3d_save_config(Hkl3D *self, const char *filename) HKL_ARG_NONNULL(1, 2);
 	HKLAPI extern Hkl3DModel *hkl3d_add_model_from_file(Hkl3D *self,
 							    const char *filename,

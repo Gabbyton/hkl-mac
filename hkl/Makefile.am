@@ -1,17 +1,21 @@
 ## Process this file with automake to produce Makefile.in
 SUBDIRS = ccan . api2
 
-AM_LDFLAGS = \
-	-no-undefined -version-info 5:0:0 \
-	$(GLIB_LIBS) \
-	$(GSL_LIBS)
 AM_CFLAGS = \
+	-Wno-initializer-overrides \
+	-Wno-unused-result \
 	-DG_LOG_DOMAIN=\"Hkl\" \
 	-I$(top_builddir) \
 	-I$(top_srcdir) \
 	$(DATATYPE99_CFLAGS) \
 	$(GLIB_CFLAGS) \
 	$(GSL_CFLAGS)
+
+AM_LDFLAGS = \
+	-no-undefined -version-info 5:0:0 \
+	ccan/libccan.la \
+	$(GLIB_LIBS) \
+	$(GSL_LIBS)
 
 hkl_c_sources = \
 	hkl-axis.c \
@@ -84,18 +88,19 @@ hkl_private_h_sources = \
 	hkl-unit-private.h \
 	hkl-vector-private.h
 
-lib_LTLIBRARIES = libhkl.la
-libhkl_la_SOURCES = $(hkl_c_sources) $(hkl_private_h_sources)
-libhkl_la_LIBADD = ccan/libccan.la
-libhkl_la_CFLAGS = \
-	$(AM_CFLAGS) \
-	-Wno-initializer-overrides \
-	-Wno-unused-result \
-	-fvisibility=hidden
 
 # just compile the template diffractometer to be sure that it is valid
 noinst_LTLIBRARIES = libdummy.la
 libdummy_la_SOURCES = hkl-engine-template.c
+
+# just a private hkl library with all symbols visiles for hkl"d and binoculars
+noinst_LTLIBRARIES += libhkl-private.la
+libhkl_private_la_SOURCES =  $(hkl_c_sources) $(hkl_private_h_sources)
+
+# the hkl library
+lib_LTLIBRARIES = libhkl.la
+libhkl_la_SOURCES = $(libhkl_private_la_SOURCES)
+libhkl_la_CFLAGS = $(AM_CFLAGS) -fvisibility=hidden
 
 # introspection
 
@@ -111,7 +116,7 @@ INTROSPECTION_COMPILER_ARGS = \
 
 if HAVE_INTROSPECTION
 
-libhkl_la_SOURCES += \
+libhkl_private_la_SOURCES += \
 	hkl-types.c \
 	hkl-types.h \
 	hkl-type-builtins.c \

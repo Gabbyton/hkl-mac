@@ -22,6 +22,7 @@
  */
 
 #include <stdio.h>
+#include <fcntl.h>
 
 #include <yaml.h>
 
@@ -39,20 +40,6 @@ enum status {
 /***************/
 /* Hkl3DConfig */
 /***************/
-
-Hkl3DConfig* hkl3d_config_new(const char *filename)
-{
-	Hkl3DConfig* self = nullptr;
-
-	self = g_new(Hkl3DConfig, 1);
-	if(!self)
-		return nullptr;
-
-	self->filename = filename;
-	darray_init(self->models);
-
-	return self;
-}
 
 void hkl3d_config_free(Hkl3DConfig *self)
 {
@@ -77,6 +64,75 @@ void hkl3d_config_fprintf(FILE *f, const Hkl3DConfig *self)
 	}
 	fprintf (f, "])");
 }
+
+
+static bool
+hkl3d_config_contains_model(const Hkl3DConfig *self, const char *filename)
+{
+	g_return_val_if_fail(nullptr != self, false);
+	g_return_val_if_fail(nullptr != filename, false);
+
+	Hkl3DModel **model;
+
+	darray_foreach(model, self->models){
+		if (0 == strcmp(filename, (*model)->filename))
+			return true;
+	}
+
+	return false;
+}
+
+static Hkl3DObject *
+hkl3d_config_get_object_by_id(const Hkl3DConfig *self, const char *filename, int id)
+{
+	g_return_val_if_fail(nullptr != self, nullptr);
+	g_return_val_if_fail(nullptr != filename, nullptr);
+
+	Hkl3DModel **model;
+
+	darray_foreach (model, self->models){
+		if (id < darray_size((*model)->objects)
+		    && 0 == strcmp((*model)->filename, filename)){
+			return darray_item((*model)->objects, id);
+		}
+	}
+
+	return nullptr;
+}
+
+static Hkl3DModel *
+hkl3d_config_add_model_from_file(Hkl3DConfig *self,
+				 const char *filename, const char *directory)
+{
+	int current;
+	int res;
+	const aiScene *scene = nullptr;
+	Hkl3DModel *model = nullptr;
+
+	/* first set the current directory using the directory
+	 * parameter. Maybe using openat should be a better solution
+	 * in the hkl3d_model_new_from_file */
+	current = open(".", O_RDONLY);
+	if (current < 0)
+		return nullptr;
+	res = chdir(directory);
+	if(res < 0)
+		goto close_current;
+
+	model = hkl3d_model_new_from_file(filename);
+	if(model)
+		darray_append(self->models, model);
+
+	/* restore the current directory */
+	res = fchdir(current);
+
+	return model;
+
+close_current:
+	close(current);
+	return nullptr;
+}
+
 
 
 #define INDENT "  "
@@ -348,7 +404,7 @@ static const char *state_name[] = {
 /* * Our application parser state data. */
 struct parser_state {
 	enum state state;      /* The current parse state */
-	Hkl3D *hkl3d;
+	Hkl3DConfig *config;
 	Hkl3DModel *model; /* not owned */
 	char *dir;
 	char *fname;
@@ -364,7 +420,7 @@ struct parser_state {
 void state_fprintf(FILE *f, const parser_state *state)
 {
 	fprintf(f, "parser_state->state (%d)\n", state->state);
-	fprintf(f, "parser_state->hkl3d (%p)\n", state->hkl3d);
+	fprintf(f, "parser_state->config (%p)\n", state->config);
 	fprintf(f, "parser_state->dir   \"(%s)\"\n", state->dir);
 }
 
@@ -397,7 +453,7 @@ static int get_boolean(const char *string, bool *value)
  * import our data into raw c data structures. Error processing
  * is keep to a mimimum since this is just an example.
  */
-int consume_event(struct parser_state *s, yaml_event_t *event)
+static int consume_event(struct parser_state *s, yaml_event_t *event)
 {
 	char *value;
 	Hkl3DObject *object;
@@ -496,7 +552,7 @@ int consume_event(struct parser_state *s, yaml_event_t *event)
 		switch (event->type) {
 		case YAML_SCALAR_EVENT:
 			value = (char *)event->data.scalar.value;
-			if (hkl3d_contains_model(s->hkl3d, value)) {
+			if (hkl3d_config_contains_model(s->config, value)) {
 				fprintf(stderr, "Warning: [%s] already loaded previously.\n", value);
 			}else{
 				if (s->fname) {
@@ -507,7 +563,7 @@ int consume_event(struct parser_state *s, yaml_event_t *event)
 				if (debug){
 					fprintf (stdout, "Adding [%s] model.\n", value);
 				}
-				s->model = hkl3d_add_model_from_file(s->hkl3d, value, s->dir);
+				s->model = hkl3d_config_add_model_from_file(s->config, value, s->dir);
 			}
 			s->state = STATE_FKEY;
 			break;
@@ -563,10 +619,10 @@ int consume_event(struct parser_state *s, yaml_event_t *event)
 			}
 			break;
 		case YAML_MAPPING_END_EVENT:
-			object = hkl3d_get_object_by_id(s->hkl3d, s->fname, s->oid);
+			object = hkl3d_config_get_object_by_id(s->config, s->fname, s->oid);
 			if (nullptr != object){
 				s->n_objects++; /* one more object */
-				hkl3d_object_axis_name_set(object, s->oname);
+				//hkl3d_object_axis_name_set(object, s->oname);
 				hkl3d_object_transformation_set(object, s->otransformation);
 				hkl3d_object_hide_set(object, s->ohide);
 			} else {
@@ -678,7 +734,7 @@ int consume_event(struct parser_state *s, yaml_event_t *event)
 	return SUCCESS;
 }
 
-int hkl3d_load_config(Hkl3D *self, const char *filename)
+static int hkl3d_load_config(Hkl3DConfig *self, const char *filename)
 {
 	int code = EXIT_FAILURE;
 	int status;
@@ -687,7 +743,7 @@ int hkl3d_load_config(Hkl3D *self, const char *filename)
 	yaml_parser_t parser;
 
 	memset(&state, 0, sizeof(state));
-	state.hkl3d = self;
+	state.config = self;
 	state.dir = g_path_get_dirname(filename);
 	state.state = STATE_START;
 
@@ -724,7 +780,7 @@ int hkl3d_load_config(Hkl3D *self, const char *filename)
 	} while (state.state != STATE_STOP);
 
 	if (debug){
-		hkl3d_fprintf(stdout, self);
+		hkl3d_config_fprintf(stdout, self);
 	}
 
 	code = EXIT_SUCCESS;
@@ -741,11 +797,11 @@ out_release_dir:
 	return code;
 }
 
-void hkl3d_save_config(Hkl3D *self, const char *filename)
+void hkl3d_save_config(Hkl3DConfig *self, const char *filename)
 {
 	Hkl3DModel **model;
 
-	darray_foreach(model, self->config->models){
+	darray_foreach(model, self->models){
 		char number[64];
 		int properties1, key1, value1,seq0;
 		int root;
@@ -845,7 +901,7 @@ void hkl3d_save_config(Hkl3D *self, const char *filename)
 						       YAML_PLAIN_SCALAR_STYLE);
 			value = yaml_document_add_scalar(&output_document,
 							 nullptr,
-							 (yaml_char_t *)(*object)->axis_name,
+							 (yaml_char_t *)"",
 							 -1,
 							 YAML_PLAIN_SCALAR_STYLE);
 			yaml_document_append_mapping_pair(&output_document,properties,key,value);
@@ -899,4 +955,21 @@ void hkl3d_save_config(Hkl3D *self, const char *filename)
 		yaml_document_delete(&output_document);
 		yaml_emitter_delete(&emitter);
 	}
+}
+
+
+Hkl3DConfig* hkl3d_config_new(const char *filename)
+{
+	Hkl3DConfig* self = nullptr;
+
+	self = g_new(Hkl3DConfig, 1);
+	if(!self)
+		return nullptr;
+
+	self->filename = filename;
+	darray_init(self->models);
+
+	hkl3d_load_config(self, filename);
+
+	return self;
 }
