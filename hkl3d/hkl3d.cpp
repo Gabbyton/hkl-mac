@@ -543,30 +543,29 @@ void hkl3d_axis_fprintf(FILE *f, const Hkl3DAxis *self)
 
 static Hkl3DGeometry *hkl3d_geometry_new(HklGeometry *geometry)
 {
-	uint i;
+	HklParameter **axis;
 	Hkl3DGeometry *self = nullptr;
 
 	self = g_new0 (Hkl3DGeometry, 1);
 
 	self->geometry = geometry;
-	self->axes = g_new0(Hkl3DAxis*, darray_size(geometry->axes));
-
-	for(i=0; i<darray_size(geometry->axes); ++i)
-		self->axes[i] = hkl3d_axis_new();
+	darray_init(self->axes);
+	darray_foreach(axis, geometry->axes){
+		darray_append(self->axes, hkl3d_axis_new());
+	}
 
 	return self;
 }
 
 static void hkl3d_geometry_free(Hkl3DGeometry *self)
 {
-	uint i;
+	g_return_if_fail (NULL != self);
 
-	if(!self)
-		return;
-
-	for(i=0; i<darray_size(self->geometry->axes); ++i)
-		hkl3d_axis_free(self->axes[i]);
-	free(self->axes);
+	Hkl3DAxis **axis;
+	darray_foreach(axis, self->axes){
+		hkl3d_axis_free(*axis);
+	}
+	darray_free(self->axes);
 	free(self);
 }
 
@@ -596,7 +595,7 @@ static void hkl3d_geometry_apply_transformations(Hkl3DGeometry *self)
 			/* apply the quaternion transformation to the bullet object */
 			/* use the bullet library to compute the OpenGL matrix */
 			/* apply this matrix to the G3DObject for the visualisation */
-			darray_foreach(object,  self->axes[idx]->objects){
+			darray_foreach(object,  darray_item(self->axes, idx)->objects){
 				(*object)->btObject->getWorldTransform().setRotation(btQ);
 				(*object)->btObject->getWorldTransform().getOpenGLMatrix( G3DM );
 				memcpy((*object)->transformation.raw, &G3DM[0], sizeof(G3DM));
@@ -612,9 +611,9 @@ void hkl3d_geometry_fprintf(FILE *f, const Hkl3DGeometry *self)
 
 	fprintf(f, "Hkl3DGeometry (geometry=%p, axes=[", self->geometry);
 	// TODO hkl_geometry_fprintf(f, self->geometry);
-	for(size_t i=0; i<darray_size(self->geometry->axes); ++i){
+	for(size_t i=0; i<darray_size(self->axes); ++i){
 		if(i) fprintf(f, ", ");
-		hkl3d_axis_fprintf(f, self->axes[i]);
+		hkl3d_axis_fprintf(f, darray_item(self->axes, i));
 	}
 	fprintf(f, "])");
 }
@@ -624,7 +623,7 @@ static Hkl3DAxis *hkl3d_geometry_axis_get(Hkl3DGeometry *self, const char *name)
 	for(size_t i=0; i<darray_size(self->geometry->axes); ++i){
 		if (!strcmp(hkl_parameter_name_get(darray_item(self->geometry->axes, i)),
 			    name))
-			return self->axes[i];
+			return darray_item(self->axes, i);
 	}
 	return nullptr;
 }

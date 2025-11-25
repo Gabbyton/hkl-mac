@@ -44,9 +44,6 @@ extern "C" {
 	typedef struct _Hkl3DGeometry Hkl3DGeometry;
 	typedef struct _Hkl3D Hkl3D;
 
-	typedef darray(Hkl3DObject *) darray_object;
-	typedef darray(Hkl3DModel *) darray_model;
-
 	/**************/
 	/* Hkl3DStats */
 	/**************/

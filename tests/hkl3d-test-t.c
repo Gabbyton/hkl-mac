@@ -31,6 +31,7 @@ static void check_model_validity(Hkl3D *hkl3d)
 	uint i, j;
 	uint len;
 	int res;
+	Hkl3DAxis **axis;
 	Hkl3DObject *obji;
 	Hkl3DObject *objj;
 
@@ -56,8 +57,9 @@ static void check_model_validity(Hkl3D *hkl3d)
 	}
 
 	/* check the _movingObjects validity, all Hkl3DAxis must have a size of 1 */
-	for(i=0; i<6; ++i)
-		res &= DIAG(darray_size(hkl3d->geometry->axes[i]->objects) == 1);
+	darray_foreach(axis, hkl3d->geometry->axes){
+		res &= DIAG(darray_size((*axis)->objects) == 1);
+	}
 
 	ok(res == TRUE, "no identical objects");
 }

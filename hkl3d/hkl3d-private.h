@@ -42,7 +42,6 @@ struct btTriangleMesh;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 	typedef struct _Shader {
 		GLuint program;
 	} Shader;
@@ -60,6 +59,8 @@ extern "C" {
 	/***************/
 	/* Hkl3DObject */
 	/***************/
+
+	typedef darray(Hkl3DObject *) darray_object;
 
 	struct _Hkl3DObject
 	{
@@ -84,11 +85,13 @@ extern "C" {
 	/* Hkl3DModel */
 	/**************/
 
+	typedef darray(Hkl3DModel *) darray_model;
+
 	struct _Hkl3DModel
 	{
 		char *filename;
 		const struct aiScene *scene;
-		darray_object objects;
+		darray_object objects; /* owner of the objects */
 	};
 
 	/***************/
@@ -105,6 +108,8 @@ extern "C" {
 	/* Hkl3DAxis */
 	/*************/
 
+	typedef darray(Hkl3DAxis *) darray_axis;
+
 	struct _Hkl3DAxis
 	{
 		darray_object objects; /* connected object */
@@ -117,7 +122,7 @@ extern "C" {
 	struct _Hkl3DGeometry
 	{
 		HklGeometry *geometry; /* weak reference */
-		Hkl3DAxis **axes;
+		darray_axis axes;
 	};
 
 	/*********/
