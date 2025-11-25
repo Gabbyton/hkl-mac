@@ -345,19 +345,52 @@ void hkl3d_object_fprintf(FILE *f, const Hkl3DObject *self)
 /* Hkl3DModel */
 /**************/
 
-static Hkl3DModel *hkl3d_model_new(const char *filename)
+/*
+ * Initialize the bullet collision environment.
+ * create the Hkl3DObjects
+ * create the Hkl3DConfig
+ */
+static Hkl3DModel *hkl3d_model_new_from_file(const char *filename)
 {
-	g_return_val_if_fail (NULL != filename, nullptr);
+	g_return_val_if_fail(NULL != filename, nullptr);
 
-	Hkl3DModel *self = nullptr;
+	unsigned int i;
+	Hkl3DModel *self;
+	const struct aiScene *scene;
+
+	scene = aiImportFile(filename,
+			     aiProcess_CalcTangentSpace
+			     | aiProcess_Triangulate
+			     | aiProcess_JoinIdenticalVertices
+			     | aiProcess_SortByPType);
+
+	if (nullptr == scene) {
+		fprintf(stdout, "\n%s", aiGetErrorString());
+		goto out;
+	}
+
+	/* aiExportScene(scene, "glb2", g_strdup_printf("%s.glb", filename), 0); */
 
 	self = g_new0 (Hkl3DModel, 1);
-
-	self->filename = strdup(filename); /* TODO load the scene from here */
-	self->scene = nullptr;
+	self->filename = g_strdup(filename);
+	self->scene = scene;
 	darray_init(self->objects);
 
+	/* keep only the mesh with triangles */
+	for(i=0; i<scene->mNumMeshes; ++i){
+		const struct aiMesh *mesh = scene->mMeshes[i];
+		if (mesh->mPrimitiveTypes == aiPrimitiveType_TRIANGLE){
+			Hkl3DObject *object = hkl3d_object_new(self, i);
+
+			if (nullptr != object)
+				darray_append(self->objects, object);
+		}
+	}
+
 	return self;
+
+out:
+	return nullptr;
 }
 
 const char *
@@ -411,54 +444,6 @@ void hkl3d_model_fprintf(FILE *f, const Hkl3DModel *self)
 	fprintf(f, "])");
 }
 
-/*
- * Initialize the bullet collision environment.
- * create the Hkl3DObjects
- * create the Hkl3DConfig
- */
-static Hkl3DModel *hkl3d_model_new_from_file(const char *filename)
-{
-	unsigned int i;
-	Hkl3DModel *self = nullptr;
-	const struct aiScene *scene;
-
-	g_return_val_if_fail(NULL != filename, nullptr);
-
-	scene = aiImportFile(filename,
-			     aiProcess_CalcTangentSpace
-			     | aiProcess_Triangulate
-			     | aiProcess_JoinIdenticalVertices
-			     | aiProcess_SortByPType);
-
-	if (nullptr == scene) {
-		fprintf(stdout, "\n%s", aiGetErrorString());
-		goto out;
-	}
-
-	/* ai_scene_fprintf(stdout, scene); */
-	/* aiExportScene(scene, "glb2", g_strdup_printf("%s.glb", filename), 0); */
-
-	self = hkl3d_model_new(filename);
-	if (nullptr == self)
-		goto out;
-
-	self->scene = scene;
-
-	/* keep only the mesh with triangles */
-	for(i=0; i<scene->mNumMeshes; ++i){
-		const struct aiMesh *mesh = scene->mMeshes[i];
-		if (mesh->mPrimitiveTypes == aiPrimitiveType_TRIANGLE){
-			Hkl3DObject *object = hkl3d_object_new(self, i);
-
-			if (nullptr != object)
-				darray_append(self->objects, object);
-		}
-	}
-
-	return self;
-out:
-	return nullptr;
-}
 
 /**************/
 /* Hkl3DStats */
