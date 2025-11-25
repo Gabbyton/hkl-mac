@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Joseph Adams <joeyadams3.14159@gmail.com>
+ * Copyright (C) 2011, 2025 Joseph Adams <joeyadams3.14159@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -278,9 +278,16 @@ typedef darray(unsigned long)  darray_ulong;
 		} \
 	} while(0)
 
-#define darray_realloc(arr, newAlloc) do { \
-		(arr).item = (typeof((arr).item))realloc((arr).item, ((arr).alloc = (newAlloc)) * sizeof(*(arr).item)); \
-	} while(0)
+#define darray_realloc(arr, newAlloc) do {                              \
+                void *tmp = realloc((arr).item, (newAlloc) * sizeof(*(arr).item)); \
+                if (NULL == tmp && 0 != (newAlloc) ) {                  \
+                        abort();                                        \
+                }else{                                                  \
+                        (arr).item = (typeof((arr).item)) tmp;          \
+                        (arr).alloc = (newAlloc);                       \
+                }                                                       \
+        } while(0)
+
 #define darray_growalloc(arr, need) do { \
 		size_t need_ = (need); \
 		if (need_ > (arr).alloc) \

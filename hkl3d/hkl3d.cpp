@@ -485,9 +485,7 @@ static Hkl3DAxis *hkl3d_axis_new(void)
 	Hkl3DAxis *self = nullptr;
 
 	self = g_new0 (Hkl3DAxis, 1);
-
-	self->objects = nullptr; /* do not own the objects */
-	self->len = 0;
+	darray_init(self->objects); /* dos not own the objects */
 
 	return self;
 }
@@ -497,7 +495,7 @@ static void hkl3d_axis_free(Hkl3DAxis *self)
 	if(!self)
 		return;
 
-	free(self->objects);
+	darray_free(self->objects);
 	free(self);
 }
 
@@ -505,29 +503,25 @@ static void hkl3d_axis_free(Hkl3DAxis *self)
 static void hkl3d_axis_attach_object(Hkl3DAxis *self, Hkl3DObject *object)
 {
 	object->axis = self;
-	self->objects = (Hkl3DObject **)realloc(self->objects, sizeof(*self->objects) * (self->len + 1));
-	self->objects[self->len++] = object;
+	darray_append(self->objects, object);
 }
 
 /* should be optimized (useless if the Hkl3DObject had a connection with the Hkl3DAxis */
 static void hkl3d_axis_detach_object(Hkl3DAxis *self, Hkl3DObject *object)
 {
+	g_return_if_fail (NULL != self);
+	g_return_if_fail (NULL != object);
+	g_return_if_fail (self == object->axis);
+
 	size_t i;
 
-	if(!self || !object)
-		return;
-
-	if(self != object->axis)
-		return;
-
 	/* find the index of the object in the object list */
-	for(i=0; self->objects[i] != object; ++i);
-
-	object->axis = nullptr;
-	/* move all above objects of 1 position */
-	self->len--;
-	if(i < self->len)
-		memmove(object, object+1, sizeof(object) * (self->len - i));
+	for(i=0; i<darray_size(self->objects); ++i){
+		if (darray_item(self->objects, i) == object){
+			object->axis = nullptr;
+			darray_remove(self->objects, i);
+		}
+	}
 }
 
 void hkl3d_axis_fprintf(FILE *f, const Hkl3DAxis *self)
@@ -536,9 +530,9 @@ void hkl3d_axis_fprintf(FILE *f, const Hkl3DAxis *self)
 	g_return_if_fail (nullptr != self);
 
 	fprintf(f, "Hkl3DAxis (objects=[");
-	for(size_t i=0; i<self->len; ++i){
+	for(size_t i=0; i<darray_size(self->objects); ++i){
 		if(i) fprintf (f, ", ");
-		fprintf (f, "%p", self->objects[i]);
+		fprintf (f, "%p", darray_item(self->objects, i));
 	}
 	fprintf(f, "])");
 }
@@ -590,6 +584,7 @@ static void hkl3d_geometry_apply_transformations(Hkl3DGeometry *self)
 			size_t idx = (*holder)->config->idx[j];
 			const HklQuaternion *q = hkl_parameter_quaternion_get(darray_item(self->geometry->axes, idx));
 			float G3DM[16];
+			Hkl3DObject **object;
 
 			/* conversion beetween hkl -> bullet coordinates */
 			btQ *= btQuaternion(q->data[1],
@@ -601,10 +596,10 @@ static void hkl3d_geometry_apply_transformations(Hkl3DGeometry *self)
 			/* apply the quaternion transformation to the bullet object */
 			/* use the bullet library to compute the OpenGL matrix */
 			/* apply this matrix to the G3DObject for the visualisation */
-			for(k=0; k<self->axes[idx]->len; ++k){
-				self->axes[idx]->objects[k]->btObject->getWorldTransform().setRotation(btQ);
-				self->axes[idx]->objects[k]->btObject->getWorldTransform().getOpenGLMatrix( G3DM );
-				memcpy(self->axes[idx]->objects[k]->transformation.raw, &G3DM[0], sizeof(G3DM));
+			darray_foreach(object,  self->axes[idx]->objects){
+				(*object)->btObject->getWorldTransform().setRotation(btQ);
+				(*object)->btObject->getWorldTransform().getOpenGLMatrix( G3DM );
+				memcpy((*object)->transformation.raw, &G3DM[0], sizeof(G3DM));
 			}
 		}
 	}

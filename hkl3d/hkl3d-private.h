@@ -107,8 +107,7 @@ extern "C" {
 
 	struct _Hkl3DAxis
 	{
-		Hkl3DObject **objects; /* connected object */
-		size_t len;
+		darray_object objects; /* connected object */
 	};
 
 	/*****************/
