@@ -63,6 +63,7 @@ import           Data.Aeson                        (FromJSON (..), ToJSON (..))
 import           Data.Int                          (Int32)
 import           Data.Kind                         (Type)
 import           Data.Text                         (Text, unpack)
+import           Data.Typeable                     (Typeable, typeOf)
 import           Data.Vector.Storable              (Vector, fromList)
 import           Data.Vector.Storable.Mutable      (IOVector, replicate,
                                                     unsafeNew)
@@ -323,7 +324,7 @@ instance (GDataSourcePath f g, GDataSourcePath f' g') => GDataSourcePath (f :*: 
         g'withDataSourceP file f' $ \path' g' ->
             gg (path :*: path') (g :*: g')
 
-instance (Show (a DSPath), DataSource a) => GDataSourcePath (K1 i [a DSPath]) (K1 i (a DSAcq)) where
+instance (Show (a DSPath), Typeable (a DSPath), DataSource a) => GDataSourcePath (K1 i [a DSPath]) (K1 i (a DSAcq)) where
     g'withDataSourceP file (K1 acqs) gg =
         withDataSourcesP file acqs $ \acq dat ->
             gg (K1 [acq]) (K1 dat)
@@ -349,15 +350,19 @@ class DataSource d where
                             => ScanFile l -> d DSPath -> (d DSPath -> d DSAcq -> m r) -> m r
     withDataSourceP = generic'withDataSourceP
 
-withDataSourcesP :: (DataSource d, Location l, MonadSafe m, Show (d DSPath))
+withDataSourcesP :: (DataSource d, Location l, MonadSafe m, Show (d DSPath), Typeable (d DSPath))
                  => ScanFile l -> [d DSPath] -> (d DSPath -> d DSAcq -> m r) -> m r
-withDataSourcesP f paths g = go paths
+withDataSourcesP f paths g = go paths []
   where
-    go [] = throwM $ HklDataSourceException'NoRemainingDataPath (show paths)
-    go (s : ss) =  withDataSourceP f s g `catch` \(exl :: HklDataSourceException) ->
-                   case exl of
-                     HklDataSourceException'NoRemainingDataPath _ -> throwM exl
-                     _                                            -> go ss
+    msg = (show . typeOf $ paths)
+    go [] acc = throwM $ HklDataSourceException'NoRemainingDataPath (msg <> show paths : acc)
+    go (s : ss) acc = withDataSourceP f s g `catch` \(exl :: HklDataSourceException) ->
+                      case exl of
+                        HklDataSourceException'NoRemainingDataPath prev -> do
+                                 if null ss
+                                 then throwM $ HklDataSourceException'NoRemainingDataPath (msg : prev)
+                                 else go ss prev
+                        _ -> go ss acc
 
 -- DataSource (instances)
 

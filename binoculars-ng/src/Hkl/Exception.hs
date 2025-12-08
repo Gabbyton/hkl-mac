@@ -52,7 +52,7 @@ data HklDataSourceException
   = CanNotOpenDataSource'Double'Ini Section Key
   | CanNotOpenDataSource'Or HklDataSourceException HklDataSourceException
   | HklDataSourceException'HklH5Exception HklH5Exception
-  | HklDataSourceException'NoRemainingDataPath String
+  | HklDataSourceException'NoRemainingDataPath [String]
   deriving (Show, Typeable)
 
 instance Exception HklDataSourceException

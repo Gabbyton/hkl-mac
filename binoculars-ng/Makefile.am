@@ -206,4 +206,6 @@ sixs: binoculars-ng
 #	$(PROCESS) /nfs/ruche/sixs-soleil/com-sixs/2025/Run4/Cheng-Long_20250900/binoculars/config_stereo.cfg 339
 #	$(PROCESS) /nfs/ruche/sixs-soleil/com-sixs/2025/Run4/Cheng-Long_20250900/binoculars/config_stereo.cfg 340
 #	$(PROCESS) data/test/config_sixs_ruche_20241687.ini 46
-	$(PROCESS) data/test/config_sixs_ruche_20241687_gisaxs.ini 94
+#	$(PROCESS) data/test/config_sixs_ruche_20241687_gisaxs.ini 94
+#	$(PROCESS) data/test/config_sixs_ruche_20241687.ini 95-99
+	$(PROCESS) /nfs/ruche/sixs-soleil/com-sixs/2025/Run3/Coati_AgNi322/binoculars/config.cfg 377-390
