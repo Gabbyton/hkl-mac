@@ -96,10 +96,13 @@ static btCollisionObject * btObject_from_shape(btCollisionShape* shape)
 }
 
 
-Hkl3DBulletObject *hkl3d_bullet_object_new(const struct aiMesh *mesh)
+Hkl3DBulletObject *
+hkl3d_bullet_object_new(Hkl3DObject *object)
 {
 	Hkl3DBulletObject *self = g_new0 (Hkl3DBulletObject, 1);
+	auto mesh = object->model->scene->mMeshes[object->mesh];
 
+	self->object = object;
 	self->meshes = trimesh_from_aiMesh(mesh);
 	self->btShape = shape_from_trimesh(self->meshes, false);
 	self->btObject = btObject_from_shape(self->btShape);
@@ -155,12 +158,17 @@ Hkl3DBullet *hkl3d_bullet_new(const Hkl3DGeometry *geometry)
 					      self->_btCollisionConfiguration);
 
 	/* populate the collision world with all objects of the geometry */
+	darray_init(self->bobjects);
 	darray_foreach(axis, geometry->axes){
 		darray_foreach(object, (*axis)->objects){
-			hkl3d_bullet_collision_object_add (self, *object);
+			/* bullet */
+			Hkl3DBulletObject *bobject = hkl3d_bullet_object_new(*object);
+
+			darray_append(self->bobjects, bobject);
+			self->_btWorld->addCollisionObject(bobject->btObject);
+			(*object)->added = true;
 		}
 	}
-
 
 	return self;
 }
@@ -168,6 +176,14 @@ Hkl3DBullet *hkl3d_bullet_new(const Hkl3DGeometry *geometry)
 void
 hkl3d_bullet_free(Hkl3DBullet *self)
 {
+	Hkl3DBulletObject **bobject;
+
+	darray_foreach(bobject, self->bobjects){
+		self->_btWorld->removeCollisionObject((*bobject)->btObject);
+		hkl3d_bullet_object_free (*bobject);
+	}
+	darray_free(self->bobjects);
+
 	if (self->_btWorld)
 		delete self->_btWorld;
 	if (self->_btBroadphase)
@@ -179,26 +195,22 @@ hkl3d_bullet_free(Hkl3DBullet *self)
 
 }
 
-void
-hkl3d_bullet_collision_object_remove(Hkl3DBullet *self, Hkl3DObject *object)
+void hkl3d_bullet_apply_transformations(Hkl3DBullet *self)
 {
-	self->_btWorld->removeCollisionObject(object->bullet->btObject);
-	object->added = false;
+	Hkl3DBulletObject **bobject;
+
+	darray_foreach(bobject, self->bobjects){
+		(*bobject)->btObject->getWorldTransform().setFromOpenGLMatrix( &(*bobject)->object->transformation.raw[0][0] );
+	}
 }
 
-void
-hkl3d_bullet_collision_object_add(Hkl3DBullet *self, Hkl3DObject *object)
-{
-	self->_btWorld->addCollisionObject(object->bullet->btObject);
-	object->added = true;
-}
 
 bool
 hkl3d_bullet_perform_collision (Hkl3DBullet *self, Hkl3DConfig *config)
 {
 	int numManifolds;
 	Hkl3DModel **model;
-	Hkl3DObject **object;
+	Hkl3DBulletObject **bobject;
 
 	self->_btWorld->performDiscreteCollisionDetection();
 	self->_btWorld->updateAabbs();
@@ -206,14 +218,13 @@ hkl3d_bullet_perform_collision (Hkl3DBullet *self, Hkl3DConfig *config)
 	numManifolds = self->_btDispatcher->getNumManifolds();
 
 	/* update Hkl3DObject collision from manifolds */
-	darray_foreach(model, config->models){
-		darray_foreach(object, (*model)->objects){
-			(*object)->is_colliding = FALSE;
-			for(int k=0; k<numManifolds; ++k){
-				btPersistentManifold *manifold = self->_btDispatcher->getManifoldByIndexInternal(k);
-				(*object)->is_colliding |= (*object)->bullet->btObject == manifold->getBody0();
-				(*object)->is_colliding |= (*object)->bullet->btObject == manifold->getBody1();
-			}
+	darray_foreach(bobject, self->bobjects){
+		(*bobject)->object->is_colliding = FALSE;
+
+		for(int k=0; k<numManifolds; ++k){
+			btPersistentManifold *manifold = self->_btDispatcher->getManifoldByIndexInternal(k);
+			(*bobject)->object->is_colliding |= (*bobject)->btObject == manifold->getBody0();
+			(*bobject)->object->is_colliding |= (*bobject)->btObject == manifold->getBody1();
 		}
 	}
 

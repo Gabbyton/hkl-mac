@@ -250,7 +250,6 @@ static void hkl3d_axis_apply_transformation_to_objects(Hkl3DAxis *self, const Hk
 
 	darray_foreach(object, self->objects){
 		(*object)->transformation = transformation;
-		(*object)->bullet->btObject->getWorldTransform().setFromOpenGLMatrix( &transformation.raw[0][0] );
 	}
 }
 

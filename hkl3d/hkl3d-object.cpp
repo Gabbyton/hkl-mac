@@ -132,9 +132,6 @@ Hkl3DObject *hkl3d_object_new(Hkl3DModel *model, unsigned int mesh)
 	self->selected = false;
 	self->transformation = GLMS_MAT4_IDENTITY; /* todo importe from the node */
 
-	/* bullet */
-	self->bullet = hkl3d_bullet_object_new(model->scene->mMeshes[self->mesh]);
-
 	/* OpenGL */
 	self->vao = 0;
 
@@ -145,8 +142,6 @@ void hkl3d_object_free(Hkl3DObject *self)
 {
 	if(!self)
 		return;
-
-	hkl3d_bullet_object_free (self->bullet);
 
 	free(self);
 }
@@ -166,7 +161,7 @@ void hkl3d_object_aabb_get(const Hkl3DObject *self, float from[3], float to[3])
 {
 	btVector3 min, max;
 
-	self->bullet->btShape->getAabb(self->bullet->btObject->getWorldTransform(), min, max);
+//	self->bullet->btShape->getAabb(self->bullet->btObject->getWorldTransform(), min, max);
 
 	from[0] = min.getX();
 	from[1] = min.getY();

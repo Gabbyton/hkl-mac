@@ -37,7 +37,8 @@ static void hkl3d_apply_transformations(Hkl3D *self)
 
 	/* set the right transformation of each objects and get numbers */
 	gettimeofday(&debut, nullptr);
-	hkl3d_geometry_apply_transformations(self->geometry);
+	hkl3d_geometry_apply_transformations (self->geometry);
+	hkl3d_bullet_apply_transformations (self->bullet);
 	gettimeofday(&fin, nullptr);
 	timersub(&fin, &debut, &self->stats.transformation);
 }
@@ -75,28 +76,6 @@ void hkl3d_free(Hkl3D *self)
 	hkl3d_geometry_free (self->geometry);
 	hkl3d_config_free (self->config);
 	free (self);
-}
-
-/**
- * Hkl3D::hide_object:
- *
- * update the visibility of an Hkl3DObject in the bullet world
- * add or remove the object from the _btWorld depending on the hide
- * member of the object.
- **/
-void hkl3d_hide_object(Hkl3D *self, Hkl3DObject *object, int hide)
-{
-	object->hide = hide;
-
-	if (true == object->hide){
-		if (true == object->added){
-			hkl3d_bullet_collision_object_remove(self->bullet, object);
-		}
-	}else{
-		if (false == object->added){
-			hkl3d_bullet_collision_object_add(self->bullet, object);
-		}
-	}
 }
 
 int hkl3d_is_colliding(Hkl3D *self)

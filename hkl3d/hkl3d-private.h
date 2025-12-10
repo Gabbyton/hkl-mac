@@ -60,14 +60,17 @@ extern "C" {
 	/* Hkl3DBulletObject */
 	/*********************/
 
+	typedef darray(Hkl3DBulletObject *) darray_bobject;
+
 	struct _Hkl3DBulletObject
 	{
+		Hkl3DObject *object;
 		struct btCollisionObject *btObject;
 		struct btCollisionShape *btShape;
 		struct btTriangleMesh *meshes;
 	};
 
-	Hkl3DBulletObject *hkl3d_bullet_object_new(const struct aiMesh *mesh);
+	Hkl3DBulletObject *hkl3d_bullet_object_new(Hkl3DObject *object);
 	void hkl3d_bullet_object_free(Hkl3DBulletObject *self);
 	void hkl3d_bullet_object_fprintf(FILE *f, const Hkl3DBulletObject *self);
 
@@ -87,7 +90,6 @@ extern "C" {
 		int draw_aabb;
 		int selected;
 		int movable;
-		Hkl3DBulletObject *bullet; /* TODO remove */
 		GLuint vao;
 		CGLM_ALIGN_MAT mat4s transformation;
 	};
@@ -162,13 +164,12 @@ extern "C" {
 		struct btBroadphaseInterface *_btBroadphase;
 		struct btCollisionWorld *_btWorld;
 		struct btCollisionDispatcher *_btDispatcher;
+		darray_bobject bobjects;
 	};
 
 	Hkl3DBullet *hkl3d_bullet_new (const Hkl3DGeometry *geometry);
 	void hkl3d_bullet_free (Hkl3DBullet *self);
-
-	void hkl3d_bullet_collision_object_add (Hkl3DBullet *self, Hkl3DObject *object);
-	void hkl3d_bullet_collision_object_remove (Hkl3DBullet *self, Hkl3DObject *object);
+	void hkl3d_bullet_apply_transformations(Hkl3DBullet *self);
 	void hkl3d_bullet_get_collision_coordinates(const Hkl3DBullet *self,
 						    int manifold, int contact,
 						    double *xa, double *ya, double *za,
