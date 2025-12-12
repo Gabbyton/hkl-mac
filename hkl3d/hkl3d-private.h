@@ -64,13 +64,13 @@ extern "C" {
 
 	struct _Hkl3DBulletObject
 	{
-		Hkl3DObject *object;
+		Hkl3DAxis *axis;
+		Hkl3DObject *object; /* for the transformation */
 		struct btCollisionObject *btObject;
 		struct btCollisionShape *btShape;
 		struct btTriangleMesh *meshes;
 	};
 
-	Hkl3DBulletObject *hkl3d_bullet_object_new(Hkl3DObject *object);
 	void hkl3d_bullet_object_free(Hkl3DBulletObject *self);
 	void hkl3d_bullet_object_fprintf(FILE *f, const Hkl3DBulletObject *self);
 

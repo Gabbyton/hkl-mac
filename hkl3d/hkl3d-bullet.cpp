@@ -34,24 +34,37 @@
 /* Hkl3DBulletObject */
 /*********************/
 
-static btTriangleMesh *trimesh_from_aiMesh(const struct aiMesh *mesh)
+static btTriangleMesh *trimesh_from_axis(Hkl3DAxis *axis)
 {
 	unsigned int i;
+	Hkl3DObject **object;
 	btTriangleMesh *trimesh;
 
 	trimesh = new btTriangleMesh();
-	trimesh->preallocateVertices(mesh->mNumVertices);
-	for(i=0; i<mesh->mNumFaces; ++i){
-		btVector3 vertex0 (mesh->mVertices[mesh->mFaces[i].mIndices[0]].x,
-				   mesh->mVertices[mesh->mFaces[i].mIndices[0]].y,
-				   mesh->mVertices[mesh->mFaces[i].mIndices[0]].z);
-		btVector3 vertex1 (mesh->mVertices[mesh->mFaces[i].mIndices[1]].x,
-				   mesh->mVertices[mesh->mFaces[i].mIndices[1]].y,
-				   mesh->mVertices[mesh->mFaces[i].mIndices[1]].z);
-		btVector3 vertex2 (mesh->mVertices[mesh->mFaces[i].mIndices[2]].x,
-				   mesh->mVertices[mesh->mFaces[i].mIndices[2]].y,
-				   mesh->mVertices[mesh->mFaces[i].mIndices[2]].z);
-		trimesh->addTriangle(vertex0, vertex1, vertex2, true);
+
+	int mNumVertices = 0;
+	darray_foreach (object, axis->objects){
+		const struct aiMesh *mesh = (*object)->model->scene->mMeshes[(*object)->mesh];
+
+		mNumVertices += mesh->mNumVertices;
+	}
+	trimesh->preallocateVertices(mNumVertices);
+
+	darray_foreach (object, axis->objects){
+		const struct aiMesh *mesh = (*object)->model->scene->mMeshes[(*object)->mesh];
+
+		for(i=0; i<mesh->mNumFaces; ++i){
+			btVector3 vertex0 (mesh->mVertices[mesh->mFaces[i].mIndices[0]].x,
+					   mesh->mVertices[mesh->mFaces[i].mIndices[0]].y,
+					   mesh->mVertices[mesh->mFaces[i].mIndices[0]].z);
+			btVector3 vertex1 (mesh->mVertices[mesh->mFaces[i].mIndices[1]].x,
+					   mesh->mVertices[mesh->mFaces[i].mIndices[1]].y,
+					   mesh->mVertices[mesh->mFaces[i].mIndices[1]].z);
+			btVector3 vertex2 (mesh->mVertices[mesh->mFaces[i].mIndices[2]].x,
+					   mesh->mVertices[mesh->mFaces[i].mIndices[2]].y,
+					   mesh->mVertices[mesh->mFaces[i].mIndices[2]].z);
+			trimesh->addTriangle(vertex0, vertex1, vertex2, true);
+		}
 	}
 
 	return trimesh;
@@ -96,16 +109,19 @@ static btCollisionObject * btObject_from_shape(btCollisionShape* shape)
 }
 
 
-Hkl3DBulletObject *
-hkl3d_bullet_object_new(Hkl3DObject *object)
+static Hkl3DBulletObject *
+hkl3d_bullet_object_new(Hkl3DAxis *axis)
 {
-	Hkl3DBulletObject *self = g_new0 (Hkl3DBulletObject, 1);
-	auto mesh = object->model->scene->mMeshes[object->mesh];
+	Hkl3DBulletObject *self = nullptr;
 
-	self->object = object;
-	self->meshes = trimesh_from_aiMesh(mesh);
-	self->btShape = shape_from_trimesh(self->meshes, false);
-	self->btObject = btObject_from_shape(self->btShape);
+	if (darray_size(axis->objects) > 0){
+		self = g_new0 (Hkl3DBulletObject, 1);
+		self->axis = axis;
+		self->object = darray_item(axis->objects, 0);
+		self->meshes = trimesh_from_axis(axis);
+		self->btShape = shape_from_trimesh(self->meshes, false);
+		self->btObject = btObject_from_shape(self->btShape);
+	}
 
 	return self;
 }
@@ -127,10 +143,13 @@ void hkl3d_bullet_object_fprintf(FILE *f, const Hkl3DBulletObject *self)
 {
 	GSList *faces;
 
-	fprintf(f, "Hkl3dBulletObject (", self);
-	fprintf(f, "btObject=%p, ", self->btObject);
-	fprintf(f, "btShape=%p, ", self->btShape);
-	fprintf(f, "meshes=%p), ", self->meshes);
+	fprintf (f, "Hkl3dBulletObject (", self);
+	fprintf (f, "axis=%p, ", self->axis);
+	fprintf (f, "object=%p, ", self->object);
+	fprintf (f, "object->is_colliding=%d, ", self->object->is_colliding);
+	fprintf (f, "btObject=%p, ", self->btObject);
+	fprintf (f, "btShape=%p, ", self->btShape);
+	fprintf (f, "meshes=%p), ", self->meshes);
 }
 
 /***************/
@@ -160,13 +179,11 @@ Hkl3DBullet *hkl3d_bullet_new(const Hkl3DGeometry *geometry)
 	/* populate the collision world with all objects of the geometry */
 	darray_init(self->bobjects);
 	darray_foreach(axis, geometry->axes){
-		darray_foreach(object, (*axis)->objects){
-			/* bullet */
-			Hkl3DBulletObject *bobject = hkl3d_bullet_object_new(*object);
+		Hkl3DBulletObject *bobject = hkl3d_bullet_object_new(*axis);
 
+		if (nullptr != bobject){
 			darray_append(self->bobjects, bobject);
 			self->_btWorld->addCollisionObject(bobject->btObject);
-			(*object)->added = true;
 		}
 	}
 
@@ -209,7 +226,7 @@ bool
 hkl3d_bullet_perform_collision (Hkl3DBullet *self, Hkl3DConfig *config)
 {
 	int numManifolds;
-	Hkl3DModel **model;
+	Hkl3DObject **object;
 	Hkl3DBulletObject **bobject;
 
 	self->_btWorld->performDiscreteCollisionDetection();
@@ -217,16 +234,24 @@ hkl3d_bullet_perform_collision (Hkl3DBullet *self, Hkl3DConfig *config)
 
 	numManifolds = self->_btDispatcher->getNumManifolds();
 
+	fprintf (stdout, "numManifolds=%d\n", numManifolds);
+
 	/* update Hkl3DObject collision from manifolds */
 	darray_foreach(bobject, self->bobjects){
-		(*bobject)->object->is_colliding = FALSE;
+			int is_colliding = FALSE;
 
-		for(int k=0; k<numManifolds; ++k){
-			btPersistentManifold *manifold = self->_btDispatcher->getManifoldByIndexInternal(k);
-			(*bobject)->object->is_colliding |= (*bobject)->btObject == manifold->getBody0();
-			(*bobject)->object->is_colliding |= (*bobject)->btObject == manifold->getBody1();
-		}
+			for(int k=0; k<numManifolds; ++k){
+				btPersistentManifold *manifold = self->_btDispatcher->getManifoldByIndexInternal(k);
+				is_colliding |= (*bobject)->btObject == manifold->getBody0();
+				is_colliding |= (*bobject)->btObject == manifold->getBody1();
+			}
+
+			darray_foreach (object, (*bobject)->axis->objects) {
+				(*object)->is_colliding = is_colliding;
+			}
 	}
+
+	hkl3d_bullet_fprintf(stdout, self);
 
 	return numManifolds != 0;
 }
@@ -254,9 +279,20 @@ hkl3d_bullet_get_collision_coordinates(const Hkl3DBullet *self, int manifold, in
 void
 hkl3d_bullet_fprintf(FILE *f, const Hkl3DBullet *self)
 {
+	int i = 0;
+	Hkl3DBulletObject **bobject;
+
 	fprintf(f, "Hkl3DBullet (");
-	fprintf(f, "_btCollisionConfiguration=%p", self->_btCollisionConfiguration);
-	fprintf(f, ", _btBroadphase=%p", self->_btBroadphase);
-	fprintf(f, ", _btWorld=%p", self->_btWorld);
-	fprintf(f, ", _btDispatcher=%p)", self->_btDispatcher);
+	fprintf(f, "btCollisionConfiguration=%p", self->_btCollisionConfiguration);
+	fprintf(f, ", btBroadphase=%p", self->_btBroadphase);
+	fprintf(f, ", btWorld=%p", self->_btWorld);
+	fprintf(f, ", btDispatcher=%p)", self->_btDispatcher);
+	fprintf(f, ", bobjects=[");
+	darray_foreach(bobject, self->bobjects){
+		if (i++)
+			fprintf(f, ", ");
+		hkl3d_bullet_object_fprintf(f, *bobject);
+	}
+	fprintf(f , "])\n");
+
 }

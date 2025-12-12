@@ -23,7 +23,3 @@ hkl3d_DATA = $(EXTRA_DIST)
 
 export-all-model:
 	scp $(blends) people.debian.org:public_html/hkl3d/
-
-import-all-model:
-	scp people.debian.org:public_html/hkl3d/*.blend .
-	scp -r people.debian.org:Cristal .
