@@ -394,9 +394,9 @@ static void hkl3d_gl_draw_object(const Hkl3DObject *object, Shader *shader)
 	static unsigned int n_vec3 = 3;
 	const struct aiScene *scene = object->model->scene;
 	const struct aiMesh *mesh = scene->mMeshes[object->mesh];
-	CGLM_ALIGN_MAT vec3s ambient;
-	CGLM_ALIGN_MAT vec3s diffuse;
-	CGLM_ALIGN_MAT vec3s specular;
+	CGLM_ALIGN_MAT vec3s ambient = GLM_VEC3_ZERO_INIT;
+	CGLM_ALIGN_MAT vec3s diffuse = GLM_VEC3_ZERO_INIT;
+	CGLM_ALIGN_MAT vec3s specular = GLM_VEC3_ZERO_INIT;
 	GLfloat shininess = 12;
 	GLfloat alpha = object->is_colliding == 0 ? 1.0 : 0.5;;
 
@@ -404,7 +404,7 @@ static void hkl3d_gl_draw_object(const Hkl3DObject *object, Shader *shader)
 	aiGetMaterialFloatArray(material, AI_MATKEY_COLOR_AMBIENT, ambient.raw, &n_vec3);
 	aiGetMaterialFloatArray(material, AI_MATKEY_COLOR_DIFFUSE, diffuse.raw, &n_vec3);
 	aiGetMaterialFloatArray(material, AI_MATKEY_COLOR_SPECULAR, specular.raw, &n_vec3);
-	aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, specular.raw);
+	aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &shininess);
 
 	/* set the uniforms */
 	set_uniform_mat4s(shader, "model", object->transformation);
