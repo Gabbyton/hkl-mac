@@ -596,7 +596,7 @@ hkl_gui_3d_gl_area_render_cb(GtkGLArea *area,
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	/* Draw scenes */
-	hkl3d_gl_draw_models(self->hkl3d);
+	hkl3d_gl_draw (self->hkl3d);
 
 	/* Flush the contents of the pipeline */
 	glFlush ();

@@ -357,17 +357,29 @@ draw_aabb(const float from[3], const float to[3], const float color[4])
 	glDeleteVertexArrays(1, &vao);
 }
 
-static void hkl3d_gl_draw_object_aabb(const Hkl3DObject *self, Shader *shader)
+static void hkl3d_gl_draw_bullet_object (const Hkl3DBulletObject *self, Shader *shader)
 {
 	GLfloat from[3];
 	GLfloat to[3];
 	GLfloat color[4] = {1, 0, 0, 0.8};
 
-	if(hkl3d_object_hide_get(self))
-		return;
+	if (self->draw_aabb){
+		hkl3d_bullet_object_aabb_get(self, from, to);
+		draw_aabb(from, to, color);
+	}
+}
 
-	hkl3d_object_aabb_get(self, from, to);
-	draw_aabb(from, to, color);
+static void hkl3d_gl_draw_aabb (Hkl3D *self)
+{
+	Hkl3DBulletObject **bobject;
+	CGLM_ALIGN_MAT mat4s identity = {GLM_MAT4_IDENTITY_INIT};
+
+	/* the aabb object are expressed in world coordinates */
+	set_uniform_mat4s(&self->shader, "model", identity);
+
+	darray_foreach(bobject, self->bullet->bobjects){
+		hkl3d_gl_draw_bullet_object (*bobject, &self->shader);
+	}
 }
 
 /***********************/
@@ -376,18 +388,12 @@ static void hkl3d_gl_draw_object_aabb(const Hkl3DObject *self, Shader *shader)
 
 void hkl3d_gl_draw_aabb_set(Hkl3D *self, bool aabb)
 {
-	Hkl3DModel **model;
-	Hkl3DObject **object;
+	Hkl3DBulletObject **bobject;
 
-	darray_foreach(model, self->config->models){
-		darray_foreach(object, (*model)->objects){
-			hkl3d_object_draw_aabb_set(*object, aabb);
-		}
+	darray_foreach(bobject, self->bullet->bobjects){
+		hkl3d_bullet_object_draw_aabb_set(*bobject, aabb);
 	}
-
-	glUseProgram (0);
 }
-
 
 static void hkl3d_gl_draw_object(const Hkl3DObject *object, Shader *shader)
 {
@@ -417,21 +423,12 @@ static void hkl3d_gl_draw_object(const Hkl3DObject *object, Shader *shader)
 	glBindVertexArray (object->vao);
 	glDrawElements (GL_TRIANGLES, mesh->mNumFaces * 3, GL_UNSIGNED_INT, 0);
 	glBindVertexArray (0);
-
-	if (object->draw_aabb)
-		hkl3d_gl_draw_object_aabb(object, shader);
-
 }
 
-void hkl3d_gl_draw_models(Hkl3D *self)
+static void hkl3d_gl_draw_models(Hkl3D *self)
 {
-	int i;
-	static unsigned int n_vec3 = 3;
-
 	Hkl3DModel **model;
 	Hkl3DObject **object;
-
-	glUseProgram (self->shader.program);
 
 	/* remove all objects from the collision world */
 	darray_foreach(model, self->config->models){
@@ -439,6 +436,14 @@ void hkl3d_gl_draw_models(Hkl3D *self)
 			hkl3d_gl_draw_object(*object, &self->shader);
 		}
 	}
+}
+
+void hkl3d_gl_draw (Hkl3D *self)
+{
+	glUseProgram (self->shader.program);
+
+	hkl3d_gl_draw_models (self);
+	hkl3d_gl_draw_aabb (self);
 
 	glUseProgram (0);
 }

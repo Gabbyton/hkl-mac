@@ -123,7 +123,6 @@ Hkl3DObject *hkl3d_object_new(Hkl3DModel *model, unsigned int mesh)
 
 	/* fill the hkl3d object structure. */
 	self->added = false;
-	self->draw_aabb = false;
 	self->hide = false;
 	self->is_colliding = false;
 	self->mesh = mesh;
@@ -154,26 +153,6 @@ static void matrix_fprintf(FILE *f, const float matrix[])
 			fprintf(f, " %6.3f", matrix[4 * i + j]);
 		}
 	}
-}
-
-/* TODO move this elsewhere */
-void hkl3d_object_aabb_get(const Hkl3DObject *self, float from[3], float to[3])
-{
-	btVector3 min, max;
-
-//	self->bullet->btShape->getAabb(self->bullet->btObject->getWorldTransform(), min, max);
-
-	from[0] = min.getX();
-	from[1] = min.getY();
-	from[2] = min.getZ();
-	to[0] = max.getX();
-	to[1] = max.getY();
-	to[2] = max.getZ();
-}
-
-void hkl3d_object_draw_aabb_set(Hkl3DObject *self, bool draw_aabb)
-{
-	self->draw_aabb = draw_aabb;
 }
 
 void hkl3d_object_transformation_set(Hkl3DObject *self, mat4s transformation)

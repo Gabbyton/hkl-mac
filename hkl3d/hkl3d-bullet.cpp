@@ -118,6 +118,7 @@ hkl3d_bullet_object_new(Hkl3DAxis *axis)
 		self = g_new0 (Hkl3DBulletObject, 1);
 		self->axis = axis;
 		self->object = darray_item(axis->objects, 0);
+		self->draw_aabb = false;
 		self->meshes = trimesh_from_axis(axis);
 		self->btShape = shape_from_trimesh(self->meshes, false);
 		self->btObject = btObject_from_shape(self->btShape);
@@ -139,6 +140,26 @@ void hkl3d_bullet_object_free(Hkl3DBulletObject *self)
 	}
 }
 
+void hkl3d_bullet_object_aabb_get(const Hkl3DBulletObject *self,
+				  float from[3], float to[3])
+{
+	btVector3 min, max;
+
+	self->btShape->getAabb(self->btObject->getWorldTransform(), min, max);
+
+	from[0] = min.getX();
+	from[1] = min.getY();
+	from[2] = min.getZ();
+	to[0] = max.getX();
+	to[1] = max.getY();
+	to[2] = max.getZ();
+}
+
+void hkl3d_bullet_object_draw_aabb_set(Hkl3DBulletObject *self, bool draw_aabb)
+{
+	self->draw_aabb = draw_aabb;
+}
+
 void hkl3d_bullet_object_fprintf(FILE *f, const Hkl3DBulletObject *self)
 {
 	GSList *faces;
@@ -149,7 +170,7 @@ void hkl3d_bullet_object_fprintf(FILE *f, const Hkl3DBulletObject *self)
 	fprintf (f, "object->is_colliding=%d, ", self->object->is_colliding);
 	fprintf (f, "btObject=%p, ", self->btObject);
 	fprintf (f, "btShape=%p, ", self->btShape);
-	fprintf (f, "meshes=%p), ", self->meshes);
+	fprintf (f, "meshes=%p)", self->meshes);
 }
 
 /***************/

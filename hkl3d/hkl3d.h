@@ -57,9 +57,7 @@ extern "C" {
 	/* Hkl3DObject */
 	/***************/
 
-	HKLAPI extern void hkl3d_object_aabb_get(const Hkl3DObject *self, float from[3], float to[3]);
 	HKLAPI extern void hkl3d_object_axis_name_set(Hkl3DObject *self, const char *axis_name); /* TODO remove not a good idea */
-	HKLAPI extern void hkl3d_object_draw_aabb_set(Hkl3DObject *self, bool aabb);
 	HKLAPI extern bool hkl3d_object_hide_get(const Hkl3DObject *self);
 	HKLAPI extern void hkl3d_object_hide_set(Hkl3DObject *self, bool hide);
 	HKLAPI extern void hkl3d_object_transformation_set(Hkl3DObject *self, mat4s transformation);
@@ -125,9 +123,9 @@ extern "C" {
 
 	/* Opengl */
 	HKLAPI void hkl3d_gl_draw_aabb_set(Hkl3D *self, bool aabb);
-	HKLAPI void hkl3d_gl_draw_models(Hkl3D *self);
-	HKLAPI void hkl3d_gl_init(Hkl3D *self);
-	HKLAPI void hkl3d_gl_resize(Hkl3D *self, gint width, gint height);
+	HKLAPI void hkl3d_gl_draw (Hkl3D *self);
+	HKLAPI void hkl3d_gl_init (Hkl3D *self);
+	HKLAPI void hkl3d_gl_resize (Hkl3D *self, gint width, gint height);
 
 
 #ifdef __cplusplus

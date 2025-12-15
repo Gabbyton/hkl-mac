@@ -66,11 +66,15 @@ extern "C" {
 	{
 		Hkl3DAxis *axis;
 		Hkl3DObject *object; /* for the transformation */
+		int draw_aabb;
 		struct btCollisionObject *btObject;
 		struct btCollisionShape *btShape;
 		struct btTriangleMesh *meshes;
 	};
 
+	void hkl3d_bullet_object_aabb_get(const Hkl3DBulletObject *self,
+					  float from[3], float to[3]);
+	void hkl3d_bullet_object_draw_aabb_set(Hkl3DBulletObject *self, bool aabb);
 	void hkl3d_bullet_object_free(Hkl3DBulletObject *self);
 	void hkl3d_bullet_object_fprintf(FILE *f, const Hkl3DBulletObject *self);
 
@@ -87,7 +91,6 @@ extern "C" {
 		int is_colliding;
 		int hide;
 		int added;
-		int draw_aabb;
 		int selected;
 		int movable;
 		GLuint vao;
