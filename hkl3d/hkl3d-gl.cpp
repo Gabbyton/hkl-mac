@@ -226,6 +226,10 @@ static Shader init_shader()
 	view = glms_lookat(viewPos, center, up);
 	set_uniform_mat4s(&shader, "view", view);
 
+	/* default model */
+	CGLM_ALIGN_MAT mat4s model = GLMS_MAT4_IDENTITY_INIT;
+	set_uniform_mat4s(&shader, "model", model);
+
 	/* dir light */
 	set_uniform_make_vec3s(&shader, "dirLight.direction", -0.2, -1.0, -0.3);
         set_uniform_make_vec3s(&shader, "dirLight.ambient", 0.05, 0.05, 0.05);
@@ -273,114 +277,6 @@ static Shader init_shader()
 	return shader;
 }
 
-
-/*********************/
-/* Hkl3D OpenGL AABB */
-/*********************/
-
-static void
-draw_aabb(const float from[3], const float to[3], const float color[4])
-{
-	GLfloat vertexes[7 * 2 * 12]; /* position, color(RGB) */
-	GLfloat *v;
-
-	float halfExtents[3] = {
-		(to[0] - from[0]) * .5f,
-		(to[1] - from[1]) * .5f,
-		(to[2] - from[2]) * .5f
-	};
-	float center[3] = {
-		(to[0] + from[0]) * .5f,
-		(to[1] + from[1]) * .5f,
-		(to[2] + from[2]) * .5f
-	};
-	int i, j;
-
-	float edgecoord[3] = {1., 1., 1.};
-
-	v = &vertexes[0];
-	for (i=0;i<4;i++){
-		for (j=0;j<3;j++){
-			/* position */
-			v[0] = (edgecoord[0] * halfExtents[0] + center[0]) / 1;
-			v[1] = (edgecoord[1] * halfExtents[1] + center[1]) / 1;
-			v[2] = (edgecoord[2] * halfExtents[2] + center[2]) / 1;
-
-			/* color */
-			v[3] = color[0];
-			v[4] = color[1];
-			v[5] = color[2];
-			v[6] = color[3];
-
-			int othercoord = j % 3;
-			edgecoord[othercoord] *= -1.f;
-
-			/* position */
-			v[7] = (edgecoord[0] * halfExtents[0] + center[0]) / 1;
-			v[8] = (edgecoord[1] * halfExtents[1] + center[1]) / 1;
-			v[9] = (edgecoord[2] * halfExtents[2] + center[2]) / 1;
-
-			/* color */
-			v[10] = color[0];
-			v[11] = color[1];
-			v[12] = color[2];
-			v[13] = color[3];
-
-			v = v + 14;
-		}
-		edgecoord[0] = -1;
-		edgecoord[1] = -1;
-		edgecoord[2] = -1;
-		if (i < 3)
-			edgecoord[i] *= -1;
-	}
-
-	GLuint vbo = 0;
-	glGenBuffers( 1, &vbo );
-	glBindBuffer( GL_ARRAY_BUFFER, vbo );
-	glBufferData( GL_ARRAY_BUFFER, (7 * 2 * 12) * sizeof( float ), vertexes, GL_STATIC_DRAW );
-
-	GLuint vao = 0;
-	glGenVertexArrays( 1, &vao );
-	glBindVertexArray( vao );
-
-	glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof (GLfloat), NULL );
-	glEnableVertexAttribArray( 0 );
-
-	/* glVertexAttribPointer (1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof (GLfloat), (void *)(3 * sizeof (GLfloat)) ); */
-	/* glEnableVertexAttribArray( 1 ); */
-
-	// Draw points 0-3 from the currently bound VAO with current in-use shader.
-	glDrawArrays (GL_LINES, 0, 2 * 12);
-
-	glDeleteBuffers(1, &vbo);
-	glDeleteVertexArrays(1, &vao);
-}
-
-static void hkl3d_gl_draw_bullet_object (const Hkl3DBulletObject *self, Shader *shader)
-{
-	GLfloat from[3];
-	GLfloat to[3];
-	GLfloat color[4] = {1, 0, 0, 0.8};
-
-	if (self->draw_aabb){
-		hkl3d_bullet_object_aabb_get(self, from, to);
-		draw_aabb(from, to, color);
-	}
-}
-
-static void hkl3d_gl_draw_aabb (Hkl3D *self)
-{
-	Hkl3DBulletObject **bobject;
-	CGLM_ALIGN_MAT mat4s identity = {GLM_MAT4_IDENTITY_INIT};
-
-	/* the aabb object are expressed in world coordinates */
-	set_uniform_mat4s(&self->shader, "model", identity);
-
-	darray_foreach(bobject, self->bullet->bobjects){
-		hkl3d_gl_draw_bullet_object (*bobject, &self->shader);
-	}
-}
 
 /***********************/
 /* Hkl3D OpenGL model  */
@@ -438,12 +334,21 @@ static void hkl3d_gl_draw_models(Hkl3D *self)
 	}
 }
 
+static void hkl3d_gl_draw_debug (Hkl3D *self)
+{
+	CGLM_ALIGN_MAT mat4s identity = GLMS_MAT4_IDENTITY_INIT;
+
+	set_uniform_mat4s(&self->shader, "model", identity);
+	hkl3d_bullet_gl_draw_debug (self->bullet);
+}
+
 void hkl3d_gl_draw (Hkl3D *self)
 {
 	glUseProgram (self->shader.program);
 
 	hkl3d_gl_draw_models (self);
-	hkl3d_gl_draw_aabb (self);
+
+	hkl3d_gl_draw_debug (self);
 
 	glUseProgram (0);
 }

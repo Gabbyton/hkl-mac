@@ -30,6 +30,60 @@
 #include "BulletCollision/Gimpact/btGImpactShape.h"
 
 
+class Hkl3DDebug : public btIDebugDraw
+{
+	void drawLine(const btVector3& from, const btVector3& to, const btVector3& color)
+		{
+			GLfloat vertexes[] = {
+				from.x(), from.y(), from.z(), color.x(), color.y(), color.z(),
+				to.x(), to.y(), to.z(), color.x(), color.y(), color.z(),
+			};
+
+			GLuint vbo = 0;
+			glGenBuffers( 1, &vbo );
+			glBindBuffer( GL_ARRAY_BUFFER, vbo );
+			glBufferData( GL_ARRAY_BUFFER, (6 * 2) * sizeof( float ), vertexes, GL_STATIC_DRAW );
+
+			GLuint vao = 0;
+			glGenVertexArrays( 1, &vao );
+			glBindVertexArray( vao );
+
+			glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof (GLfloat), NULL );
+			glEnableVertexAttribArray( 0 );
+
+			glDrawArrays (GL_LINES, 0, 2 * 1);
+
+			glDeleteBuffers(1, &vbo);
+			glDeleteVertexArrays(1, &vao);
+		}
+
+	void reportErrorWarning(const char* warningString)
+		{
+			fprintf (stdout, "%s\n", warningString);
+		};
+
+	void draw3dText(const btVector3& location, const char* textString)
+		{
+			fprintf (stdout, "%s\n", textString);
+		};
+
+	void setDebugMode(int debugMode) {};
+
+	int getDebugMode() const { return DBG_DrawWireframe | DBG_DrawAabb | DBG_DrawContactPoints; }
+
+	void drawContactPoint(const btVector3& PointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime, const btVector3& color)
+		{
+			drawSphere (PointOnB, distance, color);
+			drawLine (PointOnB, PointOnB + normalOnB * distance, color);
+		};
+
+};
+
+void hkl3d_bullet_gl_draw_debug (Hkl3DBullet *self)
+{
+	self->_btWorld->debugDrawWorld();
+}
+
 /*********************/
 /* Hkl3DBulletObject */
 /*********************/
@@ -63,7 +117,7 @@ static btTriangleMesh *trimesh_from_axis(Hkl3DAxis *axis)
 			btVector3 vertex2 (mesh->mVertices[mesh->mFaces[i].mIndices[2]].x,
 					   mesh->mVertices[mesh->mFaces[i].mIndices[2]].y,
 					   mesh->mVertices[mesh->mFaces[i].mIndices[2]].z);
-			trimesh->addTriangle(vertex0, vertex1, vertex2, true);
+			trimesh->addTriangle(vertex0, vertex1, vertex2, false);
 		}
 	}
 
@@ -197,6 +251,9 @@ Hkl3DBullet *hkl3d_bullet_new(const Hkl3DGeometry *geometry)
 					      self->_btBroadphase,
 					      self->_btCollisionConfiguration);
 
+	auto debug = new Hkl3DDebug();
+	self->_btWorld->setDebugDrawer (debug);
+
 	/* populate the collision world with all objects of the geometry */
 	darray_init(self->bobjects);
 	darray_foreach(axis, geometry->axes){
@@ -272,7 +329,7 @@ hkl3d_bullet_perform_collision (Hkl3DBullet *self, Hkl3DConfig *config)
 			}
 	}
 
-	hkl3d_bullet_fprintf(stdout, self);
+	// hkl3d_bullet_fprintf(stdout, self);
 
 	return numManifolds != 0;
 }

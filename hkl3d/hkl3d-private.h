@@ -177,6 +177,7 @@ extern "C" {
 						    int manifold, int contact,
 						    double *xa, double *ya, double *za,
 						    double *xb, double *yb, double *zb);
+	void hkl3d_bullet_gl_draw_debug (Hkl3DBullet *self);
 	bool hkl3d_bullet_perform_collision (Hkl3DBullet *self, Hkl3DConfig *config);
 	void hkl3d_bullet_remove_all_objects (Hkl3DBullet *self, const Hkl3DConfig *config);
 
