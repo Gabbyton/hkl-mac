@@ -9,6 +9,7 @@ AM_CFLAGS = \
 	$(ASSIMP_CFLAGS) \
 	$(BULLET_CFLAGS) \
 	$(DATATYPE99_CFLAGS) \
+	$(EPOXY_CFLAGS) \
 	$(GLIB_CFLAGS) \
 	$(YAML_CFLAGS)
 
@@ -17,6 +18,7 @@ AM_CXXFLAGS=$(AM_CFLAGS)
 AM_LDFLAGS = -version-info 0:0:0 \
 	$(ASSIMP_LIBS) \
 	$(BULLET_LIBS) \
+	$(EPOXY_LIBS) \
 	$(GLIB_LIBS) \
 	$(YAML_LIBS)
 
@@ -32,7 +34,7 @@ libhkl3d_la_SOURCES = \
 libhkl3d_la_LIBADD = \
 	$(top_builddir)/hkl/libhkl-private.la
 
-noinst_HEADERS = hkl3d.h hkl3d-private.h
+noinst_HEADERS = hkl3d.h hkl3d-private.h model.glsl
 
 # Support for GNU Flymake, in Emacs.
 check-syntax: AM_CFLAGS += -fsyntax-only -pipe
