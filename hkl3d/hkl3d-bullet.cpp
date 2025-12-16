@@ -51,6 +51,9 @@ class Hkl3DDebug : public btIDebugDraw
 			glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof (GLfloat), NULL );
 			glEnableVertexAttribArray( 0 );
 
+			glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof (GLfloat), &vertexes[3] );
+			glEnableVertexAttribArray( 1 );
+
 			glDrawArrays (GL_LINES, 0, 2 * 1);
 
 			glDeleteBuffers(1, &vbo);

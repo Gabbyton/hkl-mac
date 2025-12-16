@@ -37,13 +37,13 @@
 #include "hkl-geometry-private.h"
 
 
-/**********/
-/* Shader */
-/**********/
-
 #define SHADER_VERSION_STRING "#version 300 es\n"
 #define _STRINGIFY(...) #__VA_ARGS__
 #define S(...)          _STRINGIFY(__VA_ARGS__)
+
+/**********/
+/* Shader */
+/**********/
 
 static void set_uniform_mat4s (Shader *s, const char *name, mat4s m)
 {
@@ -69,26 +69,17 @@ static void set_uniform_float(Shader *s, const char *name, float x)
 	glUniform1f(loc, x);
 }
 
-static Shader init_shader()
+
+static Shader init_shader(const char *vert_src, const char *frag_src)
 {
 	GLuint p;
 
-	const char* vertex_shader =
-#define VERT_SHADER
-#include "model.glsl"
-		;
-
-	const char* fragment_shader =
-#define FRAG_SHADER
-#include "model.glsl"
-		;
-
 	GLuint vs = glCreateShader (GL_VERTEX_SHADER);
-	glShaderSource (vs, 1, &vertex_shader, NULL );
+	glShaderSource (vs, 1, &vert_src, NULL );
 	glCompileShader (vs);
 
 	GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
-	glShaderSource (fs, 1, &fragment_shader, NULL );
+	glShaderSource (fs, 1, &frag_src, NULL );
 	glCompileShader (fs);
 
 	p = glCreateProgram();
@@ -103,7 +94,57 @@ static Shader init_shader()
 	glDeleteShader (fs);
 	glDeleteShader (vs);
 
-	glUseProgram (p);
+	return shader;
+}
+
+static Shader init_shader_bullet()
+{
+	static const char* bullet_vert =
+#define VERT_SHADER
+#include "bullet.glsl"
+		;
+
+	static const char* bullet_frag =
+#define FRAG_SHADER
+#include "bullet.glsl"
+		;
+
+	Shader shader = init_shader (bullet_vert, bullet_frag);
+
+	glUseProgram (shader.program);
+
+	/* projection */
+	CGLM_ALIGN_MAT mat4s projection = GLMS_MAT4_IDENTITY_INIT;
+	set_uniform_mat4s(&shader, "projection", projection);
+
+	/* view */
+	CGLM_ALIGN_MAT vec3s viewPos = {{0, 5, 0}};
+	CGLM_ALIGN_MAT mat4s view = GLMS_MAT4_IDENTITY_INIT;
+	CGLM_ALIGN_MAT vec3s center = GLMS_VEC3_ZERO_INIT;
+	CGLM_ALIGN_MAT vec3s up = {{0, 0, 1}};
+	view = glms_lookat(viewPos, center, up);
+	set_uniform_mat4s(&shader, "view", view);
+
+	glUseProgram (0);
+
+	return shader;
+}
+
+static Shader init_shader_model()
+{
+	static const char* model_vert =
+#define VERT_SHADER
+#include "model.glsl"
+		;
+
+	static const char* model_frag =
+#define FRAG_SHADER
+#include "model.glsl"
+		;
+
+	Shader shader = init_shader (model_vert, model_frag);
+
+	glUseProgram (shader.program);
 
 	/* projection */
 	CGLM_ALIGN_MAT mat4s projection = GLMS_MAT4_IDENTITY_INIT;
@@ -221,45 +262,49 @@ static void hkl3d_gl_draw_models(Hkl3D *self)
 	Hkl3DModel **model;
 	Hkl3DObject **object;
 
+	glUseProgram (self->shader.program);
+
 	/* remove all objects from the collision world */
 	darray_foreach(model, self->config->models){
 		darray_foreach(object, (*model)->objects){
 			hkl3d_gl_draw_object(*object, &self->shader);
 		}
 	}
+
+	glUseProgram (0);
 }
 
 static void hkl3d_gl_draw_debug (Hkl3D *self)
 {
 	CGLM_ALIGN_MAT mat4s identity = GLMS_MAT4_IDENTITY_INIT;
 
-	set_uniform_mat4s(&self->shader, "model", identity);
+	glUseProgram (self->shader_bullet.program);
+
 	hkl3d_bullet_gl_draw_debug (self->bullet);
-}
-
-void hkl3d_gl_draw (Hkl3D *self)
-{
-	glUseProgram (self->shader.program);
-
-	hkl3d_gl_draw_models (self);
-
-	hkl3d_gl_draw_debug (self);
 
 	glUseProgram (0);
 }
 
+void hkl3d_gl_draw (Hkl3D *self)
+{
+	hkl3d_gl_draw_models (self);
+	hkl3d_gl_draw_debug (self);
+}
+
 void hkl3d_gl_resize(Hkl3D *self, gint width, gint height)
 {
-	glUseProgram (self->shader.program);
-
-	glViewport(0, 0, width, height);
-
 	/* TODO store the lovation in the class */
 	CGLM_ALIGN_MAT mat4s projection = GLMS_MAT4_IDENTITY_INIT;
 	projection = glms_perspective (glm_rad(45), (GLfloat)width / (GLfloat)height, 0.1, 100);
-	glUniformMatrix4fv(glGetUniformLocation (self->shader.program, "projection"),
-			   1, GL_FALSE, projection.raw[0]);
 
+	glUseProgram (self->shader.program);
+	glViewport(0, 0, width, height);
+	set_uniform_mat4s(&self->shader, "projection", projection);
+	glUseProgram (0);
+
+	glUseProgram (self->shader_bullet.program);
+	glViewport(0, 0, width, height);
+	set_uniform_mat4s(&self->shader_bullet, "projection", projection);
 	glUseProgram (0);
 }
 
@@ -269,7 +314,8 @@ void hkl3d_gl_init(Hkl3D *self)
 	Hkl3DModel **model;
 	Hkl3DObject **object;
 
-	self->shader = init_shader();
+	self->shader = init_shader_model();
+	self->shader_bullet = init_shader_bullet();
 
 	/* initialize all OpenGL buffers */
 	darray_foreach(model, self->config->models){

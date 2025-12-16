@@ -194,6 +194,7 @@ extern "C" {
 		Hkl3DConfig *config;
 		Hkl3DBullet *bullet;
 		Shader shader;
+		Shader shader_bullet;
 	};
 
 	bool hkl3d_contains_model(const Hkl3D *self, const char * filename);
