@@ -34,7 +34,7 @@ libhkl3d_la_SOURCES = \
 libhkl3d_la_LIBADD = \
 	$(top_builddir)/hkl/libhkl-private.la
 
-noinst_HEADERS = hkl3d.h hkl3d-private.h model.glsl
+noinst_HEADERS = hkl3d.h hkl3d-private.h bullet.glsl model.glsl
 
 # Support for GNU Flymake, in Emacs.
 check-syntax: AM_CFLAGS += -fsyntax-only -pipe

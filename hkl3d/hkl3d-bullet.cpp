@@ -51,7 +51,7 @@ class Hkl3DDebug : public btIDebugDraw
 			glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof (GLfloat), NULL );
 			glEnableVertexAttribArray( 0 );
 
-			glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof (GLfloat), &vertexes[3] );
+			glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof (GLfloat), (void *)(3 * sizeof(GLfloat)) );
 			glEnableVertexAttribArray( 1 );
 
 			glDrawArrays (GL_LINES, 0, 2 * 1);
@@ -175,7 +175,6 @@ hkl3d_bullet_object_new(Hkl3DAxis *axis)
 		self = g_new0 (Hkl3DBulletObject, 1);
 		self->axis = axis;
 		self->object = darray_item(axis->objects, 0);
-		self->draw_aabb = false;
 		self->meshes = trimesh_from_axis(axis);
 		self->btShape = shape_from_trimesh(self->meshes, false);
 		self->btObject = btObject_from_shape(self->btShape);
@@ -195,26 +194,6 @@ void hkl3d_bullet_object_free(Hkl3DBulletObject *self)
 	if(self->meshes){
 		delete self->meshes;
 	}
-}
-
-void hkl3d_bullet_object_aabb_get(const Hkl3DBulletObject *self,
-				  float from[3], float to[3])
-{
-	btVector3 min, max;
-
-	self->btShape->getAabb(self->btObject->getWorldTransform(), min, max);
-
-	from[0] = min.getX();
-	from[1] = min.getY();
-	from[2] = min.getZ();
-	to[0] = max.getX();
-	to[1] = max.getY();
-	to[2] = max.getZ();
-}
-
-void hkl3d_bullet_object_draw_aabb_set(Hkl3DBulletObject *self, bool draw_aabb)
-{
-	self->draw_aabb = draw_aabb;
 }
 
 void hkl3d_bullet_object_fprintf(FILE *f, const Hkl3DBulletObject *self)
@@ -268,6 +247,8 @@ Hkl3DBullet *hkl3d_bullet_new(const Hkl3DGeometry *geometry)
 		}
 	}
 
+	self->debug = false;
+
 	return self;
 }
 
@@ -291,6 +272,11 @@ hkl3d_bullet_free(Hkl3DBullet *self)
 	if (self->_btCollisionConfiguration)
 		delete self->_btCollisionConfiguration;
 
+}
+
+void hkl3d_bullet_debug_set(Hkl3DBullet *self, bool debug)
+{
+	self->debug = debug;
 }
 
 void hkl3d_bullet_apply_transformations(Hkl3DBullet *self)

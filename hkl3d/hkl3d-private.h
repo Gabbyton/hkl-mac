@@ -66,15 +66,11 @@ extern "C" {
 	{
 		Hkl3DAxis *axis;
 		Hkl3DObject *object; /* for the transformation */
-		int draw_aabb;
 		struct btCollisionObject *btObject;
 		struct btCollisionShape *btShape;
 		struct btTriangleMesh *meshes;
 	};
 
-	void hkl3d_bullet_object_aabb_get(const Hkl3DBulletObject *self,
-					  float from[3], float to[3]);
-	void hkl3d_bullet_object_draw_aabb_set(Hkl3DBulletObject *self, bool aabb);
 	void hkl3d_bullet_object_free(Hkl3DBulletObject *self);
 	void hkl3d_bullet_object_fprintf(FILE *f, const Hkl3DBulletObject *self);
 
@@ -167,12 +163,14 @@ extern "C" {
 		struct btBroadphaseInterface *_btBroadphase;
 		struct btCollisionWorld *_btWorld;
 		struct btCollisionDispatcher *_btDispatcher;
+		int debug;
 		darray_bobject bobjects;
 	};
 
 	Hkl3DBullet *hkl3d_bullet_new (const Hkl3DGeometry *geometry);
 	void hkl3d_bullet_free (Hkl3DBullet *self);
 	void hkl3d_bullet_apply_transformations(Hkl3DBullet *self);
+	void hkl3d_bullet_debug_set(Hkl3DBullet *self, bool debug);
 	void hkl3d_bullet_get_collision_coordinates(const Hkl3DBullet *self,
 						    int manifold, int contact,
 						    double *xa, double *ya, double *za,

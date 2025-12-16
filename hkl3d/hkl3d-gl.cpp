@@ -220,11 +220,7 @@ static Shader init_shader_model()
 
 void hkl3d_gl_draw_aabb_set(Hkl3D *self, bool aabb)
 {
-	Hkl3DBulletObject **bobject;
-
-	darray_foreach(bobject, self->bullet->bobjects){
-		hkl3d_bullet_object_draw_aabb_set(*bobject, aabb);
-	}
+	hkl3d_bullet_debug_set(self->bullet, aabb);
 }
 
 static void hkl3d_gl_draw_object(const Hkl3DObject *object, Shader *shader)
@@ -277,6 +273,9 @@ static void hkl3d_gl_draw_models(Hkl3D *self)
 static void hkl3d_gl_draw_debug (Hkl3D *self)
 {
 	CGLM_ALIGN_MAT mat4s identity = GLMS_MAT4_IDENTITY_INIT;
+
+	if (!self->bullet->debug)
+		return;
 
 	glUseProgram (self->shader_bullet.program);
 
