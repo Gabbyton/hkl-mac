@@ -59,8 +59,10 @@ def runner():
     # https://docs.blender.org/api/current/bpy.ops.export_scene.html#bpy.ops.export_scene.gltf
     # Parameters that you won't set will use your Blender settings
     bpy.ops.export_scene.gltf(filepath=output_path,
-                              export_yup=False)
-                              #export_format='GLTF_SEPARATE')
+                              export_yup=False,
+                              use_visible=True,
+                              #export_format='GLTF_SEPARATE',
+                              )
 
 
 if __name__ == "__main__":

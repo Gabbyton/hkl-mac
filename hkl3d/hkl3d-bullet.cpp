@@ -292,6 +292,7 @@ void hkl3d_bullet_apply_transformations(Hkl3DBullet *self)
 bool
 hkl3d_bullet_perform_collision (Hkl3DBullet *self, Hkl3DConfig *config)
 {
+	int i;
 	int numManifolds;
 	Hkl3DObject **object;
 	Hkl3DBulletObject **bobject;
@@ -307,8 +308,8 @@ hkl3d_bullet_perform_collision (Hkl3DBullet *self, Hkl3DConfig *config)
 	darray_foreach(bobject, self->bobjects){
 			int is_colliding = FALSE;
 
-			for(int k=0; k<numManifolds; ++k){
-				btPersistentManifold *manifold = self->_btDispatcher->getManifoldByIndexInternal(k);
+			for(i=0; i<numManifolds; ++i){
+				btPersistentManifold *manifold = self->_btDispatcher->getManifoldByIndexInternal(i);
 				is_colliding |= (*bobject)->btObject == manifold->getBody0();
 				is_colliding |= (*bobject)->btObject == manifold->getBody1();
 			}
@@ -316,6 +317,26 @@ hkl3d_bullet_perform_collision (Hkl3DBullet *self, Hkl3DConfig *config)
 			darray_foreach (object, (*bobject)->axis->objects) {
 				(*object)->is_colliding = is_colliding;
 			}
+	}
+
+	for(i=0; i<numManifolds; ++i){
+		btPersistentManifold *manifold = self->_btDispatcher->getManifoldByIndexInternal(i);
+
+		darray_foreach(bobject, self->bobjects){
+			if (manifold->getBody0() == (*bobject)->btObject)
+				break;
+		}
+		Hkl3DAxis *axis0 = (*bobject)->axis;
+
+		darray_foreach(bobject, self->bobjects){
+			if (manifold->getBody1() == (*bobject)->btObject)
+				break;
+		}
+		Hkl3DAxis *axis1 = (*bobject)->axis;
+		fprintf (stdout, "manifold %d: obj0=\"%s\" vs obj1=\"%s\"\n",
+			 i,
+			 axis0->node->mName.data,
+			 axis1->node->mName.data);
 	}
 
 	// hkl3d_bullet_fprintf(stdout, self);
