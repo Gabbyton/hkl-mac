@@ -1,6 +1,6 @@
 # -*- org -*-
 
-* 5.1.4 YYY-MM-DD
+* 5.1.4 2026-01-20
 ** Build system
    - It is now possible to gives a CABALFLAGS on the command line.
      The haskell code was instrumented to support a new option
