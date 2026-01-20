@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -690,7 +690,9 @@ static HklEngineList *hkl_engine_list_new_soleil_sixs_med_2_3_v2(const HklFactor
 		.range = { .min=0, .max=1 },
 	};
 	static const HklParameter *parameters[] = { &eta_a_rotation };
-	static const HklEngineListInfo info = {HKL_ENGINE_LIST_INFO(parameters)};
+	static const HklEngineListInfo info = {
+		HKL_ENGINE_LIST_INFO(parameters)
+	};
 	static const HklEngineListOperations ops = {
 		HKL_ENGINE_LIST_OPERATIONS_DEFAULTS,
 		.post_engine_set=hkl_engine_list_post_engine_set_med_2_3_v2_real,

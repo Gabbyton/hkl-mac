@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2021, 2022, 2023 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2021, 2022, 2023, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -715,7 +715,6 @@ static inline int hkl_engine_list_post_engine_set_real(UNUSED HklEngineList *sel
 static inline HklEngineList *hkl_engine_list_new_with_info(const HklEngineListInfo *info,
 							   const HklEngineListOperations *ops)
 {
-	const HklParameter **parameter;
 	HklEngineList *self = g_new(HklEngineList, 1);
 
 	/* This code needs _darray to be at start of HklEngineList */
@@ -735,9 +734,12 @@ static inline HklEngineList *hkl_engine_list_new_with_info(const HklEngineListIn
 
 	darray_init(self->parameters);
 	darray_init(self->parameters_names);
-	darray_foreach(parameter, info->parameters){
-		darray_append(self->parameters, hkl_parameter_new_copy(*parameter));
-		darray_append(self->parameters_names, (*parameter)->name);
+	for(size_t i=0; i<darray_size(self->info->parameters); ++i){
+		HklParameter *p = hkl_parameter_new_copy(darray_item(self->info->parameters, i));
+		if (NULL != p){
+			darray_append(self->parameters, p);
+			darray_append(self->parameters_names, p->name);
+		}
 	};
 
 	return self;
