@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2020, 2022 Synchrotron SOLEIL
+ * Copyright (C) 2003-2020, 2022, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -362,17 +362,15 @@ static void perm_r(size_t axes_len, size_t op_len[], int p[], size_t axes_idx,
 static int solve_function(HklEngine *self,
 			  const HklFunction *function)
 {
-
 	size_t i;
 	int p[function->size];
 	double x0[function->size];
-	int degenerated[function->size];
+	int degenerated[function->size] = {};
 	size_t op_len[function->size];
 	int res;
 	gsl_vector *_x; /* use to compute sectors in perm_r (avoid copy) */
 	gsl_vector *_f; /* use to test sectors in perm_r (avoid copy) */
 	gsl_multiroot_function f;
-	HklParameter **axis;
 
 	_x = gsl_vector_alloc(function->size);
 	_f = gsl_vector_alloc(function->size);
@@ -385,11 +383,9 @@ static int solve_function(HklEngine *self,
 	if (res) {
 		memset(p, 0, sizeof(p));
 		/* use first solution as starting point for permutations */
-		i = 0;
-		darray_foreach(axis, self->axes){
-			x0[i] = (*axis)->_value;
+		for(i=0; i<function->size; ++i){
+			x0[i] = darray_item(self->axes, i)->_value;
 			op_len[i] = degenerated[i] ? 1 : 4;
-			++i;
 		}
 		for (i=0; i<op_len[0]; ++i)
 			perm_r(function->size, op_len, p, 0, i, &f, x0, _x, _f);
@@ -447,18 +443,19 @@ int hkl_mode_auto_set_real(HklMode *self,
 			    HKL_MODE_AUTO_ERROR,
 			    HKL_MODE_AUTO_ERROR_SET,
 			    "Internal error");
-		return FALSE;
+		goto failed;
 	}
 
-	darray_foreach(function, auto_info->functions)
+	darray_foreach(function, auto_info->functions){
 		ok |= solve_function(engine, *function);
+	}
 
 	if(!ok){
 		g_set_error(error,
 			    HKL_MODE_AUTO_ERROR,
 			    HKL_MODE_AUTO_ERROR_SET,
 			    "none of the functions were solved !!!");
-		return FALSE;
+		goto failed;
 	}
 
 #ifdef DEBUG
@@ -466,6 +463,8 @@ int hkl_mode_auto_set_real(HklMode *self,
 #endif
 
 	return TRUE;
+failed:
+	return FALSE;
 }
 
 HklMode *hkl_mode_auto_with_init_new(const HklModeAutoInfo *auto_info,
