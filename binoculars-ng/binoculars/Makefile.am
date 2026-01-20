@@ -8,23 +8,19 @@ AM_CFLAGS = \
 	$(DATATYPE99_CFLAGS) \
 	$(GLIB_CFLAGS) \
 	$(GSL_CFLAGS) \
-	$(HDF5_CFLAGS) \
-	$(INIH_CFLAGS)
+	$(HDF5_CFLAGS)
 
 AM_LDFLAGS = -version-info 0:0:0 \
 	$(top_builddir)/hkl/libhkl.la \
 	$(CGLM_LIBS) \
 	$(GLIB_LIBS) \
 	$(GSL_LIBS) \
-	$(HDF5_LIBS) \
-	$(INIH_LIBS)
+	$(HDF5_LIBS)
 
 noinst_LTLIBRARIES = libhkl-binoculars.la
 libhkl_binoculars_la_SOURCES = \
 	hkl-binoculars.c \
 	hkl-binoculars.h \
-	hkl-binoculars-config.c \
-	hkl-binoculars-config-private.h \
 	hkl-binoculars-detectors-2d.c \
 	hkl-binoculars-detectors-2d-private.h \
 	hkl-binoculars-geometry.c \
@@ -45,14 +41,6 @@ libhkl_binoculars_la_SOURCES = \
 	$(top_builddir)/hkl/hkl-source.c \
 	$(top_builddir)/hkl/hkl-unit.c \
 	$(top_builddir)/hkl/hkl-vector.c
-
-#installed_mainheaderdir = $(includedir)/hkl-@VMAJ@
-#dist_installed_mainheader_DATA = hkl-binoculars.h
-
-# bin_PROGRAMS = binoculars-hkl
-# binoculars_hkl_SOURCES = \
-# 	$(libhkl_binoculars_a_SOURCES) \
-#	binoculars-hkl.c
 
 # Support for GNU Flymake, in Emacs.
 check-syntax: AM_CFLAGS += -fsyntax-only -pipe

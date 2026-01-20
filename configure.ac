@@ -179,7 +179,6 @@ AM_CONDITIONAL([BINOCULARS], [test x$enable_binoculars = xyes])
 AM_COND_IF([BINOCULARS],
            [PKG_CHECK_MODULES([HDF5], [hdf5-serial >= 1.8.13])
             PKG_CHECK_MODULES([CGLM], [cglm >= 0.7])
-            PKG_CHECK_MODULES([INIH], [inih >= 55])
             AC_PATH_PROG([CABAL], [cabal])
             if test -z "$CABAL" ; then
                AC_MSG_ERROR([cabal was not found])

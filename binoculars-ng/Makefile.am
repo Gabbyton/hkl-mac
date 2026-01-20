@@ -51,7 +51,6 @@ binoculars_ng_SOURCES=\
 	src/Hkl/Types.hs \
 	src/Hkl/Utils.hs \
         binoculars/hkl-binoculars.c \
-        binoculars/hkl-binoculars-config.c \
         binoculars/hkl-binoculars-detectors-2d.c \
         binoculars/hkl-binoculars-geometry.c \
         binoculars/hkl-binoculars-io-cnpy.c \
