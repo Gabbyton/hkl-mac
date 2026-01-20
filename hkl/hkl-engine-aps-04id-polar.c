@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2024 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2024, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  * Copyright (C) 2023-2024  UChicago Argonne, LLC
@@ -285,7 +285,7 @@ static HklMode *psi_constant_horizontal(void)
 	static const HklModeAutoInfo info = {
 		HKL_MODE_AUTO_INFO_WITH_PARAMS(
 			"psi constant horizontal", axes_r, axes_w,
-			functions, psi_constant_parameters),
+			functions, parameters),
 	};
 
 	return hkl_mode_auto_new(&info,
@@ -302,7 +302,7 @@ static HklMode *psi_constant_vertical(void)
 	static const HklModeAutoInfo info = {
 		HKL_MODE_AUTO_INFO_WITH_PARAMS(
 			"psi constant vertical", axes_r, axes_w,
-			functions, psi_constant_parameters),
+			functions, parameters),
 	};
 
 	return hkl_mode_auto_new(
