@@ -12,6 +12,8 @@
 #include "hkl/ccan/build_assert/build_assert.h"
 #include "hkl/ccan/darray/darray.h"
 
+#define MAX_HEADER_SIZE 10000
+
 #define REGEX_DESCR "'descr':\\s+'(.+)'"
 #define REGEX_FORTRAN "'fortran_order':\\s+(.+)"
 #define REGEX_SHAPE "'shape':\\s+\\((.+)\\)"
@@ -90,6 +92,8 @@ static struct descr_t parse_descr(const char *header, regmatch_t match)
         case 'f':
                 descr.elem_type = HklBinocularsNpyDouble();
                 break;
+	default:
+		abort();
         };
 
         /* elem_size */
@@ -188,7 +192,7 @@ static struct npy_t *parse_npy(FILE* fp,
                 uint16_t len;
                 res = fread(&len, 1, sizeof(len), fp);
                 assert(res == 2);
-                npy->header_len = (uint32_t)len;
+                npy->header_len = (uint32_t)len < MAX_HEADER_SIZE ? (uint32_t)len : MAX_HEADER_SIZE;
                 break;
         }
         case VERSION_2:
@@ -207,7 +211,7 @@ static struct npy_t *parse_npy(FILE* fp,
 
         /* read the header */
 
-        npy->header = malloc(npy->header_len * sizeof(char));
+        npy->header = g_new (char, npy->header_len);
         res = fread(npy->header, 1, npy->header_len, fp);
         assert(res == npy->header_len);
 
