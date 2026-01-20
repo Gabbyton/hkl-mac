@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2017 Synchrotron SOLEIL
+ * Copyright (C) 2003-2017, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  * Copyright (C) 2023      ESRF - The European Synchrotron
@@ -125,19 +125,6 @@ static HklMode *constant_eta_noncoplanar(void)
 				 &hkl_mode_operations,
 				 TRUE);
 }
-
-
-/*****************/
-/* mode readonly */
-/*****************/
-
-REGISTER_READONLY_INCIDENCE(hkl_engine_template_incidence_new,
-			    P99_PROTECT({MU, ETA, PHI}),
-			    surface_parameters_y);
-
-REGISTER_READONLY_EMERGENCE(hkl_engine_template_emergence_new,
-			    P99_PROTECT({MU, ETA, PHI, NU, DELTA}),
-			    surface_parameters_y);
 
 /***********/
 /* Engines */
