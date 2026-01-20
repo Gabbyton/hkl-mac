@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2021, 2022, 2023 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2021, 2022, 2023, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -78,25 +78,26 @@ error:
 static double hkl_geometry_list_kphi_range(const HklGeometryList *self)
 {
 	uint idx = 0;
-	double min, max;
+	double min = 0, max = 0;
 	const HklGeometryListItem *item;
 	HklParameter **axis;
 
 	/* get the kphi index */
 	item = hkl_geometry_list_items_first_get(self);
-	darray_foreach(axis, item->geometry->axes){
-		if (!strcmp((*axis)->name, "kphi"))
-			break;
-		idx++;
-	}
+	if (NULL != item && NULL != item->geometry){
+		darray_foreach(axis, item->geometry->axes){
+			if (!strcmp((*axis)->name, "kphi"))
+				break;
+			idx++;
+		}
 
-	min = max = hkl_parameter_value_get(darray_item(item->geometry->axes, idx), HKL_UNIT_USER);
-	for(;item;item = hkl_geometry_list_items_next_get(self, item)){
-		double current = hkl_parameter_value_get(darray_item(item->geometry->axes, idx), HKL_UNIT_USER);
-		min = current < min ? current : min;
-		max = current >= max ? current : max;
+		min = max = hkl_parameter_value_get(darray_item(item->geometry->axes, idx), HKL_UNIT_USER);
+		for(;item;item = hkl_geometry_list_items_next_get(self, item)){
+			double current = hkl_parameter_value_get(darray_item(item->geometry->axes, idx), HKL_UNIT_USER);
+			min = current < min ? current : min;
+			max = current >= max ? current : max;
+		}
 	}
-
 	return max - min;
 }
 
