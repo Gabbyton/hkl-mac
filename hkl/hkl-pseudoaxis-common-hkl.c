@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022, 2025 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2025, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -132,7 +132,7 @@ static int fit_detector_position(HklMode *mode,
 	params.geometry = geometry;
 	params.detector = detector;
 	params.kf0 = kf;
-	params.axes = malloc(sizeof(*params.axes) * detector_holder->config->len);
+	params.axes = g_new (HklParameter *, detector_holder->config->len);
 	params.len = 0;
 	/* for each axis of the mode */
 	darray_foreach(axis_name, mode->info->axes_w){
