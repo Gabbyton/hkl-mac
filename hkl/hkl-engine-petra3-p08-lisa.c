@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  * Copyright (C) 2017      DESY
@@ -352,7 +352,7 @@ static const HklModeOperations hkl_mode_hkl_petra3_p08_lisa_operations = {
 	HKL_MODE_HKL_PETRA3_P08_LISA_OPERATIONS_DEFAULTS,
 };
 
-static const char* hkl_geometry_petra3_p08_lisa_axes[] = {MCHI, SPHI, DTTH, DH, DROT};
+UNUSED static const char* hkl_geometry_petra3_p08_lisa_axes[] = {MCHI, SPHI, DTTH, DH, DROT};
 
 static HklHolder *hkl_geometry_petra3_p08_lisa_sample_holder_get_real(const HklGeometry *geometry,
 								      const HklSample *sample)
@@ -400,7 +400,7 @@ static HklVector hkl_geometry_petra3_p08_lisa_kf_get_real(const HklGeometry *geo
 		.ki_get = hkl_geometry_petra3_p08_lisa_ki_get_real,	\
 		.kf_get = hkl_geometry_petra3_p08_lisa_kf_get_real
 
-static HklGeometry *hkl_geometry_new_petra3_p08_lisa(const HklFactory *factory)
+UNUSED static HklGeometry *hkl_geometry_new_petra3_p08_lisa(const HklFactory *factory)
 {
 	static HklGeometryOperations ops = {HKL_GEOMETRY_PETRA3_P08_LISA_OPERATIONS_DEFAULTS};
 	HklGeometry *self = hkl_geometry_new(factory, &ops);
@@ -635,8 +635,6 @@ HklEngine *hkl_engine_lisa_pm_new(HklEngineList *engines)
 
 }
 
-
-
 /***********/
 /* Engines */
 /***********/
@@ -659,7 +657,7 @@ static HklEngine *hkl_engine_petra3_p08_lisa_hkl_new(HklEngineList *engines)
 	return self;
 }
 
-static HklEngine *hkl_engine_petra3_p08_lisa_pm_new(HklEngineList *engines)
+UNUSED static HklEngine *hkl_engine_petra3_p08_lisa_pm_new(HklEngineList *engines)
 {
 	HklEngine *self;
 	HklMode *default_mode;
@@ -678,7 +676,7 @@ static HklEngine *hkl_engine_petra3_p08_lisa_pm_new(HklEngineList *engines)
 /* Engine list */
 /***************/
 
-static HklEngineList *hkl_engine_list_new_petra3_p08_lisa(const HklFactory *factory)
+UNUSED static HklEngineList *hkl_engine_list_new_petra3_p08_lisa(const HklFactory *factory)
 {
 
 	HklEngineList *self = hkl_engine_list_new();
