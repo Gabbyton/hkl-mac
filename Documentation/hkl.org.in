@@ -3,6 +3,7 @@
 #+EMAIL: picca at synchrotron dash soleil dot fr
 #+AUTHOR: Wermeille Didier
 #+EMAIL: wermeille at esrf dot fr
+#+OPTIONS: H:3 num:1
 #+LANGUAGE: en
 #+STYLE: <style>table.center {margin-left:auto; margin- right:auto;}</style>
 #+HTML_HEAD: <link href="css/style.css" rel="stylesheet" type="text/css" />
@@ -585,13 +586,13 @@
    - [[https://developer.gnome.org/glib/][GLib-2.0 >= 2.3.4]]
 
    First you need to generate the autotools files via
-   
+
    #+BEGIN_SRC sh
      ./autogen.sh
    #+END_SRC
 
    Then you can compile the minimal library with thses commands
-   
+
    #+BEGIN_SRC sh
      ./configure --disable-gui
      make
@@ -879,182 +880,7 @@
    (first solution of the geometries list)
    #+END_QUOTE
 * Releases
-** @VERSION@
-** 5.0.0.3381 <2023-11-21 mar.>
-*** DONE fix for real the HklLattice segfault <2023-11-21 mar.>
-*** DONE added the [qx_qy|qx_qz|qy_qz]_timestamp custom projection to binoculars-ng <2023-11-20 Mon>
-*** DONE added the q_sampleaxis_timestamp custom projection to binoculars-ng <2023-11-17 Fri>
-*** DONE fix the segfault when trying to create a non valid HklLattice <2023-11-17 Fri>
-** 5.0.0.2661 <2020-10-02 Fri>
-*** DONE Only finite float values are allow when setting an HklParameter value or range.
-    When using =hkl_parameter_value_set= or
-    =hkl_parameter_min_max_set= functions it is not allowed to use the
-    float =NaN=, =-Inf=, =+Inf= value.
-*** DONE use python3 instead of python2 for unit tests
-    In order to prepare the removal of python2 for Debian 11, we
-    switched the unit test. The remaining part is during the build of
-    the documentation. The best would be to report a bug against emacs
-    in order to set python3 as default python interpreter.
-*** DONE Added the Soleil Nanoscopium robot setup.
-** 5.0.0.2456 <2018-02-22 Thu>
-*** DONE add emergence on all e4c diffractometers <2017-03-16 Thu>
-    The emergence pseudo axis was added to =SOLEIL MARS= and =E4CV=
-*** DONE Fix for multiarch (headers) <2016-05-04 mer.>
-    The =ccan_config.h= generated file is arch specific. It is then
-    necessary to install this file under /usr/include/<triplet> on
-    Debian like systems. This way it will be possible to co-installa
-    32/64 bit version of hkl, or to do cross-compilation (arm on
-    x86_64, etc...)
-*** DONE Fix the FTBFS with the new bullet 2.86.1 version <2017-08-13 dim.>
-    In order to update the internal structures of =Hkl3DObject= (the
-    =is-colliding= member), we were using a callback which became
-    un-effective with this new version of bullet. The logic was
-    rewritten in order to be much more efficient using the manifold
-    informations. Now we iterate on =Hkl3DObject= object only once
-    (n) complexity instead of (n²) with the previous one.
-*** DONE Added "SOLEIL SIXS MED2+3 v2" geometry <2019-03-29 Fri>
-    This diffractometer contains a global HklEngineList parameter in
-    order to activate or not the rotation of the Detector. A new
-    public API was added in order to deal with these parameters.
-#+BEGIN_SRC c
-  const darray_string *hkl_engine_list_parameters_names_get(const HklEngineList *self);
-
-  const HklParameter *hkl_engine_list_parameter_get(const HklEngineList *self, const char *name,
-                                                    GError **error);
-
-  int hkl_engine_list_parameter_set(HklEngineList *self,
-                                    const char *name, const HklParameter *parameter,
-                                    GError **error);
-
-  void hkl_engine_list_parameters_values_get(const HklEngineList *self,
-                                             double values[], size_t n_values,
-                                             HklUnitEnum unit_type);
-
-  int hkl_engine_list_parameters_values_set(HklEngineList *self,
-                                            double values[], size_t n_values,
-                                            HklUnitEnum unit_type, GError **error);
-#+END_SRC
-
-And also available via the Python binding.
-
-#+BEGIN_SRC python :export code
-  engines = factory.create_new_engine_list()
-
-  # get parameters names
-  names = engines.parameters_names_get()
-
-  # get the parameters values
-  values = engines.parameters_values_get(Hkl.UnitEnum.USER)
-
-  # set the parameters values
-  engines.parameters_values_set(values, Hkl.UnitEnum.USER)
-#+END_SRC
-
-** 5.0.0.2080 <2016-04-27 mer.>
-*** DONE =HklEngine= <2016-01-20 mer.>
-    emergence_fixed for the SOLEIL SIX MED 2+2 geometry.
-*** DONE =HklVector= <2016-02-09 mar.>
-    The hkl_vector_init method is now public.
-*** DONE =HklParameter= <2016-02-25 Thu>
-    At the end of the computation all solutions are filtered in order
-    to check that they are valid (min < value < range). BUT for a
-    rotation axis this check was instead (min < value % 2pi < max).
-*** DONE =HklGeometry= <2016-04-20 mer.>
-    Add hkl_geometry_[sample/detector]_rotation_get method. It is now
-    possible to get the sample or the detector rotation expressed as a
-    =HklQuaternion=.
-#+BEGIN_SRC python :export code
-  qr = geometry.sample_rotation_get(sample)
-  qd = geometry.detector_rotation_get(detector)
-#+END_SRC
-*** DONE =HklQuaternion= <2016-04-20 mer.>
-    Add hkl_quaternion_to_matrix in order to convert a =HklQuaternion=
-    into a =HklMatrix=. Then you just need to convert this HklMatrix
-    into a numpy array when used from the python binding
-#+BEGIN_SRC python :export code
-  def hkl_matrix_to_numpy(m):
-      M = empty((3, 3))
-      for i in range(3):
-          for j in range(3):
-              M[i, j] = m.get(i, j)
-      return M
-
-
-  M = hkl_matrix_to_numpy(q.to_matrix())
-#+END_SRC
-*** DONE Soleil Sirius Turret <2016-04-26 mar.>
-    Add the =basepitch= axis which rotate around $\vec{y}$ in mrad.
-** 4.99.99.1955 <2015-07-15 mer.>
-   Add the ccan_config.h public header. This header is generated with
-   the ccan configurator program.
-** 4.99.99.1950 <2015-07-07 mar.>
-   Fix an FTBFS observed on the sparc arch
-** 4.99.99.1949 <2015-07-03 ven.>
-*** DONE =HklInterval= <2015-07-03 ven.>
-    =hkl_interval_cmp= was wrong. Now the comparison is done between
-    =HKL_EPSILON= and the distance between minimum and maximum. This
-    problem was triggered first on ppc64el architecture.
-*** DONE PATH_MAX <2015-07-03 ven.>
-    Replace getcwd called by get_current_dir_path instead in order to
-    avoid PATH_MAX which is not available on hurd.
-** 4.99.99.1946 <2015-06-30 mar.>
-*** DONE =HklEngine=
-**** "emergence" <2015-06-22 lun.>
-     Add a new emergence engine which contains only one pseudo axis.
-     + =emergence= the outgoing beam emergence from the sample's surface.
-     + =azimuth= the sample's surface azimuth.
-** 4.99.99.1940 <2015-05-04 lun.>
-*** DONE =HklLattice= add an =hkl_lattice_volume_get=
-#+BEGIN_SRC c
-  volume = hkl_lattice_volume_get(lattice);
-#+END_SRC
-*** DONE =HklEngine=
-**** "nrj, sample, ...  dependencies" <2015-03-24 mar.>
-     Add the =hkl_engine_dependencies_get= method which return if the
-     =HklEngine= depends of the axes, the energy, or the sample. the
-     possible values are stored in the =HklEngineDependencies= enum.
-
-#+BEGIN_SRC c
-  dependencies = hkl_engine_dependencies_get(engine);
-  if (dependencies & HKL_ENGINE_DEPENDENCIES_ENERGY) {
-          ...
-  }
-  if (dependencies & HKL_ENGINE_DEPENDENCIES_SAMPLE) {
-          ...
-  }
-  ...
-#+END_SRC
-**** "tth2" <2015-04-03 ven>
-     Add a new hkl engine which contains two pseudo axes.
-     + =tth=  two times the diffraction angle $\theta$
-     + =alpha= the azimuth of q in the zOy plan.
-**** "incidence" <2015-04-21 mar.>
-     Add a new incidence engine which contain only one pseudo axis.
-     + =incidence= the incoming beam incidence on the sample surface.
-     + =azimuth= the sample surface azimuth.
-**** =hkl_engine_parameter_set= <2015-05-04 lun.>
-     Fix a bug and expose the method in the binding.
-**** general
-     - use #define AXIS "axis_name" in all the code to set the axes
-       names at only one place. <2015-04-23 jeu.>
-*** DONE =HklLattice= expose in the binding the _x_get/set methods <2015-03-24 mar.>
-    Now you can use hkl_lattice_x_get where x=a, b, c, alpha, beta,
-    gamma in the bindings.
-#+BEGIN_SRC python :export code
-  a = lattice.a_get()
-  lattice.a_set(a)
-#+END_SRC
-*** DONE =HklSampleReflection= expose the flag_get/set and geometry_get/set method <2015-03-24 mar.>
-    It is now possible to change the geometry stored in a reflection
-    via the bindings.
-#+BEGIN_SRC python :export code
-  flag = reflection.flag_get()
-  reflection.flag_set(flag)
-
-  geometry = reflection.geometry_get()
-  geometry.axes_values_set([omega, chi, phi, ...])
-  reflection.geometry_set(geometry)
-#+END_SRC
+#+INCLUDE: "@top_srcdir@/NEWS" :minlevel 2
 * Todo
 ** hkl
 *** TODO ESRF BM28 PSIC
@@ -1314,7 +1140,7 @@ within SPEC that need to be implemented here.
     + Investigate [[http://liboil.freedesktop.org/wiki/][liboil]] to speed calculation (in HklVector, HklMatrix
       and HklQuaternion)
     + Avoid to call =hkl_engine_prepare_internal= at each computation.
-      
+
 ** documentation
 *** TODO [1/6] rewrite documentation in org-mode
     - [-] embedding code into the org file.
@@ -1331,11 +1157,15 @@ within SPEC that need to be implemented here.
     - [ ] check if org-info.js could be usefull.
     - [ ] add documentation explaining the sector-cuts a la hkl.
 *** TODO bug with asymptote on macbook
+
+#+begin_src shell
 picca@cush:~/src/repo.or.cz/hkl$ export MESA_GL_VERSION_OVERRIDE=4.5
 picca@cush:~/src/repo.or.cz/hkl$ make
+#+end_src
 
 gives
 
+#+begin_src shell
 /usr/bin/asy -config "" -d -render=4 -f png -o 3S+1D.png 3S+1D.asy
 0:1(10): error: GLSL 3.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.50, 3.30, 1.00 ES, and 3.00 ES
 
@@ -1401,9 +1231,14 @@ GL Compile error
 59:   materialIndex=material;
 60: #endif
 61: }
+#+end_src
+
+#+begin_src shell
 /usr/bin/asy -config "" -d -render=4 -f png -o B_b3_y.png B_b3_y.asy
 0:1(10): error: GLSL 3.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.50, 3.30, 1.00 ES, and 3.00 ES
+#+end_src
 
+#+begin_src shell
 GL Compile error
 1: #version 300
 2: #extension GL_ARB_uniform_buffer_object : enable
@@ -1466,8 +1301,12 @@ GL Compile error
 59:   materialIndex=material;
 60: #endif
 61: }
+#+end_src
+
+#+begin_src shell
 /usr/bin/asy -config "" -d -render=4 -f png -o B_a.png B_a.asy
 0:1(10): error: GLSL 3.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.50, 3.30, 1.00 ES, and 3.00 ES
+#+end_src
 
 ** [0/3] gui
    - [ ] change the color of fitparameter cells if they differ from
