@@ -117,7 +117,7 @@ EXTRA_DIST = $(binoculars_ng_SOURCES) $(test_sources)
 # local tests #
 ###############
 
-RTS = +RTS -N4 -RTS
+# RTS = +RTS -N4 -RTS
 RTS =
 RUN_LIBTOOL = $(LIBTOOL) --mode=execute -dlopen $(top_builddir)/hkl/libhkl.la
 RUN = $(RUN_LIBTOOL) /usr/bin/time -v ./binoculars-ng $(RTS)
