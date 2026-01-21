@@ -1,6 +1,6 @@
 ;;; hkl-default.el --- Hkl specific emacsen startup code.
 
-;; Copyright (C) 2003-2019, 2024 Synchrotron SOLEIL
+;; Copyright (C) 2003-2019, 2024, 2026 Synchrotron SOLEIL
 ;;                         L'Orme des Merisiers Saint-Aubin
 ;;                         BP 48 91192 GIF-sur-YVETTE CEDEX
 
@@ -27,6 +27,8 @@
 ;; of Emacs for a hkl library documentation generation.
 
 ;;; Code:
+
+(require 'ox-publish)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -88,8 +90,6 @@
      :publishing-function org-publish-attachment)
 
     ))))
-
-(require 'ox-publish)
 
 (provide 'hkl-default)
 ;;; hkl-default ends here
