@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2010-2019, 2025 Synchrotron SOLEIL
+ * Copyright (C) 2010-2019, 2025, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -27,7 +27,7 @@
 #include "hkl.h"
 
 #define SOLEIL_DIFFABS_MODEL "soleil-diffabs.yaml"
-#define SOLEIL_CRISTAL_4C_MODEL "soleil-cristal-4c.yaml"
+#define SOLEIL_CRISTAL_K4C_MODEL "soleil-cristal-4c.yaml"
 
 // forward declaration due to bullet static linking
 struct btVector3;

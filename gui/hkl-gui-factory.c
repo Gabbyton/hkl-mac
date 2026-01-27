@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022, 2024, 2025 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2024, 2025, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -250,8 +250,8 @@ hkl_gui_factory_set_factory(HklGuiFactory *self,
 
 	if(!strcmp("K6C", dname))
 		filename = get_model(SOLEIL_DIFFABS_MODEL);
-	else if (!strcmp("K4CV", dname))
-		filename = get_model(SOLEIL_CRISTAL_4C_MODEL);
+	else if (!strcmp("SOLEIL CRISTAL K4C", dname))
+		filename = get_model(SOLEIL_CRISTAL_K4C_MODEL);
 
 	if (filename){
 		self->gui3d = hkl_gui_3d_new(filename,

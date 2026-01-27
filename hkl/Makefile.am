@@ -49,6 +49,7 @@ hkl_c_sources = \
 	hkl-engine-petra3-p09-eh2.c \
 	hkl-engine-petra3-p23-4c.c \
 	hkl-engine-petra3-p23-6c.c \
+	hkl-engine-soleil-cristal-k4c.c \
 	hkl-engine-soleil-nanoscopium-robot.c \
 	hkl-engine-soleil-sirius-turret.c \
 	hkl-engine-soleil-sixs-med.c \
