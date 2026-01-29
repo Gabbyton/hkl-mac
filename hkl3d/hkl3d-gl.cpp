@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2010, 2025      Synchrotron SOLEIL
+ * Copyright (C) 2010, 2025, 2026      Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -40,6 +40,8 @@
 #define SHADER_VERSION_STRING "#version 300 es\n"
 #define _STRINGIFY(...) #__VA_ARGS__
 #define S(...)          _STRINGIFY(__VA_ARGS__)
+
+#define VIEWPOS_DEFAULT {{0, 0.5, 0}}
 
 /**********/
 /* Shader */
@@ -118,7 +120,7 @@ static Shader init_shader_bullet()
 	set_uniform_mat4s(&shader, "projection", projection);
 
 	/* view */
-	CGLM_ALIGN_MAT vec3s viewPos = {{0, 5, 0}};
+	CGLM_ALIGN_MAT vec3s viewPos = VIEWPOS_DEFAULT;
 	CGLM_ALIGN_MAT mat4s view = GLMS_MAT4_IDENTITY_INIT;
 	CGLM_ALIGN_MAT vec3s center = GLMS_VEC3_ZERO_INIT;
 	CGLM_ALIGN_MAT vec3s up = {{0, 0, 1}};
@@ -152,7 +154,7 @@ static Shader init_shader_model()
 	set_uniform_mat4s(&shader, "projection", projection);
 
 	/* view position */
-	CGLM_ALIGN_MAT vec3s viewPos = {{0, 5, 0}};
+	CGLM_ALIGN_MAT vec3s viewPos = VIEWPOS_DEFAULT;
 	set_uniform_vec3sv(&shader, "viewPos", viewPos);
 
 	/* view */
