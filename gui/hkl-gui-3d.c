@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2019, 2022, 2025 Synchrotron SOLEIL
+ * Copyright (C) 2003-2019, 2022, 2025, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -817,8 +817,6 @@ gl_area_on_realize_cb (GtkGLArea *area,
 
 	hkl3d_gl_init(self->hkl3d);
 
-	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
 }
