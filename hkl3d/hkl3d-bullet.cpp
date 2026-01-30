@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2010, 2025      Synchrotron SOLEIL
+ * Copyright (C) 2010, 2025, 2026      Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -76,7 +76,7 @@ class Hkl3DDebug : public btIDebugDraw
 
 	void drawContactPoint(const btVector3& PointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime, const btVector3& color)
 		{
-			drawSphere (PointOnB, distance, color);
+			drawSphere (PointOnB, 0.002, color);
 			drawLine (PointOnB, PointOnB + normalOnB * distance, color);
 		};
 
