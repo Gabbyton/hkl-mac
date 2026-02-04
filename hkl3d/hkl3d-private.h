@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2010-2019, 2025 Synchrotron SOLEIL
+ * Copyright (C) 2010-2019, 2025, 2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -163,14 +163,12 @@ extern "C" {
 		struct btBroadphaseInterface *_btBroadphase;
 		struct btCollisionWorld *_btWorld;
 		struct btCollisionDispatcher *_btDispatcher;
-		int debug;
 		darray_bobject bobjects;
 	};
 
 	Hkl3DBullet *hkl3d_bullet_new (const Hkl3DGeometry *geometry);
 	void hkl3d_bullet_free (Hkl3DBullet *self);
 	void hkl3d_bullet_apply_transformations(Hkl3DBullet *self);
-	void hkl3d_bullet_debug_set(Hkl3DBullet *self, bool debug);
 	void hkl3d_bullet_get_collision_coordinates(const Hkl3DBullet *self,
 						    int manifold, int contact,
 						    double *xa, double *ya, double *za,

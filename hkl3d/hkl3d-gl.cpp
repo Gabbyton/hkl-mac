@@ -220,11 +220,6 @@ static Shader init_shader_model()
 /* Hkl3D OpenGL model  */
 /***********************/
 
-void hkl3d_gl_draw_aabb_set(Hkl3D *self, bool aabb)
-{
-	hkl3d_bullet_debug_set(self->bullet, aabb);
-}
-
 static void hkl3d_gl_draw_object(const Hkl3DObject *object, Shader *shader)
 {
 	static unsigned int n_vec3 = 3;
@@ -255,10 +250,13 @@ static void hkl3d_gl_draw_object(const Hkl3DObject *object, Shader *shader)
 	glBindVertexArray (0);
 }
 
-static void hkl3d_gl_draw_models(Hkl3D *self)
+static void hkl3d_gl_draw_models(Hkl3D *self, gboolean draw)
 {
 	Hkl3DModel **model;
 	Hkl3DObject **object;
+
+	if (!draw)
+		return;
 
 	glUseProgram (self->shader.program);
 
@@ -272,11 +270,11 @@ static void hkl3d_gl_draw_models(Hkl3D *self)
 	glUseProgram (0);
 }
 
-static void hkl3d_gl_draw_debug (Hkl3D *self)
+static void hkl3d_gl_draw_bullet (Hkl3D *self, gboolean draw)
 {
 	CGLM_ALIGN_MAT mat4s identity = GLMS_MAT4_IDENTITY_INIT;
 
-	if (!self->bullet->debug)
+	if (!draw)
 		return;
 
 	glUseProgram (self->shader_bullet.program);
@@ -286,10 +284,10 @@ static void hkl3d_gl_draw_debug (Hkl3D *self)
 	glUseProgram (0);
 }
 
-void hkl3d_gl_draw (Hkl3D *self)
+void hkl3d_gl_draw(Hkl3D *self, gboolean draw_bullet, gboolean draw_model)
 {
-	hkl3d_gl_draw_models (self);
-	hkl3d_gl_draw_debug (self);
+	hkl3d_gl_draw_bullet (self, draw_bullet);
+	hkl3d_gl_draw_models (self, draw_model);
 }
 
 void hkl3d_gl_resize(Hkl3D *self, gint width, gint height)

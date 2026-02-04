@@ -42,7 +42,8 @@ enum {
 
 	PROP_FILENAME,
 	PROP_GEOMETRY,
-	PROP_AABB,
+	PROP_SHOW_BULLET,
+	PROP_SHOW_MODEL,
 
 	N_PROPERTIES
 };
@@ -84,7 +85,8 @@ struct _HklGui3DPrivate {
 		gint32 beginx;
 		gint32 beginy;
 	} mouse;
-	gboolean aabb;
+	gboolean show_bullet;
+	gboolean show_model;
 };
 
 struct _HklGui3D {
@@ -93,7 +95,8 @@ struct _HklGui3D {
 	Hkl3D *hkl3d;
 
 	GtkGLArea *gl_area;
-	GtkWidget *toggle_button_aabb;
+	GtkWidget *toggle_button_show_bullet;
+	GtkWidget *toggle_button_show_model;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (HklGui3D, hkl_gui_3d, G_TYPE_OBJECT);
@@ -149,11 +152,19 @@ hkl_gui_3d_get_geometry(HklGui3D *self)
 }
 
 static gboolean
-hkl_gui_3d_get_aabb(HklGui3D *self)
+hkl_gui_3d_get_show_bullet(HklGui3D *self)
 {
 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
 
-	return priv->aabb;
+	return priv->show_bullet;
+}
+
+static gboolean
+hkl_gui_3d_get_show_model(HklGui3D *self)
+{
+	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
+
+	return priv->show_model;
 }
 
 static void _filename_and_geometry(HklGui3D *self)
@@ -191,18 +202,31 @@ hkl_gui_3d_set_geometry(HklGui3D *self, HklGeometry *geometry)
 }
 
 static void
-hkl_gui_3d_set_aabb(HklGui3D *self, gboolean aabb)
+hkl_gui_3d_set_show_bullet(HklGui3D *self, gboolean show_bullet)
 {
 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
 
-	g_return_if_fail(aabb != priv->aabb);
+	g_return_if_fail(show_bullet != priv->show_bullet);
 
-	priv->aabb = aabb;
-	hkl3d_gl_draw_aabb_set(self->hkl3d, aabb);
+	priv->show_bullet = show_bullet;
 
 	hkl_gui_3d_invalidate(self);
 
-	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_AABB]);
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_SHOW_BULLET]);
+}
+
+static void
+hkl_gui_3d_set_show_model(HklGui3D *self, gboolean show_model)
+{
+	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
+
+	g_return_if_fail(show_model != priv->show_model);
+
+	priv->show_model = show_model;
+
+	hkl_gui_3d_invalidate(self);
+
+	g_object_notify_by_pspec (G_OBJECT (self), props[PROP_SHOW_BULLET]);
 }
 
 static void
@@ -218,8 +242,11 @@ set_property (GObject *object, guint prop_id,
 	case PROP_GEOMETRY:
 		hkl_gui_3d_set_geometry(self, g_value_get_pointer (value));
 		break;
-	case PROP_AABB:
-		hkl_gui_3d_set_aabb(self, g_value_get_boolean (value));
+	case PROP_SHOW_BULLET:
+		hkl_gui_3d_set_show_bullet(self, g_value_get_boolean (value));
+		break;
+	case PROP_SHOW_MODEL:
+		hkl_gui_3d_set_show_model(self, g_value_get_boolean (value));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -241,8 +268,11 @@ get_property (GObject *object, guint prop_id,
 	case PROP_GEOMETRY:
 		g_value_set_pointer (value, hkl_gui_3d_get_geometry (self));
 		break;
-	case PROP_AABB:
-		g_value_set_boolean (value, hkl_gui_3d_get_aabb (self));
+	case PROP_SHOW_BULLET:
+		g_value_set_boolean (value, hkl_gui_3d_get_show_bullet (self));
+		break;
+	case PROP_SHOW_MODEL:
+		g_value_set_boolean (value, hkl_gui_3d_get_show_model (self));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -584,6 +614,7 @@ hkl_gui_3d_gl_area_render_cb(GtkGLArea *area,
 			     gpointer user_data)
 {
 	HklGui3D *self = HKL_GUI_3D (user_data);
+	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
 
 	gtk_gl_area_make_current (area);
 
@@ -596,7 +627,7 @@ hkl_gui_3d_gl_area_render_cb(GtkGLArea *area,
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	/* Draw scenes */
-	hkl3d_gl_draw (self->hkl3d);
+	hkl3d_gl_draw (self->hkl3d, priv->show_bullet, priv->show_model);
 
 	/* Flush the contents of the pipeline */
 	glFlush ();
@@ -789,11 +820,19 @@ hkl_gui_3d_class_init (HklGui3DClass *class)
 				      G_PARAM_READWRITE |
 				      G_PARAM_STATIC_STRINGS);
 
-	props[PROP_AABB] =
-		g_param_spec_boolean ("aabb",
-				      "Aabb",
-				      "Draw the aabb boxes",
+	props[PROP_SHOW_BULLET] =
+		g_param_spec_boolean ("show-bullet",
+				      "Show-Bullet",
+				      "Draw the bullet debug internals",
 				      false,
+				      G_PARAM_READWRITE |
+				      G_PARAM_STATIC_STRINGS);
+
+	props[PROP_SHOW_MODEL] =
+		g_param_spec_boolean ("show-model",
+				      "Show-Model",
+				      "Draw the model",
+				      true,
 				      G_PARAM_READWRITE |
 				      G_PARAM_STATIC_STRINGS);
 
@@ -824,18 +863,6 @@ gl_area_on_realize_cb (GtkGLArea *area,
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-static void
-aabb_activated (GtkToggleButton *button,
-		gpointer user_data)
-{
-	HklGui3D *self = HKL_GUI_3D(user_data);
-	gboolean aabb;
-
-	aabb = gtk_toggle_button_get_active (button);
-
-	hkl_gui_3d_set_aabb(self, aabb);
-}
-
 static void hkl_gui_3d_init (HklGui3D * self)
 {
 	HklGui3DPrivate *priv = hkl_gui_3d_get_instance_private(self);
@@ -845,21 +872,29 @@ static void hkl_gui_3d_init (HklGui3D * self)
 	/* properties */
 	priv->filename = NULL;
 	priv->geometry = NULL;
-	priv->aabb = FALSE;
+	priv->show_bullet = false;
+	priv->show_model = true;
 
 	/* widgets instances */
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	priv->frame1 = GTK_FRAME (gtk_frame_new("3d"));
 	self->gl_area = GTK_GL_AREA (gtk_gl_area_new ());
-	self->toggle_button_aabb = gtk_toggle_button_new_with_label("aabb");
+	self->toggle_button_show_bullet = gtk_toggle_button_new_with_label("Bullet");
+	self->toggle_button_show_model = gtk_toggle_button_new_with_label("Model");
 
 	/* frame1 */
 	gtk_frame_set_child(priv->frame1, vbox);
 
-	/* button_aabb */
-	g_signal_connect (self->toggle_button_aabb, "toggled",
-			  G_CALLBACK (aabb_activated), self);
+	/* button_show_bullet */
+	g_object_bind_property(self, "show_bullet",
+			       self->toggle_button_show_bullet, "active",
+			       G_BINDING_SYNC_CREATE | G_BINDING_BIDIRECTIONAL);
+
+	/* button_show_model */
+	g_object_bind_property(self, "show_model",
+			       self->toggle_button_show_model, "active",
+			       G_BINDING_SYNC_CREATE | G_BINDING_BIDIRECTIONAL);
 
 	/* gl_area */
 	gtk_gl_area_set_has_depth_buffer (self->gl_area, true);
@@ -875,7 +910,8 @@ static void hkl_gui_3d_init (HklGui3D * self)
 			 G_CALLBACK(hkl_gui_3d_gl_area_render_cb), self);
 
 	/* hbox */
-	gtk_box_append (GTK_BOX (hbox), self->toggle_button_aabb);
+	gtk_box_append (GTK_BOX (hbox), self->toggle_button_show_bullet);
+	gtk_box_append (GTK_BOX (hbox), self->toggle_button_show_model);
 
 	/* vbox */
 	gtk_box_append (GTK_BOX (vbox), GTK_WIDGET (self->gl_area));

@@ -72,11 +72,11 @@ class Hkl3DDebug : public btIDebugDraw
 
 	void setDebugMode(int debugMode) {};
 
-	int getDebugMode() const { return DBG_DrawWireframe | DBG_DrawAabb | DBG_DrawContactPoints; }
+	int getDebugMode() const { return DBG_DrawWireframe | DBG_DrawAabb | DBG_DrawContactPoints | DBG_NoDeactivation; }
 
 	void drawContactPoint(const btVector3& PointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime, const btVector3& color)
 		{
-			drawSphere (PointOnB, 0.002, color);
+			drawSphere (PointOnB, 0.02, color);
 			drawLine (PointOnB, PointOnB + normalOnB * distance, color);
 		};
 
@@ -247,8 +247,6 @@ Hkl3DBullet *hkl3d_bullet_new(const Hkl3DGeometry *geometry)
 		}
 	}
 
-	self->debug = false;
-
 	return self;
 }
 
@@ -272,11 +270,6 @@ hkl3d_bullet_free(Hkl3DBullet *self)
 	if (self->_btCollisionConfiguration)
 		delete self->_btCollisionConfiguration;
 
-}
-
-void hkl3d_bullet_debug_set(Hkl3DBullet *self, bool debug)
-{
-	self->debug = debug;
 }
 
 void hkl3d_bullet_apply_transformations(Hkl3DBullet *self)
@@ -306,17 +299,17 @@ hkl3d_bullet_perform_collision (Hkl3DBullet *self, Hkl3DConfig *config)
 
 	/* update Hkl3DObject collision from manifolds */
 	darray_foreach(bobject, self->bobjects){
-			int is_colliding = FALSE;
+		int is_colliding = FALSE;
 
-			for(i=0; i<numManifolds; ++i){
-				btPersistentManifold *manifold = self->_btDispatcher->getManifoldByIndexInternal(i);
-				is_colliding |= (*bobject)->btObject == manifold->getBody0();
-				is_colliding |= (*bobject)->btObject == manifold->getBody1();
-			}
+		for(i=0; i<numManifolds; ++i){
+			btPersistentManifold *manifold = self->_btDispatcher->getManifoldByIndexInternal(i);
+			is_colliding |= (*bobject)->btObject == manifold->getBody0();
+			is_colliding |= (*bobject)->btObject == manifold->getBody1();
+		}
 
-			darray_foreach (object, (*bobject)->axis->objects) {
-				(*object)->is_colliding = is_colliding;
-			}
+		darray_foreach (object, (*bobject)->axis->objects) {
+			(*object)->is_colliding = is_colliding;
+		}
 	}
 
 	for(i=0; i<numManifolds; ++i){

@@ -1,5 +1,12 @@
 # -*- org -*-
 
+* 5.1.5 <unreleased>
+** Ghkl (Gui)
+   - add toggled buttons in order to display bullet internal and/or
+     openGL model. It helps when debuging collision issues.
+
+** Hkl (C-library)
+   - Added the =SOLEIL CRISTAL K4C= diffractometer.
 * 5.1.4 <2026-01-20 mar.>
 ** Build system
    - It is now possible to gives a CABALFLAGS on the command line.
@@ -462,6 +469,3 @@ the bindings.
         - 'Constant Phi"
       - Kappa6C
         - all Eulerian 4 Circles modes.
-
-
-
