@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns  #-}
+{-# LANGUAGE CPP           #-}
 {-# LANGUAGE GADTs         #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
@@ -18,6 +19,10 @@ import           System.IO.Unsafe             (unsafePerformIO)
 import           Hkl.C.Binoculars
 import           Hkl.Detector
 import           Hkl.Repa
+
+#if MIN_VERSION_base(4, 20, 0)
+import           Prelude                      hiding (foldl')
+#endif
 
 data Image
     = ImageDouble (IOVector Double)

@@ -17,7 +17,7 @@
 {-# LANGUAGE UndecidableInstances       #-}
 
 {-
-    Copyright  : Copyright (C) 2014-2025 Synchrotron SOLEIL
+    Copyright  : Copyright (C) 2014-2026 Synchrotron SOLEIL
                                          L'Orme des Merisiers Saint-Aubin
                                          BP 48 91192 GIF-sur-YVETTE CEDEX
     License    : GPL3+
@@ -93,7 +93,9 @@ import           Data.ByteString.Lazy              (toStrict)
 import           Data.Char                         (isSpace)
 import           Data.Either.Combinators           (maybeToRight)
 import           Data.Either.Extra                 (mapLeft, mapRight)
+#if !MIN_VERSION_base(4, 20, 0)
 import           Data.Foldable                     (foldl')
+#endif
 import           Data.Hashable                     (Hashable)
 import           Data.HashMap.Strict               (HashMap, unionWith)
 import           Data.Ini                          (Ini (..), printIni)
@@ -105,8 +107,7 @@ import           Data.Ini.Config.Bidir             (FieldValue (..), IniSpec,
                                                     ini, listWithSeparator,
                                                     number, parseIni, section,
                                                     text, (.=))
-import           Data.List                         (elemIndex, find, isInfixOf,
-                                                    length)
+import           Data.List                         (elemIndex, find, isInfixOf)
 import           Data.List.NonEmpty                (NonEmpty (..), head, map)
 import           Data.Maybe                        (catMaybes, fromMaybe)
 import           Data.Text                         (Text, breakOn, cons, drop,
@@ -852,9 +853,9 @@ instance HasFieldValue (Resolutions DIM2) where
       parse :: Text -> Either String (Resolutions DIM2)
       parse t = do
         rs <- (fvParse $ listWithSeparator "," auto) t
-        case Data.List.length rs of
-          1 -> Right (Resolutions2 (Prelude.head rs) (Prelude.head rs))
-          2 -> Right (Resolutions2 (Prelude.head rs) (rs !! 1))
+        case rs of
+          [r] -> Right (Resolutions2 r r)
+          [r1, r2] -> Right (Resolutions2 r1 r2)
           _ -> Left "Need one or two resolutions values for this projection"
 
       emit :: Resolutions DIM2 -> Text
@@ -876,9 +877,9 @@ instance HasFieldValue (Resolutions DIM3) where
       parse :: Text -> Either String (Resolutions DIM3)
       parse t = do
         rs <- (fvParse $ listWithSeparator "," auto) t
-        case Data.List.length rs of
-          1 -> Right (Resolutions3 (Prelude.head rs) (Prelude.head rs) (Prelude.head rs))
-          3 -> Right (Resolutions3 (Prelude.head rs) (rs !! 1) (rs !! 2))
+        case rs of
+          [r] -> Right (Resolutions3 r r r)
+          [r1, r2, r3] -> Right (Resolutions3 r1 r2 r3)
           _ -> Left "Need one or three resolutions values for this projection"
 
       emit :: Resolutions DIM3 -> Text

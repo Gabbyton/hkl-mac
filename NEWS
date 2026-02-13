@@ -1,10 +1,11 @@
 # -*- org -*-
 
 * 5.1.5 <unreleased>
+** Binoculars-ng (Haskell program)
+   - Build with ghc 9.10 (Debian unstable)
 ** Ghkl (Gui)
    - add toggled buttons in order to display bullet internal and/or
      openGL model. It helps when debuging collision issues.
-
 ** Hkl (C-library)
    - Added the =SOLEIL CRISTAL K4C= diffractometer.
 * 5.1.4 <2026-01-20 mar.>

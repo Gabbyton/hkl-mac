@@ -17,7 +17,7 @@
 {-# LANGUAGE TypeOperators         #-}
 
 {-
-    Copyright  : Copyright (C) 2014-2025 Synchrotron SOLEIL
+    Copyright  : Copyright (C) 2014-2026 Synchrotron SOLEIL
                                          L'Orme des Merisiers Saint-Aubin
                                          BP 48 91192 GIF-sur-YVETTE CEDEX
     License    : GPL3+
@@ -73,8 +73,8 @@ import           Foreign.C.Types                   (CDouble (..))
 import           GHC.Base                          (liftA2)
 #endif
 import           GHC.Float                         (float2Double)
-import           GHC.Generics                      (Generic, K1 (..), M1 (..),
-                                                    Rep (..), U1 (..),
+import           GHC.Generics                      (Generic (..), K1 (..),
+                                                    M1 (..), Rep, U1 (..),
                                                     (:*:) (..), (:+:) (..))
 import           Numeric.Units.Dimensional.Prelude (degree, (*~), (/~))
 import           Pipes.Safe                        (MonadSafe, catch, throwM)
