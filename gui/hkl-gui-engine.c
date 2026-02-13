@@ -489,12 +489,12 @@ hkl_gui_engine_update(HklGuiEngine *self)
 /* static void */
 /* button2_clicked_cb (GtkButton* button, HklGuiEngine* self) */
 /* { */
-/* 	HklGuiEnginePrivate *priv = hkl_gui_engine_get_instance_private(self); */
+/*	HklGuiEnginePrivate *priv = hkl_gui_engine_get_instance_private(self); */
 
-/* 	if (HKL_ENGINE_CAPABILITIES_INITIALIZABLE & hkl_engine_capabilities_get(priv->engine)){ */
-/* 		if(hkl_engine_initialized_set(priv->engine, TRUE, NULL)){ */
-/* 			/\* some init method update the parameters *\/ */
-/* 			update_mode_parameters(self); */
-/* 		} */
-/* 	} */
+/*	if (HKL_ENGINE_CAPABILITIES_INITIALIZABLE & hkl_engine_capabilities_get(priv->engine)){ */
+/*		if(hkl_engine_initialized_set(priv->engine, TRUE, NULL)){ */
+/*			/\* some init method update the parameters *\/ */
+/*			update_mode_parameters(self); */
+/*		} */
+/*	} */
 /* } */

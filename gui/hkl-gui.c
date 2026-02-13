@@ -43,7 +43,7 @@
 struct _HklGuiWindow {
 	GtkApplication parent_instance;
 
-GListStore *liststore_samples;
+	GListStore *liststore_samples;
 
 	GtkAdjustment *adjustment_wavelength;
 	GtkAlertDialog *alert_dialog_solutions;
@@ -76,17 +76,17 @@ G_DEFINE_FINAL_TYPE (HklGuiWindow, hkl_gui_window, GTK_TYPE_APPLICATION);
 
 /* static gboolean */
 /* finalize_liststore_samples(GtkTreeModel *model, */
-/* 			   GtkTreePath *path, */
-/* 			   GtkTreeIter *iter, */
-/* 			   gpointer data) */
+/*			   GtkTreePath *path, */
+/*			   GtkTreeIter *iter, */
+/*			   gpointer data) */
 /* { */
-/* 	HklSample *sample = NULL; */
+/*	HklSample *sample = NULL; */
 
-/* 	gtk_tree_model_get(model, iter, */
-/* 			   SAMPLE_COL_SAMPLE, &sample, */
-/* 			   -1); */
-/* 	hkl_sample_free(sample); */
-/* 	return FALSE; */
+/*	gtk_tree_model_get(model, iter, */
+/*			   SAMPLE_COL_SAMPLE, &sample, */
+/*			   -1); */
+/*	hkl_sample_free(sample); */
+/*	return FALSE; */
 /* } */
 
 static void
@@ -112,12 +112,12 @@ raise_error(HklGuiWindow *self, GError *error)
 /* update_3d(HklGuiWindow *self) */
 /* { */
 /* #ifdef HKL3D */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
+/*	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
 
-/* 	if(priv->frame3d){ */
-/* 		hkl_gui_3d_is_colliding(priv->frame3d); */
-/* 		hkl_gui_3d_invalidate(priv->frame3d); */
-/* 	} */
+/*	if(priv->frame3d){ */
+/*		hkl_gui_3d_is_colliding(priv->frame3d); */
+/*		hkl_gui_3d_invalidate(priv->frame3d); */
+/*	} */
 /* #endif */
 /* } */
 
@@ -248,18 +248,18 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 
 	hkl_gui_factory_set_geometry(self->factory, ggeometry);
 	/* if (gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_solutions), &iter, path)) { */
-	/* 	gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_solutions), &iter, */
-	/* 			    SOLUTION_COL_HKL_GEOMETRY_LIST_ITEM, &solution, */
-	/* 			    -1); */
+	/*	gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_solutions), &iter, */
+	/*			    SOLUTION_COL_HKL_GEOMETRY_LIST_ITEM, &solution, */
+	/*			    -1); */
 
-	/* 	diffractometer_set_solution(priv->diffractometer, solution); */
+	/*	diffractometer_set_solution(priv->diffractometer, solution); */
 
-	/* 	update_axes (self); */
-	/* 	update_pseudo_axes (self); */
-	/* 	update_pseudo_axes_frames (self); */
-	/* 	update_3d(self); */
+	/*	update_axes (self); */
+	/*	update_pseudo_axes (self); */
+	/*	update_pseudo_axes_frames (self); */
+	/*	update_3d(self); */
 
-	/* 	gtk_tree_path_free (path); */
+	/*	gtk_tree_path_free (path); */
 	/* } */
 }
 
@@ -267,204 +267,204 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* /\* reflection flag *\/ */
 /* void */
 /* hkl_gui_window_cellrenderertoggle1_toggled_cb (GtkCellRendererToggle* renderer, const gchar* path, */
-/* 					       gpointer self) */
+/*					       gpointer self) */
 /* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
+/*	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
 
-/* 	g_return_if_fail (self != NULL); */
-/* 	g_return_if_fail (path != NULL); */
+/*	g_return_if_fail (self != NULL); */
+/*	g_return_if_fail (path != NULL); */
 
-/* 	if (priv->sample){ */
-/* 		gboolean flag; */
-/* 		HklSampleReflection* reflection = NULL; */
-/* 		GtkTreeIter iter = {0}; */
+/*	if (priv->sample){ */
+/*		gboolean flag; */
+/*		HklSampleReflection* reflection = NULL; */
+/*		GtkTreeIter iter = {0}; */
 
-/* 		gtk_tree_model_get_iter_from_string (GTK_TREE_MODEL(priv->liststore_reflections), */
-/* 						     &iter, path); */
-/* 		gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_reflections), */
-/* 				    &iter, */
-/* 				    REFLECTION_COL_REFLECTION, &reflection, */
-/* 				    -1); */
+/*		gtk_tree_model_get_iter_from_string (GTK_TREE_MODEL(priv->liststore_reflections), */
+/*						     &iter, path); */
+/*		gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_reflections), */
+/*				    &iter, */
+/*				    REFLECTION_COL_REFLECTION, &reflection, */
+/*				    -1); */
 
-/* 		flag = gtk_cell_renderer_toggle_get_active(renderer); */
-/* 		hkl_sample_reflection_flag_set (reflection, flag); */
-/* 		gtk_list_store_set (priv->liststore_reflections, */
-/* 				    &iter, */
-/* 				    REFLECTION_COL_FLAG, flag, */
-/* 				    -1); */
-/* 	} */
+/*		flag = gtk_cell_renderer_toggle_get_active(renderer); */
+/*		hkl_sample_reflection_flag_set (reflection, flag); */
+/*		gtk_list_store_set (priv->liststore_reflections, */
+/*				    &iter, */
+/*				    REFLECTION_COL_FLAG, flag, */
+/*				    -1); */
+/*	} */
 /* } */
 
 /* gboolean */
 /* hkl_gui_window_treeview_reflections_key_press_event_cb (GtkWidget* _sender, GdkEvent* event, */
-/* 							gpointer self) */
+/*							gpointer self) */
 /* { */
-/* 	return TRUE; */
+/*	return TRUE; */
 /* } */
 
 /* void */
 /* hkl_gui_window_toolbutton_goto_reflection_clicked_cb (GtkButton* _sender, gpointer user_data) */
 /* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
+/*	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
+/*	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
 
-/* 	g_return_if_fail (self != NULL); */
+/*	g_return_if_fail (self != NULL); */
 
-/* 	if (priv->sample) { */
-/* 		GtkTreeSelection* selection = NULL; */
-/* 		guint nb_rows = 0U; */
+/*	if (priv->sample) { */
+/*		GtkTreeSelection* selection = NULL; */
+/*		guint nb_rows = 0U; */
 
-/* 		selection = gtk_tree_view_get_selection (priv->treeview_reflections); */
-/* 		nb_rows = gtk_tree_selection_count_selected_rows (selection); */
+/*		selection = gtk_tree_view_get_selection (priv->treeview_reflections); */
+/*		nb_rows = gtk_tree_selection_count_selected_rows (selection); */
 
-/* 		if (nb_rows == 1) { */
-/* 			HklSampleReflection *reflection; */
-/* 			GtkTreeIter iter = {0}; */
-/* 			GtkTreeModel* model = NULL; */
-/* 			GtkTreePath *treepath; */
-/* 			GList* list; */
+/*		if (nb_rows == 1) { */
+/*			HklSampleReflection *reflection; */
+/*			GtkTreeIter iter = {0}; */
+/*			GtkTreeModel* model = NULL; */
+/*			GtkTreePath *treepath; */
+/*			GList* list; */
 
-/* 			model = GTK_TREE_MODEL(priv->liststore_reflections); */
+/*			model = GTK_TREE_MODEL(priv->liststore_reflections); */
 
-/* 			list = gtk_tree_selection_get_selected_rows (selection, */
-/* 								     &model); */
+/*			list = gtk_tree_selection_get_selected_rows (selection, */
+/*								     &model); */
 
-/* 			treepath = g_list_nth_data(list, 0); */
+/*			treepath = g_list_nth_data(list, 0); */
 
-/* 			gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_reflections), */
-/* 						 &iter, treepath); */
+/*			gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_reflections), */
+/*						 &iter, treepath); */
 
-/* 			gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_reflections), */
-/* 					    &iter, */
-/* 					    REFLECTION_COL_REFLECTION, &reflection, */
-/* 					    -1); */
+/*			gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_reflections), */
+/*					    &iter, */
+/*					    REFLECTION_COL_REFLECTION, &reflection, */
+/*					    -1); */
 
-/* 			hkl_geometry_set (priv->diffractometer->geometry, */
-/* 					  hkl_sample_reflection_geometry_get(reflection)); */
+/*			hkl_geometry_set (priv->diffractometer->geometry, */
+/*					  hkl_sample_reflection_geometry_get(reflection)); */
 
-/* 			update_source (self); */
-/* 			update_axes (self); */
-/* 			update_pseudo_axes (self); */
-/* 			update_3d(self); */
+/*			update_source (self); */
+/*			update_axes (self); */
+/*			update_pseudo_axes (self); */
+/*			update_3d(self); */
 
-/* 			g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free); */
-/* 		} else */
-/* 			if (nb_rows > 1) */
-/* 				gtk_statusbar_push (priv->statusbar, 0, */
-/* 						    "Please select only one reflection."); */
-/* 			else */
-/* 				gtk_statusbar_push (priv->statusbar, 0, */
-/* 						    "Please select at least one reflection."); */
-/* 	} */
+/*			g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free); */
+/*		} else */
+/*			if (nb_rows > 1) */
+/*				gtk_statusbar_push (priv->statusbar, 0, */
+/*						    "Please select only one reflection."); */
+/*			else */
+/*				gtk_statusbar_push (priv->statusbar, 0, */
+/*						    "Please select at least one reflection."); */
+/*	} */
 /* } */
 
 
 /* #define set_reciprocal_lattice(lattice, parameter) do{			\ */
-/* 		const HklParameter *p;					\ */
-/* 		gdouble value;						\ */
-/* 		p = hkl_lattice_## parameter ##_get((lattice));		\ */
-/* 		value = hkl_parameter_value_get(p, HKL_UNIT_USER);	\ */
-/* 		gtk_spin_button_set_value(priv->spinbutton_## parameter ##_star, value); \ */
-/* 	}while(0) */
+/*		const HklParameter *p;					\ */
+/*		gdouble value;						\ */
+/*		p = hkl_lattice_## parameter ##_get((lattice));		\ */
+/*		value = hkl_parameter_value_get(p, HKL_UNIT_USER);	\ */
+/*		gtk_spin_button_set_value(priv->spinbutton_## parameter ##_star, value); \ */
+/*	}while(0) */
 
 /* static void */
 /* update_reciprocal_lattice (HklGuiWindow* self) */
 /* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
+/*	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
 
-/* 	g_return_if_fail (self != NULL); */
+/*	g_return_if_fail (self != NULL); */
 
-/* 	if (priv->sample != NULL) { */
-/* 		hkl_lattice_reciprocal (hkl_sample_lattice_get(priv->sample), */
-/* 					priv->reciprocal); */
+/*	if (priv->sample != NULL) { */
+/*		hkl_lattice_reciprocal (hkl_sample_lattice_get(priv->sample), */
+/*					priv->reciprocal); */
 
-/* 		set_reciprocal_lattice(priv->reciprocal, a); */
-/* 		set_reciprocal_lattice(priv->reciprocal, b); */
-/* 		set_reciprocal_lattice(priv->reciprocal, c); */
-/* 		set_reciprocal_lattice(priv->reciprocal, alpha); */
-/* 		set_reciprocal_lattice(priv->reciprocal, beta); */
-/* 		set_reciprocal_lattice(priv->reciprocal, gamma); */
-/* 	} */
+/*		set_reciprocal_lattice(priv->reciprocal, a); */
+/*		set_reciprocal_lattice(priv->reciprocal, b); */
+/*		set_reciprocal_lattice(priv->reciprocal, c); */
+/*		set_reciprocal_lattice(priv->reciprocal, alpha); */
+/*		set_reciprocal_lattice(priv->reciprocal, beta); */
+/*		set_reciprocal_lattice(priv->reciprocal, gamma); */
+/*	} */
 /* } */
 
 /* #define set_UB(i, j) do{						\ */
-/* 		gdouble	value = hkl_matrix_get(UB, i - 1, j - 1);	\ */
-/* 		const char *format = "<tt> %+.4f </tt>";		\ */
-/* 		gchar *markup;						\ */
-/* 		markup = g_markup_printf_escaped (format, value);	\ */
-/* 		gtk_label_set_markup(GTK_LABEL (priv->label_UB ## i ## j), \ */
-/* 				     markup);				\ */
-/* 		g_free(markup);						\ */
-/* 	}while(0) */
+/*		gdouble	value = hkl_matrix_get(UB, i - 1, j - 1);	\ */
+/*		const char *format = "<tt> %+.4f </tt>";		\ */
+/*		gchar *markup;						\ */
+/*		markup = g_markup_printf_escaped (format, value);	\ */
+/*		gtk_label_set_markup(GTK_LABEL (priv->label_UB ## i ## j), \ */
+/*				     markup);				\ */
+/*		g_free(markup);						\ */
+/*	}while(0) */
 
 /* static void */
 /* update_UB (HklGuiWindow* self) */
 /* { */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
+/*	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(self); */
 
-/* 	g_return_if_fail (self != NULL); */
+/*	g_return_if_fail (self != NULL); */
 
-/* 	if (priv->sample != NULL) { */
-/* 		const HklMatrix *UB = hkl_sample_UB_get (priv->sample); */
-/* 		gchar *text = g_new0 (gchar, G_ASCII_DTOSTR_BUF_SIZE); */
+/*	if (priv->sample != NULL) { */
+/*		const HklMatrix *UB = hkl_sample_UB_get (priv->sample); */
+/*		gchar *text = g_new0 (gchar, G_ASCII_DTOSTR_BUF_SIZE); */
 
-/* 		set_UB(1, 1); */
-/* 		set_UB(1, 2); */
-/* 		set_UB(1, 3); */
-/* 		set_UB(2, 1); */
-/* 		set_UB(2, 2); */
-/* 		set_UB(2, 3); */
-/* 		set_UB(3, 1); */
-/* 		set_UB(3, 2); */
-/* 		set_UB(3, 3); */
+/*		set_UB(1, 1); */
+/*		set_UB(1, 2); */
+/*		set_UB(1, 3); */
+/*		set_UB(2, 1); */
+/*		set_UB(2, 2); */
+/*		set_UB(2, 3); */
+/*		set_UB(3, 1); */
+/*		set_UB(3, 2); */
+/*		set_UB(3, 3); */
 
-/* 		g_free(text); */
-/* 	} */
+/*		g_free(text); */
+/*	} */
 /* } */
 
 /* void */
 /* hkl_gui_window_treeview_crystals_cursor_changed_cb (GtkTreeView* _sender, gpointer user_data) */
 /* { */
-/* 	GtkTreePath* path = NULL; */
-/* 	GtkTreeViewColumn* column = NULL; */
-/* 	GtkTreeIter iter = {0}; */
+/*	GtkTreePath* path = NULL; */
+/*	GtkTreeViewColumn* column = NULL; */
+/*	GtkTreeIter iter = {0}; */
 
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-/* 	HklSample *sample; */
+/*	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
+/*	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
+/*	HklSample *sample; */
 
-/* 	g_return_if_fail (user_data != NULL); */
+/*	g_return_if_fail (user_data != NULL); */
 
-/* 	gtk_tree_view_get_cursor (priv->treeview_crystals, &path, &column); */
-/* 	if(path){ */
-/* 		if (gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_crystals), */
-/* 					     &iter, path) == TRUE){ */
-/* 			gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_crystals), */
-/* 					    &iter, */
-/* 					    SAMPLE_COL_SAMPLE, &sample, */
-/* 					    -1); */
+/*	gtk_tree_view_get_cursor (priv->treeview_crystals, &path, &column); */
+/*	if(path){ */
+/*		if (gtk_tree_model_get_iter (GTK_TREE_MODEL(priv->liststore_crystals), */
+/*					     &iter, path) == TRUE){ */
+/*			gtk_tree_model_get (GTK_TREE_MODEL(priv->liststore_crystals), */
+/*					    &iter, */
+/*					    SAMPLE_COL_SAMPLE, &sample, */
+/*					    -1); */
 
-/* 			if(sample && sample != priv->sample){ */
-/* 				priv->sample = sample; */
+/*			if(sample && sample != priv->sample){ */
+/*				priv->sample = sample; */
 
-/* 				update_reflections(self); */
-/* 				update_lattice(self); */
-/* 				update_reciprocal_lattice (self); */
-/* 				update_ux_uy_uz (self); */
-/* 				update_UB (self); */
+/*				update_reflections(self); */
+/*				update_lattice(self); */
+/*				update_reciprocal_lattice (self); */
+/*				update_ux_uy_uz (self); */
+/*				update_UB (self); */
 
-/* 				if(priv->diffractometer){ */
-/* 					diffractometer_set_sample(priv->diffractometer, */
-/* 								  priv->sample); */
+/*				if(priv->diffractometer){ */
+/*					diffractometer_set_sample(priv->diffractometer, */
+/*								  priv->sample); */
 
-/* 					update_pseudo_axes (self); */
-/* 					update_pseudo_axes_frames (self); */
-/* 					update_solutions(self); */
-/* 				} */
-/* 			} */
-/* 		} */
-/* 		gtk_tree_path_free (path); */
-/* 	} */
+/*					update_pseudo_axes (self); */
+/*					update_pseudo_axes_frames (self); */
+/*					update_solutions(self); */
+/*				} */
+/*			} */
+/*		} */
+/*		gtk_tree_path_free (path); */
+/*	} */
 /* } */
 
 
@@ -472,65 +472,65 @@ column_view_solutions_activate_cb (GtkColumnView *column_view,
 /* void */
 /* hkl_gui_window_toolbutton_setUB_clicked_cb(GtkButton* _sender, gpointer user_data) */
 /* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
+/*	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
+/*	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
 
-/* 	HklMatrix *UB; */
-/* 	GError *error = NULL; */
+/*	HklMatrix *UB; */
+/*	GError *error = NULL; */
 
-/* 	UB = hkl_matrix_new_full(gtk_spin_button_get_value(priv->spinbutton_U11), */
-/* 				 gtk_spin_button_get_value(priv->spinbutton_U12), */
-/* 				 gtk_spin_button_get_value(priv->spinbutton_U13), */
-/* 				 gtk_spin_button_get_value(priv->spinbutton_U21), */
-/* 				 gtk_spin_button_get_value(priv->spinbutton_U22), */
-/* 				 gtk_spin_button_get_value(priv->spinbutton_U23), */
-/* 				 gtk_spin_button_get_value(priv->spinbutton_U31), */
-/* 				 gtk_spin_button_get_value(priv->spinbutton_U32), */
-/* 				 gtk_spin_button_get_value(priv->spinbutton_U33)); */
+/*	UB = hkl_matrix_new_full(gtk_spin_button_get_value(priv->spinbutton_U11), */
+/*				 gtk_spin_button_get_value(priv->spinbutton_U12), */
+/*				 gtk_spin_button_get_value(priv->spinbutton_U13), */
+/*				 gtk_spin_button_get_value(priv->spinbutton_U21), */
+/*				 gtk_spin_button_get_value(priv->spinbutton_U22), */
+/*				 gtk_spin_button_get_value(priv->spinbutton_U23), */
+/*				 gtk_spin_button_get_value(priv->spinbutton_U31), */
+/*				 gtk_spin_button_get_value(priv->spinbutton_U32), */
+/*				 gtk_spin_button_get_value(priv->spinbutton_U33)); */
 
-/* 	if(!hkl_sample_UB_set (priv->sample, UB, &error)) */
-/* 		raise_error(self, &error); */
-/* 	else{ */
-/* 		if(priv->diffractometer){ */
-/* 			diffractometer_set_sample(priv->diffractometer, */
-/* 						  priv->sample); */
+/*	if(!hkl_sample_UB_set (priv->sample, UB, &error)) */
+/*		raise_error(self, &error); */
+/*	else{ */
+/*		if(priv->diffractometer){ */
+/*			diffractometer_set_sample(priv->diffractometer, */
+/*						  priv->sample); */
 
-/* 			update_lattice (self); */
-/* 			update_crystal_model (self); */
-/* 			update_reciprocal_lattice (self); */
-/* 			update_UB (self); */
-/* 			update_ux_uy_uz (self); */
-/* 			update_pseudo_axes (self); */
-/* 			update_pseudo_axes_frames (self); */
-/* 		} */
-/* 	} */
+/*			update_lattice (self); */
+/*			update_crystal_model (self); */
+/*			update_reciprocal_lattice (self); */
+/*			update_UB (self); */
+/*			update_ux_uy_uz (self); */
+/*			update_pseudo_axes (self); */
+/*			update_pseudo_axes_frames (self); */
+/*		} */
+/*	} */
 
-/* 	hkl_matrix_free(UB); */
+/*	hkl_matrix_free(UB); */
 /* } */
 
 
 /* void */
 /* hkl_gui_window_toolbutton_affiner_clicked_cb (GtkButton* _sender, gpointer user_data) */
 /* { */
-/* 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
-/* 	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
-/* 	GError *error = NULL; */
+/*	HklGuiWindow *self = HKL_GUI_WINDOW(user_data); */
+/*	HklGuiWindowPrivate *priv = hkl_gui_window_get_instance_private(user_data); */
+/*	GError *error = NULL; */
 
-/* 	if(!hkl_sample_affine (priv->sample, &error)){ */
-/* 		raise_error(self, &error); */
-/* 	}else{ */
-/* 		if(priv->diffractometer) */
-/* 			diffractometer_set_sample(priv->diffractometer, */
-/* 						  priv->sample); */
+/*	if(!hkl_sample_affine (priv->sample, &error)){ */
+/*		raise_error(self, &error); */
+/*	}else{ */
+/*		if(priv->diffractometer) */
+/*			diffractometer_set_sample(priv->diffractometer, */
+/*						  priv->sample); */
 
-/* 		update_lattice (self); */
-/* 		update_crystal_model (self); */
-/* 		update_reciprocal_lattice (self); */
-/* 		update_UB (self); */
-/* 		update_ux_uy_uz (self); */
-/* 		update_pseudo_axes (self); */
-/* 		update_pseudo_axes_frames (self); */
-/* 	} */
+/*		update_lattice (self); */
+/*		update_crystal_model (self); */
+/*		update_reciprocal_lattice (self); */
+/*		update_UB (self); */
+/*		update_ux_uy_uz (self); */
+/*		update_pseudo_axes (self); */
+/*		update_pseudo_axes_frames (self); */
+/*	} */
 /* } */
 
 /* /\* */
@@ -571,8 +571,8 @@ add_sample_reflection_activated (GSimpleAction *action,
 
 static void
 copy_sample_activated (GSimpleAction *action,
-		      GVariant *parameter,
-		      gpointer user_data)
+		       GVariant *parameter,
+		       gpointer user_data)
 {
 	HklGuiWindow *self = HKL_GUI_WINDOW(user_data);
 	HklGuiSample *gsample;
@@ -981,20 +981,20 @@ static void hkl_gui_window_startup (GApplication *application)
 {
 	G_APPLICATION_CLASS (hkl_gui_window_parent_class)->startup (application);
 
-  /* priv->diffractometer = NULL; */
-  /* priv->sample = hkl_sample_new("default"); */
+	/* priv->diffractometer = NULL; */
+	/* priv->sample = hkl_sample_new("default"); */
 
-  /* darray_init(priv->pseudo_frames); */
+	/* darray_init(priv->pseudo_frames); */
 
-  /* priv->reciprocal = hkl_lattice_new_default (); */
+	/* priv->reciprocal = hkl_lattice_new_default (); */
 
-  /* hkl_gui_window_get_widgets_and_objects_from_ui (ghkl); */
+	/* hkl_gui_window_get_widgets_and_objects_from_ui (ghkl); */
 
-  /* set_up_diffractometer_model (ghkl); */
+	/* set_up_diffractometer_model (ghkl); */
 
-  /* set_up_tree_view_crystals (ghkl); */
+	/* set_up_tree_view_crystals (ghkl); */
 
-  /* set_up_tree_view_reflections(ghkl); */
+	/* set_up_tree_view_reflections(ghkl); */
 }
 
 static void

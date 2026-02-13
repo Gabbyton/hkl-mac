@@ -532,7 +532,7 @@ hkl_gui_factory_set_error(HklGuiFactory *self,
 void
 hkl_gui_factory_set_geometry(HklGuiFactory *self,
                              HklGuiGeometry *geometry)
- {
+{
         diffractometer_set_geometry(self->diffractometer,
                                     hkl_gui_geometry_get_geometry(geometry));
         update_liststore_axes(self);
@@ -599,8 +599,8 @@ void hkl_gui_factory_compute_ub(HklGuiFactory *self, HklGuiSample* sample)
 		update_liststore_pseudo_axes(self);
 		update_liststore_engines(self);
 		/* if(priv->diffractometer) */
-		/* 	diffractometer_set_sample(priv->diffractometer, */
-		/* 				  priv->sample); */
+		/*	diffractometer_set_sample(priv->diffractometer, */
+		/*				  priv->sample); */
 
 		/* update_UB (self); */
 		/* update_ux_uy_uz (self); */

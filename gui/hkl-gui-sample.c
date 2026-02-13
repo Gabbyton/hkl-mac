@@ -257,7 +257,7 @@ hkl_gui_sample_class_init (HklGuiSampleClass *klass)
 				     "Name",
 				     "the name of the sample",
 				     "toto",
-				      G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE);
+				     G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE);
 
 	props[PROP_A] =
 		g_param_spec_double ("a",
@@ -466,7 +466,7 @@ hkl_gui_sample_get_or1(HklGuiSample *self)
 
 void
 hkl_gui_sample_set_error(HklGuiSample *self,
-			  GError *error)
+			 GError *error)
 {
 	g_clear_error(&self->error);
 	self->error = g_error_copy(error);

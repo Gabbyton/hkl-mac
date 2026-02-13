@@ -156,10 +156,10 @@ hkl_gui_parameter_class_init (HklGuiParameterClass *klass)
 
 	props[PROP_NAME] =
 		g_param_spec_string ("name",
-				      "Name",
-				      "the HklParameter name.",
+				     "Name",
+				     "the HklParameter name.",
 				     "",
-				      G_PARAM_STATIC_NAME | G_PARAM_READABLE);
+				     G_PARAM_STATIC_NAME | G_PARAM_READABLE);
 
 	props[PROP_PARAMETER] =
 		g_param_spec_pointer ("parameter",

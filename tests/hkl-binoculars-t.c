@@ -121,7 +121,7 @@ static void coordinates_save(void)
 /*         if (NULL != arr) */
 /*                 free(arr); */
 
-/* 	ok(res == TRUE, __func__); */
+/*	ok(res == TRUE, __func__); */
 /* } */
 
 static void mask_get(void)

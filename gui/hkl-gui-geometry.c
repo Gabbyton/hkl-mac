@@ -61,9 +61,9 @@ G_DEFINE_FINAL_TYPE(HklGuiGeometry, hkl_gui_geometry, G_TYPE_OBJECT);
 
 static void
 hkl_gui_geometry_set_property (GObject      *object,
-			      guint         prop_id,
-			      const GValue *value,
-			      GParamSpec   *pspec)
+			       guint         prop_id,
+			       const GValue *value,
+			       GParamSpec   *pspec)
 {
 	HklGuiGeometry *self = HKL_GUI_GEOMETRY (object);
 
@@ -86,9 +86,9 @@ hkl_gui_geometry_set_property (GObject      *object,
 
 static void
 hkl_gui_geometry_get_property (GObject    *object,
-			      guint       prop_id,
-			      GValue     *value,
-			      GParamSpec *pspec)
+			       guint       prop_id,
+			       GValue     *value,
+			       GParamSpec *pspec)
 {
 	HklGuiGeometry *self = HKL_GUI_GEOMETRY (object);
 

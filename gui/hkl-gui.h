@@ -31,10 +31,10 @@
 G_DECLARE_FINAL_TYPE (HklGuiEngine, hkl_gui_engine, HKL_GUI, ENGINE, GObject)
 
 #define HKL_GUI_TYPE_FACTORY (hkl_gui_factory_get_type ())
-G_DECLARE_FINAL_TYPE (HklGuiFactory, hkl_gui_factory, HKL_GUI, FACTORY, GObject)
+	G_DECLARE_FINAL_TYPE (HklGuiFactory, hkl_gui_factory, HKL_GUI, FACTORY, GObject)
 
 #define HKL_GUI_TYPE_GEOMETRY (hkl_gui_geometry_get_type ())
-G_DECLARE_FINAL_TYPE (HklGuiGeometry, hkl_gui_geometry, HKL_GUI, GEOMETRY, GObject)
+	G_DECLARE_FINAL_TYPE (HklGuiGeometry, hkl_gui_geometry, HKL_GUI, GEOMETRY, GObject)
 
 #define HKL_GUI_TYPE_PARAMETER (hkl_gui_parameter_get_type ())
 G_DECLARE_FINAL_TYPE (HklGuiParameter, hkl_gui_parameter, HKL_GUI, PARAMETER, GObject)

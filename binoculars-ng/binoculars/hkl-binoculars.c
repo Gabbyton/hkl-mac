@@ -945,7 +945,7 @@ static inline double compute_azimuth(vec3s kf)
                         }                                               \
                         break;                                          \
                 }                                                       \
-                case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_PHIX_QX:    \
+                case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_PHIX_QX:	\
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
                                 if(not_masked(masked, i)){              \
@@ -969,7 +969,7 @@ static inline double compute_azimuth(vec3s kf)
                         }                                               \
                         break;                                          \
                 }                                                       \
-                case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_PHIY_QY:    \
+                case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_PHIY_QY:	\
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
                                 if(not_masked(masked, i)){              \
@@ -993,7 +993,7 @@ static inline double compute_azimuth(vec3s kf)
                         }                                               \
                         break;                                          \
                 }                                                       \
-                case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_PHIZ_QZ:    \
+                case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_PHIZ_QZ:	\
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
                                 if(not_masked(masked, i)){              \

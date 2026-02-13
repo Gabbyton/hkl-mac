@@ -53,11 +53,11 @@
 		}							\
 	} while(0)
 
-#define fill_row(row, shape, val)				\
-	do{							\
-		for(int i_=0; i_<(shape).width; ++i_){		\
-			(row)[i_] = (val);			\
-		}						\
+#define fill_row(row, shape, val)			\
+	do{						\
+		for(int i_=0; i_<(shape).width; ++i_){	\
+			(row)[i_] = (val);		\
+		}					\
 	} while(0)
 
 #define replicate_column(col, shape, n)					\
@@ -134,8 +134,8 @@ struct imxpad_t {
 			}
 
 struct cirpad_transformation_t {
-         CGLM_ALIGN_MAT vec3s translation;
-         CGLM_ALIGN_MAT vec3s eulers;
+	CGLM_ALIGN_MAT vec3s translation;
+	CGLM_ALIGN_MAT vec3s eulers;
 };
 
 struct cirpad_t {
@@ -146,11 +146,11 @@ struct cirpad_t {
 };
 
 
-#define CIRPAD(pixel_size_, chip_w_, chip_h_) (struct cirpad_t)         \
-        { .imxpad_s70=IMXPAD(pixel_size_, chip_w_, chip_h_)             \
-                        , .imxpad_s70_shape=SHAPE(560, 120)             \
-                        , .n_imxpad_s70=CIRPAD_N_IMXPAD_S70             \
-                        , .transformations=CIRPAD_PARAMETERS		\
+#define CIRPAD(pixel_size_, chip_w_, chip_h_) (struct cirpad_t)	\
+        { .imxpad_s70=IMXPAD(pixel_size_, chip_w_, chip_h_)	\
+                        , .imxpad_s70_shape=SHAPE(560, 120)	\
+                        , .n_imxpad_s70=CIRPAD_N_IMXPAD_S70	\
+                        , .transformations=CIRPAD_PARAMETERS	\
                         }
 
 struct tilling_t {

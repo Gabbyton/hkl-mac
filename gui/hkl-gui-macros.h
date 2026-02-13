@@ -27,7 +27,7 @@
 
 #include "hkl.h"
 
-#define add_column(column_view, name, item_factory, ...) do {	\
+#define add_column(column_view, name, item_factory, ...) do {		\
 		GtkListItemFactory *factory;				\
 		GtkColumnViewColumn *column;				\
 									\
