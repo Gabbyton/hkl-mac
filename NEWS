@@ -1,6 +1,6 @@
 # -*- org -*-
 
-* 5.1.5 <unreleased>
+* 5.1.5 <2026-02-13 ven.>
 ** Binoculars-ng (Haskell program)
    - Build with ghc 9.10 (Debian unstable)
 ** Ghkl (Gui)
