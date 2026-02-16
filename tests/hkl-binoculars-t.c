@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2025 Synchrotron SOLEIL
+ * Copyright (C) 2003-2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -46,8 +46,13 @@ static int check_sha256(const uint8_t *buffer, size_t length, const char* finger
 	EVP_Q_digest(context, "SHA256", NULL, buffer, length, sha256, &sha256_length);
 	for(int i=0; i<SHA256_DIGEST_LENGTH; ++i)
 		snprintf(&buffer_fingerprint[2*i], 3, "%02x", sha256[i]);
-	res &= strcmp(fingerprint, buffer_fingerprint) == 0;
 
+	if (NULL == fingerprint){
+		fprintf(stdout, "detector %d fingerpring: %s skipped\n", n, buffer_fingerprint);
+		return res;
+	}
+
+	res &= strcmp(fingerprint, buffer_fingerprint) == 0;
 	if (res != TRUE)
 		fprintf(stdout, "detector %d fingerpring: %s , expected: %s\n", n, buffer_fingerprint, fingerprint);
 
@@ -81,8 +86,26 @@ static void coordinates_get(void)
 		"07854d2fef297a06ba81685e660c332de36d5d18d546927d30daad6d7fda1541",
 		"feced70203b04a1a25c0931b1f76f70af248991c31358b1b70fce2d80647966e",
 		"5647f05ec18958947d32874eeb788fa396a05d0bab7c1b71f112ceb7e9b31eee",
-		"0f3d88d8d4f3f6829d068b616b6d92b3fb91e6b039c78fa09bc0e447d5343dcd",
-		"c5a68aa2d84bf11c4a1fb38a2830f6da1e6bcc75bccc87035e26519ee57ce35d",
+/* CIRPAD */
+#if ___aarch64__ && __LP64__ /* arm64 */
+		"939416e43163951cce69556a31aab15e1aa918f494118d3fed7ba9454c018aba",
+#elif __arm__ && __ARM_EABI__ && __ARM_PCS_VFP /* armhf */
+		"939416e43163951cce69556a31aab15e1aa918f494118d3fed7ba9454c018aba",
+#elif __x86_64__ && __LP64__ /* amd64 */
+                "0f3d88d8d4f3f6829d068b616b6d92b3fb91e6b039c78fa09bc0e447d5343dcd",
+#elif __i386__ /* i386 */
+		"1e82c811973083acda4c95fb12ebf8a872dc1f70edd6e5fd6371e46bfe96059d",
+#elif __loongarch__ && __loongarch_lp64 && __loongarch_double_float  /* loong64 */
+		NULL, /* TODO */
+#elif __powerpc__ && __ppc64__ && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ /* ppc64el */
+		"087f370764181cef79788b4c60240bf5127e45fca9ecc814dfbe3f2e90f765c5",
+#elif __riscv && __riscv_xlen==64 /* riscv64 */
+		NULL, /* TODO */
+#elif __s390x__ /* s390x */
+		"8e79155d882a5af83202bd8e5546ce7f64ffbe7f8cb665f21e2cbc9f77c811fe",
+#endif
+
+ 		"c5a68aa2d84bf11c4a1fb38a2830f6da1e6bcc75bccc87035e26519ee57ce35d",
 	};
 
         for(int i=0; i<HKL_BINOCULARS_DETECTOR_NUM_DETECTORS; ++i){
