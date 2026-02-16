@@ -1,5 +1,8 @@
 # -*- org -*-
 
+* 5.1.7 <UNRELEASED>
+** Tests
+   - fixes typo when checking for arch (arm64 and ppc64el)
 * 5.1.6 <2026-02-16 lun.>
 ** Tests
    - updated the sha256 for the =CIRPAD= detector on numerous

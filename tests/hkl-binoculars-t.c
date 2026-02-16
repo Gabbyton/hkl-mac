@@ -87,24 +87,23 @@ static void coordinates_get(void)
 		"feced70203b04a1a25c0931b1f76f70af248991c31358b1b70fce2d80647966e",
 		"5647f05ec18958947d32874eeb788fa396a05d0bab7c1b71f112ceb7e9b31eee",
 /* CIRPAD */
-#if ___aarch64__ && __LP64__ /* arm64 */
+#if __x86_64__ && __LP64__ /* amd64 */
+                "0f3d88d8d4f3f6829d068b616b6d92b3fb91e6b039c78fa09bc0e447d5343dcd",
+#elif __aarch64__ && __LP64__ /* arm64 */
 		"939416e43163951cce69556a31aab15e1aa918f494118d3fed7ba9454c018aba",
 #elif __arm__ && __ARM_EABI__ && __ARM_PCS_VFP /* armhf */
 		"939416e43163951cce69556a31aab15e1aa918f494118d3fed7ba9454c018aba",
-#elif __x86_64__ && __LP64__ /* amd64 */
-                "0f3d88d8d4f3f6829d068b616b6d92b3fb91e6b039c78fa09bc0e447d5343dcd",
 #elif __i386__ /* i386 */
 		"1e82c811973083acda4c95fb12ebf8a872dc1f70edd6e5fd6371e46bfe96059d",
 #elif __loongarch__ && __loongarch_lp64 && __loongarch_double_float  /* loong64 */
 		NULL, /* TODO */
-#elif __powerpc__ && __ppc64__ && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ /* ppc64el */
+#elif __powerpc__ && __powerpc64__ && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ /* ppc64el */
 		"087f370764181cef79788b4c60240bf5127e45fca9ecc814dfbe3f2e90f765c5",
 #elif __riscv && __riscv_xlen==64 /* riscv64 */
 		NULL, /* TODO */
 #elif __s390x__ /* s390x */
 		"8e79155d882a5af83202bd8e5546ce7f64ffbe7f8cb665f21e2cbc9f77c811fe",
 #endif
-
  		"c5a68aa2d84bf11c4a1fb38a2830f6da1e6bcc75bccc87035e26519ee57ce35d",
 	};
 
