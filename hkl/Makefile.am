@@ -97,6 +97,7 @@ libdummy_la_SOURCES = hkl-engine-template.c
 # just a private hkl library with all symbols visiles for hkl"d and binoculars
 noinst_LTLIBRARIES += libhkl-private.la
 libhkl_private_la_SOURCES =  $(hkl_c_sources) $(hkl_private_h_sources)
+libhkl_private_la_CFLAGS = $(AM_CFLAGS)
 
 # the hkl library
 lib_LTLIBRARIES = libhkl.la

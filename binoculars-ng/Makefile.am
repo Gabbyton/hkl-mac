@@ -119,7 +119,7 @@ EXTRA_DIST = $(binoculars_ng_SOURCES) $(test_sources)
 
 # RTS = +RTS -N4 -RTS
 RTS =
-RUN_LIBTOOL = $(LIBTOOL) --mode=execute -dlopen $(top_builddir)/hkl/libhkl-private.la
+RUN_LIBTOOL = $(LIBTOOL) --mode=execute -dlopen $(top_builddir)/hkl/libhkl.la
 RUN = $(RUN_LIBTOOL) /usr/bin/time -v ./binoculars-ng $(RTS)
 RUN_DBG = $(RUN_LIBTOOL) gdb --args
 PROCESS = $(RUN) process
@@ -211,4 +211,4 @@ sixs: binoculars-ng
 #	$(PROCESS) /nfs/ruche/sixs-soleil/com-sixs/2025/Run3/Coati_AgNi322/binoculars/config.cfg 377-390
 #       TODO
 #	$(PROCESS) data/test/config_sixs_ruche_qpars.ini 290
-	$(PROCESS_DBG) data/test/config_sixs_ruche_threshold.ini 63-64
+	$(PROCESS) data/test/config_sixs_ruche_threshold.ini 63-64
