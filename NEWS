@@ -1,5 +1,8 @@
 # -*- org -*-
 
+* 5.1.8 <unreleased>
+** Binoculars (C-library)
+   - Added support for uint8 images.
 * 5.1.7 <2026-02-16 lun.>
 ** Tests
    - fixes typo when checking for arch (arm64 and ppc64el)

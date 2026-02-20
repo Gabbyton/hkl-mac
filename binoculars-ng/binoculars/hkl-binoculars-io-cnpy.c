@@ -84,6 +84,9 @@ static struct descr_t parse_descr(const char *header, regmatch_t match)
                 break;
         };
 
+        /* elem_size */
+        descr.elem_size = atoi(&description[2]);
+
         /* elem_type */
         switch(description[1]){
         case 'b':
@@ -92,12 +95,23 @@ static struct descr_t parse_descr(const char *header, regmatch_t match)
         case 'f':
                 descr.elem_type = HklBinocularsNpyDouble();
                 break;
+	case 'u':
+		switch (descr.elem_size){
+		case 1:
+			descr.elem_type = HklBinocularsNpyUInt8();
+			break;
+		case 2:
+			descr.elem_type = HklBinocularsNpyUInt16();
+			break;
+		default:
+			fprintf (stderr, "npy: Unupported unsigned int type %s\n", description);
+			abort();
+		}
+		break;
 	default:
+		fprintf (stderr, "npy: Unsupported element type %s\n", description);
 		abort();
         };
-
-        /* elem_size */
-        descr.elem_size = atoi(&description[2]);
 
         free(description);
 
@@ -304,6 +318,10 @@ void *npy_load(const char *fname,
                                                 of(HklBinocularsNpyInt32) {
 							convert(npy, int32_t, arr, uint8_t);
                                                 }
+                                                of(HklBinocularsNpyUInt8) {
+							arr = npy->arr;
+							npy_free_but_array (npy);
+                                                }
                                                 of(HklBinocularsNpyUInt16) {
 							convert(npy, uint16_t, arr, uint8_t);
                                                 }
@@ -313,6 +331,9 @@ void *npy_load(const char *fname,
                                 of(HklBinocularsNpyDouble) {
                                         match(read_type){
                                                 of(HklBinocularsNpyBool) {
+							convert(npy, uint8_t, arr, double);
+                                                }
+                                                of(HklBinocularsNpyUInt8) {
 							convert(npy, uint8_t, arr, double);
                                                 }
                                                 of(HklBinocularsNpyUInt16) {
@@ -333,6 +354,9 @@ void *npy_load(const char *fname,
                                                 of(HklBinocularsNpyBool) {
 							convert(npy, uint8_t, arr, int32_t);
                                                 }
+                                                of(HklBinocularsNpyUInt8) {
+							convert(npy, uint8_t, arr, int32_t);
+                                                }
                                                 of(HklBinocularsNpyUInt16) {
 							convert(npy, uint16_t, arr, int32_t);
                                                 }
@@ -346,9 +370,34 @@ void *npy_load(const char *fname,
                                         }
                                 }
 
+                                of(HklBinocularsNpyUInt8) {
+                                        match(read_type){
+                                                of(HklBinocularsNpyBool) {
+                                                        arr = npy->arr;
+                                                        npy_free_but_array(npy);
+                                                }
+                                                of(HklBinocularsNpyDouble) {
+							convert(npy, double, arr, uint8_t);
+                                                }
+                                                of(HklBinocularsNpyInt32) {
+							convert(npy, int32_t, arr, uint8_t);
+                                                }
+                                                of(HklBinocularsNpyUInt8) {
+							arr = npy->arr;
+							npy_free_but_array (npy);
+                                                }
+                                                of(HklBinocularsNpyUInt16) {
+							convert(npy, uint16_t, arr, uint8_t);
+                                                }
+                                        }
+                                }
+
                                 of(HklBinocularsNpyUInt16) {
                                         match(read_type){
                                                 of(HklBinocularsNpyBool) {
+							convert(npy, uint8_t, arr, uint16_t);
+                                                }
+                                                of(HklBinocularsNpyUInt8) {
 							convert(npy, uint8_t, arr, uint16_t);
                                                 }
                                                 of(HklBinocularsNpyUInt16) {
@@ -385,6 +434,7 @@ static inline char map_type(HklBinocularsNpyDataType type)
                 of(HklBinocularsNpyBool)   res = 'b';
                 of(HklBinocularsNpyDouble) res = 'f';
                 of(HklBinocularsNpyInt32)  res = 'i';
+                of(HklBinocularsNpyUInt8)  res = 'u';
                 of(HklBinocularsNpyUInt16) res = 'u';
         }
 
@@ -422,6 +472,7 @@ int npy_data_type_element_size(HklBinocularsNpyDataType type)
                 of(HklBinocularsNpyBool)   res = 1;
                 of(HklBinocularsNpyDouble) res = 8;
                 of(HklBinocularsNpyInt32)  res = 4;
+                of(HklBinocularsNpyUInt8)  res = 1;
                 of(HklBinocularsNpyUInt16) res = 2;
         }
 
