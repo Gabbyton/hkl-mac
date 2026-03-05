@@ -1,6 +1,11 @@
-// use is_matrix when possible
+// use DIAG when possible
 
+@i@
 @@
+
+#include <tap/basic.h>
+
+@depends on i@
 identifier res;
 expression E;
 @@

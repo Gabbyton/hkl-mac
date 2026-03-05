@@ -45,12 +45,12 @@ static int hkl_geometry_list_check_geometry_unit(const HklGeometryList *self,
 		geometry = hkl_geometry_list_item_geometry_get(item);
 
 		res = TRUE;
-		res &= CHECK_AXIS_VALUE(geometry, "mu", mu * HKL_DEGTORAD);
-		res &= CHECK_AXIS_VALUE(geometry, "omega", omega * HKL_DEGTORAD);
-		res &= CHECK_AXIS_VALUE(geometry, "chi", chi * HKL_DEGTORAD);
-		res &= CHECK_AXIS_VALUE(geometry, "phi", phi * HKL_DEGTORAD);
-		res &= CHECK_AXIS_VALUE(geometry, "gamma", gamma * HKL_DEGTORAD);
-		res &= CHECK_AXIS_VALUE(geometry, "delta", delta * HKL_DEGTORAD);
+		res &= DIAG(CHECK_AXIS_VALUE(geometry, "mu", mu * HKL_DEGTORAD));
+		res &= DIAG(CHECK_AXIS_VALUE(geometry, "omega", omega * HKL_DEGTORAD));
+		res &= DIAG(CHECK_AXIS_VALUE(geometry, "chi", chi * HKL_DEGTORAD));
+		res &= DIAG(CHECK_AXIS_VALUE(geometry, "phi", phi * HKL_DEGTORAD));
+		res &= DIAG(CHECK_AXIS_VALUE(geometry, "gamma", gamma * HKL_DEGTORAD));
+		res &= DIAG(CHECK_AXIS_VALUE(geometry, "delta", delta * HKL_DEGTORAD));
 
 		if (res)
 			break;

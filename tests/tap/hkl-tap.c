@@ -92,7 +92,7 @@ int check_pseudoaxes(HklEngine *engine,
 
 	if(hkl_engine_pseudo_axis_values_get(engine, currents, len, HKL_UNIT_DEFAULT, NULL)){
 		for(i=0; i<len; ++i){
-			res &= fabs(currents[i] - expected[i]) <= HKL_EPSILON;
+			res &= DIAG(fabs(currents[i] - expected[i]) <= HKL_EPSILON);
 			if (!res){
 				fprintf(stderr, "current: %f, expected: %f, epsilon: %f\n",
 					currents[i], expected[i], HKL_EPSILON);

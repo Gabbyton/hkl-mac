@@ -52,7 +52,7 @@ static int check_sha256(const uint8_t *buffer, size_t length, const char* finger
 		return res;
 	}
 
-	res &= strcmp(fingerprint, buffer_fingerprint) == 0;
+	res &= DIAG(strcmp(fingerprint, buffer_fingerprint) == 0);
 	if (res != TRUE)
 		fprintf(stdout, "detector %d fingerpring: %s , expected: %s\n", n, buffer_fingerprint, fingerprint);
 
@@ -68,7 +68,7 @@ static int check_sha256_detector_array(int n, const uint8_t *buffer, size_t elem
 	int height;
 
 	hkl_binoculars_detector_2d_shape_get(n, &width, &height);
-	res &= check_sha256(buffer, width * height * elem_size, fingerprint, n);
+	res &= DIAG(check_sha256(buffer, width * height * elem_size, fingerprint, n));
 
 	return res;
 }
@@ -110,7 +110,7 @@ static void coordinates_get(void)
         for(int i=0; i<HKL_BINOCULARS_DETECTOR_NUM_DETECTORS; ++i){
                 double *arr = hkl_binoculars_detector_2d_coordinates_get(i);
 		if (NULL != arr){
-			res &= check_sha256_detector_array(i, (uint8_t *)(&arr[0]), sizeof(*arr), fingerprint[i]);
+			res &= DIAG(check_sha256_detector_array(i, (uint8_t *)(&arr[0]), sizeof(*arr), fingerprint[i]));
 			free(arr);
 		}
         }
@@ -165,7 +165,7 @@ static void mask_get(void)
         for(int i=0; i<HKL_BINOCULARS_DETECTOR_NUM_DETECTORS; ++i){
                 uint8_t *arr = hkl_binoculars_detector_2d_mask_get(i);
 		if (NULL != arr){
-			res &= check_sha256_detector_array(i, arr, sizeof(*arr), fingerprint[i]);
+			res &= DIAG(check_sha256_detector_array(i, arr, sizeof(*arr), fingerprint[i]));
 			free(arr);
 		}
         }
@@ -366,8 +366,9 @@ static void qcustom_projection(void)
         int res = TRUE;
         int i;
 
-        for(i=0; i<HKL_BINOCULARS_QCUSTOM_NUM_SUBPROJECTIONS; ++i)
-                res &= qcustom_projection_sub(i);
+        for(i=0; i<HKL_BINOCULARS_QCUSTOM_NUM_SUBPROJECTIONS; ++i) {
+                res &= DIAG(qcustom_projection_sub(i));
+        }
 
         ok(res == TRUE, __func__);
 }
@@ -662,8 +663,8 @@ static void hkl_projection(void)
                 }
 
                 for(i=0; i<ARRAY_SIZE(imax[n]); ++i){
-                        res &= imin[n][i] == darray_item(cube->axes, i).imin;
-                        res &= imax[n][i] == darray_item(cube->axes, i).imax;
+                        res &= DIAG(imin[n][i] == darray_item(cube->axes, i).imin);
+                        res &= DIAG(imax[n][i] == darray_item(cube->axes, i).imax);
                 }
 
                 if (res == FALSE){
@@ -962,8 +963,8 @@ static void test_polarization(void)
 	}
 
 	for(i=0; i<ARRAY_SIZE(imax[n]); ++i){
-		res &= imin[n][i] == darray_item(cube->axes, i).imin;
-		res &= imax[n][i] == darray_item(cube->axes, i).imax;
+		res &= DIAG(imin[n][i] == darray_item(cube->axes, i).imin);
+		res &= DIAG(imax[n][i] == darray_item(cube->axes, i).imax);
 	}
 
 	if (res == FALSE){
