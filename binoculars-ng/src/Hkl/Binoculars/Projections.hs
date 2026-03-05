@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE PolyKinds             #-}
 {-
-    Copyright  : Copyright (C) 2014-2024 Synchrotron SOLEIL
+    Copyright  : Copyright (C) 2014-2024, 2026 Synchrotron SOLEIL
                                          L'Orme des Merisiers Saint-Aubin
                                          BP 48 91192 GIF-sur-YVETTE CEDEX
     License    : GPL3+
@@ -18,6 +18,7 @@ module Hkl.Binoculars.Projections
   , cmd
   , newSpace
   , saveCube
+  , withMaybeDynamicMask
   , withMaybeLimits
   , withMaybeMask
   , withMaybeSampleAxis
@@ -35,11 +36,12 @@ import           Control.Monad.Trans.Reader (ReaderT, runReaderT)
 import           Data.ByteString            (useAsCString)
 import           Data.Text.Encoding         (encodeUtf8)
 import           Foreign.C.String           (CString, withCString)
-import           Foreign.C.Types            (CBool, CSize (..))
+import           Foreign.C.Types            (CBool, CDouble (..), CSize (..))
 import           Foreign.ForeignPtr         (ForeignPtr, newForeignPtr,
                                              withForeignPtr)
 import           Foreign.Marshal.Alloc      (alloca)
 import           Foreign.Marshal.Array      (withArrayLen)
+import           Foreign.Marshal.Utils      (maybeWith, with)
 import           Foreign.Ptr                (Ptr, nullPtr)
 import           Foreign.Storable           (poke)
 import           GHC.Exts                   (IsList (..))
@@ -110,32 +112,38 @@ newLimits (Limits mmin mmax) res =
           newForeignPtr p'hkl_binoculars_axis_limits_free
                         =<< c'hkl_binoculars_axis_limits_new imin'' imax''
 
+withDynamicMask :: DynamicMask -> (Ptr CDouble -> IO r) -> IO r
+withDynamicMask (DynamicMask v) = with (CDouble v)
+
+withMaybeDynamicMask :: Maybe DynamicMask -> (Ptr CDouble -> IO r) -> IO r
+withMaybeDynamicMask = maybeWith withDynamicMask
+
 withMaybeLimits :: Shape sh
                 => Maybe (RLimits sh)
                 -> Resolutions sh
                 -> (Int -> Ptr (Ptr C'HklBinocularsAxisLimits) -> IO r)
                 -> IO r
-withMaybeLimits mls rs f = do
-  case mls of
-    Nothing   -> f 0 nullPtr
-    (Just ls) -> do
-      ptrs <- zipWithM newLimits (toList ls) (toList rs)
-      withForeignPtrs ptrs $ \pts -> withArrayLen pts f
+withMaybeLimits mls rs f =
+    case mls of
+      Nothing -> f 0 nullPtr
+      Just ls ->
+          do ptrs <- zipWithM newLimits (toList ls) (toList rs)
+             withForeignPtrs ptrs $ \pts -> withArrayLen pts f
+
+withMask :: Mask -> (Ptr CBool -> IO r) -> IO r
+withMask m = withForeignPtr (toForeignPtr m)
 
 withMaybeMask :: Maybe Mask -> (Ptr CBool -> IO r) -> IO r
-withMaybeMask mm f = case mm of
-                       Nothing  -> f nullPtr
-                       (Just m) -> withForeignPtr (toForeignPtr m) $ \ptr -> f ptr
-
-withMaybeSampleAxis :: Maybe SampleAxis -> (CString -> IO r) -> IO r
-withMaybeSampleAxis Nothing f  = f nullPtr
-withMaybeSampleAxis (Just a) f = withSampleAxis a f
+withMaybeMask = maybeWith withMask
 
 withResolutions :: Shape sh => Resolutions sh -> (Int -> Ptr Double -> IO r) -> IO r
 withResolutions = withArrayLen . toList
 
 withSampleAxis :: SampleAxis -> (CString -> IO r) -> IO r
 withSampleAxis (SampleAxis t) =  useAsCString (encodeUtf8 t)
+
+withMaybeSampleAxis :: Maybe SampleAxis -> (CString -> IO r) -> IO r
+withMaybeSampleAxis = maybeWith withSampleAxis
 
 -----------
 -- Space --

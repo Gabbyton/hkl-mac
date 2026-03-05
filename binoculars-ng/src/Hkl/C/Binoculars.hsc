@@ -12,7 +12,7 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 
 {-
-    Copyright  : Copyright (C) 2014-2025 Synchrotron SOLEIL
+    Copyright  : Copyright (C) 2014-2026 Synchrotron SOLEIL
                                          L'Orme des Merisiers Saint-Aubin
                                          BP 48 91192 GIF-sur-YVETTE CEDEX
     License    : GPL3+
@@ -372,6 +372,7 @@ type C'ProjectionTypeQCustom t = Ptr C'HklBinocularsSpace -- HklBinocularsSpace 
  -> CDouble -- uqz
  -> CString -- const char *sample_axis
  -> CInt -- int do_polarization_correction
+ -> Ptr CDouble -- double *image_threshold
  -> IO ()
 
 foreign import ccall unsafe "hkl-binoculars.h hkl_binoculars_space_qcustom_double" \
@@ -401,6 +402,7 @@ type C'ProjectionTypeHkl t = Ptr C'HklBinocularsSpace -- HklBinocularsSpace *sel
   -> Ptr (Ptr C'HklBinocularsAxisLimits) -- const HklBinocularsAxisLimits
   -> CSize -- size_t n_limits
   -> CInt -- int do_polarization_correction
+  -> Ptr CDouble -- double *image_threshold
   -> IO ()
 
 foreign import ccall unsafe "hkl-binoculars.h hkl_binoculars_space_hkl_double" \

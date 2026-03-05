@@ -35,6 +35,7 @@ module Hkl.Binoculars.Config
     , ConfigRange(..)
     , Degree(..)
     , DestinationTmpl(..)
+    , DynamicMask(..)
     , FieldEmitter(..)
     , FieldParsable(..)
     , HasFieldComment(..)
@@ -409,7 +410,14 @@ instance HasFieldValue DestinationTmpl where
 instance FieldEmitter Double where
   fieldEmitter d = pack $ printf "%f" d
 
--- Geometry
+-- DynamicMask
+
+newtype DynamicMask =
+  DynamicMask { unDynamicMask :: Double }
+  deriving (Eq, Show)
+  deriving newtype HasFieldValue
+
+-- Maybe Geometry
 
 instance HasIniParser (Maybe Geometry) where
     iniParser

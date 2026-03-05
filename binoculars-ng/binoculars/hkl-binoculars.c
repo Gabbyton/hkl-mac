@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2025 Synchrotron SOLEIL
+ * Copyright (C) 2003-2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -701,9 +701,9 @@ static const char **axis_name_from_subprojection(HklBinocularsQCustomSubProjecti
         return names;
 }
 
-static inline int not_masked(const uint8_t *masked, size_t idx)
+static inline int not_masked(const uint8_t *masked, size_t idx, double img, double *image_threshold)
 {
-        return NULL == masked || 0 == masked[idx];
+        return (NULL == masked || 0 == masked[idx]) && (NULL == image_threshold || img < *image_threshold);
 }
 
 static inline double polarisation(vec3s kf, double weight, int do_polarisation)
@@ -826,7 +826,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_QX_QY_QZ:    \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -849,7 +849,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_TTH_TIMESTAMP: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -874,7 +874,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_TIMESTAMP: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -898,7 +898,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_QPAR_QPER_TIMESTAMP: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -923,7 +923,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_QPAR_QPER:   \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -948,7 +948,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_PHIX_QX:	\
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -972,7 +972,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_PHIY_QY:	\
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -996,7 +996,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_PHIZ_QZ:	\
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1020,7 +1020,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_STEREO:    \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1050,7 +1050,7 @@ static inline double compute_azimuth(vec3s kf)
                                 int axis = rint(hkl_parameter_value_get(p, HKL_UNIT_USER) / resolutions[2]); \
                                                                         \
                                 for(i=0;i<n_pixels;++i){                \
-                                        if(not_masked(masked, i)){      \
+					if(not_masked(masked, i, image[i], image_threshold)){ \
                                                 CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                                 v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1071,7 +1071,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_X_Y_Z:       \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         glms_vec3_print(v, stdout);     \
@@ -1094,7 +1094,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Y_Z_TIMESTAMP: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1114,7 +1114,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_QPAR_QPER:	\
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1140,7 +1140,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_QPARS_QPER_TIMESTAMP: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1169,7 +1169,7 @@ static inline double compute_azimuth(vec3s kf)
                                 int axis = rint(hkl_parameter_value_get(p, HKL_UNIT_USER) / resolutions[2]); \
                                                                         \
                                 for(i=0;i<n_pixels;++i){                \
-                                        if(not_masked(masked, i)){      \
+					if(not_masked(masked, i, image[i], image_threshold)){ \
                                                 CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                                 v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1199,7 +1199,7 @@ static inline double compute_azimuth(vec3s kf)
                                 int axis = rint(hkl_parameter_value_get(p, HKL_UNIT_USER) / resolutions[1]); \
                                                                         \
                                 for(i=0;i<n_pixels;++i){                \
-                                        if(not_masked(masked, i)){      \
+					if(not_masked(masked, i, image[i], image_threshold)){ \
                                                 CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                                 v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1229,7 +1229,7 @@ static inline double compute_azimuth(vec3s kf)
                                 int axis = rint(hkl_parameter_value_get(p, HKL_UNIT_USER) / resolutions[1]); \
                                                                         \
                                 for(i=0;i<n_pixels;++i){                \
-                                        if(not_masked(masked, i)){      \
+					if(not_masked(masked, i, image[i], image_threshold)){ \
                                                 CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                                 v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1254,7 +1254,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_QX_QY_TIMESTAMP: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1277,7 +1277,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_QX_QZ_TIMESTAMP: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1300,7 +1300,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_QY_QZ_TIMESTAMP: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1323,7 +1323,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_TTH_AZIMUTH: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1349,7 +1349,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_TIMESCAN0:	\
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1373,7 +1373,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_Q_SCANNUMBER: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1397,7 +1397,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_TTH_SCANNUMBER: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1422,7 +1422,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_PHIX_Q_THETAX: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1446,7 +1446,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_PHIY_Q_THETAY: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1470,7 +1470,7 @@ static inline double compute_azimuth(vec3s kf)
                 case HKL_BINOCULARS_QCUSTOM_SUB_PROJECTION_PHIZ_Q_THETAZ: \
                 {                                                       \
                         for(i=0;i<n_pixels;++i){                        \
-                                if(not_masked(masked, i)){              \
+                                if(not_masked(masked, i, image[i], image_threshold)){ \
                                         CGLM_ALIGN_MAT vec3s v = {{q_x[i], q_y[i], q_z[i]}}; \
                                                                         \
                                         v = glms_mat4_mulv3(m_holder_d, v, 1); \
@@ -1545,7 +1545,7 @@ HKL_BINOCULARS_SPACE_QCUSTOM_IMPL(uint32_t);
                 glms_mat4_print(m_holder_d, stdout);                    \
                                                                         \
                 for(i=0;i<n_pixels;++i){                                \
-                        if(not_masked(masked, i)){                      \
+			if(not_masked(masked, i, image[i], image_threshold)){ \
                                 CGLM_ALIGN_MAT vec3s v = {{h[i], k[i], l[i]}}; \
                                                                         \
                                 v = glms_mat4_mulv3(m_holder_d, v, 1);  \
@@ -1617,7 +1617,7 @@ HKL_BINOCULARS_SPACE_HKL_IMPL(uint32_t);
                 glms_mat4_print(m_holder_d, stdout);                    \
                                                                         \
                 for(i=0;i<n_pixels;++i){                                \
-                        if(not_masked(masked, i)){                      \
+			if(not_masked(masked, i, image[i], image_threshold)){ \
                                 CGLM_ALIGN_MAT vec3s v = {{h[i], k[i], l[i]}}; \
                                                                         \
                                 v = glms_mat4_mulv3(m_holder_d, v, 1);  \

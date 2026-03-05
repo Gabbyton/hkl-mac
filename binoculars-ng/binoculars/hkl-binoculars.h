@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the hkl library.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2003-2025 Synchrotron SOLEIL
+ * Copyright (C) 2003-2026 Synchrotron SOLEIL
  *                         L'Orme des Merisiers Saint-Aubin
  *                         BP 48 91192 GIF-sur-YVETTE CEDEX
  *
@@ -261,7 +261,8 @@ typedef enum _HklBinocularsQCustomSubProjectionEnum
                                                        double uqy,      \
                                                        double uqz,      \
                                                        const char *sample_axis, \
-                                                       int do_polarisation_correction \
+                                                       int do_polarisation_correction, \
+						       double *image_threshold \
                 )
 
 
@@ -287,7 +288,8 @@ HKLAPI extern HKL_BINOCULARS_SPACE_QCUSTOM_DECL(uint32_t);
                                                    const uint8_t *masked, \
                                                    const HklBinocularsAxisLimits **limits, \
                                                    size_t n_limits,     \
-                                                   int do_polarisation_correction \
+                                                   int do_polarisation_correction, \
+						   double *image_threshold \
                 )
 
 HKLAPI extern HKL_BINOCULARS_SPACE_HKL_DECL(double);
@@ -312,7 +314,8 @@ HKLAPI extern HKL_BINOCULARS_SPACE_HKL_DECL(uint32_t);
                                                     const uint8_t *masked, \
                                                     const HklBinocularsAxisLimits **limits, \
                                                     size_t n_limits,    \
-                                                    int do_polarisation_correction \
+                                                    int do_polarisation_correction, \
+						    double *image_threshold \
                 )
 
 

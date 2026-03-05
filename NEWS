@@ -3,6 +3,10 @@
 * 5.1.8 <unreleased>
 ** Binoculars (C-library)
    - Added support for uint8 images.
+** Binoculars-ng (Haskell program)
+   - Added the =input.dynamic_mask= parameter in the configuration in
+     order to deal with hot detector's pixels. This parameter takes
+     only one =double= value which mask all pixels above it.
 * 5.1.7 <2026-02-16 lun.>
 ** Tests
    - fixes typo when checking for arch (arm64 and ppc64el)
@@ -27,8 +31,9 @@
      architecture do not supporte threading, so in order to allow
      build and test on these architectures, is is possible to call
      configure like this.
-
-     ./configure CABALFLAGS="-f -useThreaded"
+     #+begin_src shell
+       ./configure CABALFLAGS="-f -useThreaded"
+     #+end_src
    - remove old ICA files, used by the old maven build system.
 ** Binoculars (C-library)
    - Added support for double images.

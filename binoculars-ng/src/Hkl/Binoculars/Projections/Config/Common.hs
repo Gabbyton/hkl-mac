@@ -12,7 +12,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-
-    Copyright  : Copyright (C) 2014-2025 Synchrotron SOLEIL
+    Copyright  : Copyright (C) 2014-2026 Synchrotron SOLEIL
                                          L'Orme des Merisiers Saint-Aubin
                                          BP 48 91192 GIF-sur-YVETTE CEDEX
     License    : GPL3+
@@ -77,6 +77,7 @@ instance HasIniConfig Common where
           , binocularsConfig'Common'SkipLastPoints         :: Maybe Int
           , binocularsConfig'Common'PolarizationCorrection :: Bool
           , binocularsConfig'Common'Geometry               :: Maybe Geometry
+          , binocularsConfig'Common'DynamicMask            :: Maybe DynamicMask
           } deriving (Eq, Show, Generic)
 
     data Args Common
@@ -106,6 +107,7 @@ instance HasIniConfig Common where
           , binocularsConfig'Common'SkipLastPoints = Nothing
           , binocularsConfig'Common'PolarizationCorrection = False
           , binocularsConfig'Common'Geometry = Nothing
+          , binocularsConfig'Common'DynamicMask = Nothing
           }
 
     toIni c = Ini { iniSections = fromList [ ("dispatcher", elemFDef "ncores" binocularsConfig'Common'NCores c defaultConfig
@@ -313,6 +315,12 @@ instance HasIniConfig Common where
                                                       , " `false` - do not apply the polarization correction."
                                                       , " to avoid overwriting them."
                                                       ]
+                                                      <> elemFMbDef "dynamic_mask" binocularsConfig'Common'DynamicMask c defaultConfig
+                                                      [ "mask pixels of the detector if the pixel value is above this value."
+                                                      , ""
+                                                      , " `<not set>` - process all pixels."
+                                                      , " `threshold` - process pixel only if its value is lower than `threshold`"
+                                                      ]
                                             )
                                          ]
 
@@ -398,4 +406,5 @@ instance HasIniConfig Common where
                                                             Nothing -> binocularsConfig'Common'Geometry defaultConfig
                                                             Just g -> Just g
                                             )
+         binocularsConfig'Common'DynamicMask <- parseMb cfg "input" "dynamic_mask"
          pure BinocularsConfig'Common{..}

@@ -13,7 +13,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-
-    Copyright  : Copyright (C) 2014-2025 Synchrotron SOLEIL
+    Copyright  : Copyright (C) 2014-2026 Synchrotron SOLEIL
                                          L'Orme des Merisiers Saint-Aubin
                                          BP 48 91192 GIF-sur-YVETTE CEDEX
     License    : GPL3+
@@ -190,26 +190,27 @@ instance HasIniConfig 'HklProjection where
 ----------------
 
 {-# INLINE spaceHkl #-}
-spaceHkl :: Detector b DIM2 -> Array F DIM3 Double -> Resolutions DIM3 -> Maybe (RLimits DIM3) -> Bool -> Space DIM3 -> DataFrameHkl -> IO (DataFrameSpace DIM3)
-spaceHkl det pixels rs mlimits doPolarizationCorrection space@(Space fSpace) (DataFrameHkl (DataFrameQCustom att g img mmask _ _ _) samplePath) = do
+spaceHkl :: Detector b DIM2 -> Array F DIM3 Double -> Resolutions DIM3 -> Maybe (RLimits DIM3) -> Bool -> Maybe DynamicMask -> Space DIM3 -> DataFrameHkl -> IO (DataFrameSpace DIM3)
+spaceHkl det pixels rs mlimits doPolarizationCorrection mdmask space@(Space fSpace) (DataFrameHkl (DataFrameQCustom att g img mmask _ _ _) samplePath) = do
   withNPixels det $ \nPixels ->
-    withGeometry g $ \geometry ->
-    withSample samplePath $ \sample ->
     withForeignPtr (toForeignPtr pixels) $ \pix ->
-    withResolutions rs $ \nr r ->
+    withForeignPtr fSpace $ \pSpace ->
+    withGeometry g $ \geometry ->
+    withMaybeDynamicMask mdmask $ \c'dmask ->
     withMaybeMask mmask $ \ mask'' ->
-    withPixelsDims pixels $ \ndim dims ->
     withMaybeLimits mlimits rs $ \nlimits limits ->
-    withForeignPtr fSpace $ \pSpace -> do
+    withResolutions rs $ \nr r ->
+    withPixelsDims pixels $ \ndim dims ->
+    withSample samplePath $ \sample -> do
     case img of
       (ImageDouble arr) -> unsafeWith arr $ \i -> do
-        {-# SCC "hkl_binoculars_space_hkl_double" #-} c'hkl_binoculars_space_hkl_double pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection)
+        {-# SCC "hkl_binoculars_space_hkl_double" #-} c'hkl_binoculars_space_hkl_double pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection) c'dmask
       (ImageInt32 arr) -> unsafeWith arr $ \i -> do
-        {-# SCC "hkl_binoculars_space_hkl_int32_t" #-} c'hkl_binoculars_space_hkl_int32_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection)
+        {-# SCC "hkl_binoculars_space_hkl_int32_t" #-} c'hkl_binoculars_space_hkl_int32_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection) c'dmask
       (ImageWord16 arr) -> unsafeWith arr $ \i -> do
-        {-# SCC "hkl_binoculars_space_hkl_uint16_t" #-} c'hkl_binoculars_space_hkl_uint16_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection)
+        {-# SCC "hkl_binoculars_space_hkl_uint16_t" #-} c'hkl_binoculars_space_hkl_uint16_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection) c'dmask
       (ImageWord32 arr) -> unsafeWith arr $ \i -> do
-        {-# SCC "hkl_binoculars_space_hkl_uint32_t" #-} c'hkl_binoculars_space_hkl_uint32_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection)
+        {-# SCC "hkl_binoculars_space_hkl_uint32_t" #-} c'hkl_binoculars_space_hkl_uint32_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection) c'dmask
     return (DataFrameSpace img space att)
 
 ----------
@@ -238,6 +239,7 @@ processHklP = do
   let mSkipFirstPoints = binocularsConfig'Common'SkipFirstPoints common
   let mSkipLastPoints = binocularsConfig'Common'SkipLastPoints common
   let doPolarizationCorrection = binocularsConfig'Common'PolarizationCorrection common
+  let mdmask = binocularsConfig'Common'DynamicMask common
 
   -- directly from the specific config
   let mlimits = binocularsConfig'Hkl'ProjectionLimits conf
@@ -270,7 +272,7 @@ processHklP = do
     each chunks
     >-> Pipes.Prelude.map (\(Chunk fn f t) -> (fn, [f, quot (f + t) 4, quot (f + t) 4 * 2, quot (f + t) 4 * 3, t]))
     >-> framesP datapaths
-    >-> project det 3 (spaceHkl det pixels res mlimits doPolarizationCorrection)
+    >-> project det 3 (spaceHkl det pixels res mlimits doPolarizationCorrection mdmask)
     >-> accumulateP c
 
   logDebugN "stop gessing final cube size"
@@ -285,7 +287,7 @@ processHklP = do
                              -- >-> tee Pipes.Prelude.print
                              >-> framesP datapaths
                              >-> Pipes.Prelude.filter (\(DataFrameHkl (DataFrameQCustom _ _ img _ _ _ _) _) -> filterSumImage mImageSumMax img)
-                             >-> project det 3 (spaceHkl det pixels res mlimits doPolarizationCorrection)
+                             >-> project det 3 (spaceHkl det pixels res mlimits doPolarizationCorrection mdmask)
                              >-> tee (accumulateP c)
                              >-> progress pb
                          ) jobs
