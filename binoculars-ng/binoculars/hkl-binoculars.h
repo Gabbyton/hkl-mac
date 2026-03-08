@@ -22,8 +22,10 @@
 #ifndef __HKL_BINOCULARS_H__
 #define __HKL_BINOCULARS_H__
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "hkl.h"
-#include "stdint.h"
 
 G_BEGIN_DECLS
 
@@ -261,7 +263,7 @@ typedef enum _HklBinocularsQCustomSubProjectionEnum
                                                        double uqy,      \
                                                        double uqz,      \
                                                        const char *sample_axis, \
-                                                       int do_polarisation_correction, \
+                                                       bool do_polarisation_correction, \
 						       double *image_threshold \
                 )
 
@@ -288,7 +290,7 @@ HKLAPI extern HKL_BINOCULARS_SPACE_QCUSTOM_DECL(uint32_t);
                                                    const uint8_t *masked, \
                                                    const HklBinocularsAxisLimits **limits, \
                                                    size_t n_limits,     \
-                                                   int do_polarisation_correction, \
+                                                   bool do_polarisation_correction, \
 						   double *image_threshold \
                 )
 
@@ -314,7 +316,7 @@ HKLAPI extern HKL_BINOCULARS_SPACE_HKL_DECL(uint32_t);
                                                     const uint8_t *masked, \
                                                     const HklBinocularsAxisLimits **limits, \
                                                     size_t n_limits,    \
-                                                    int do_polarisation_correction, \
+                                                    bool do_polarisation_correction, \
 						    double *image_threshold \
                 )
 

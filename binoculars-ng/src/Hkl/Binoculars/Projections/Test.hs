@@ -45,6 +45,7 @@ import           Data.Text.IO                       (putStr)
 import           Data.Vector.Storable.Mutable       (unsafeWith)
 import           Foreign.C.Types                    (CDouble (..))
 import           Foreign.ForeignPtr                 (withForeignPtr)
+import           Foreign.Marshal.Utils              (fromBool)
 import           GHC.Generics                       (Generic)
 import           Path                               (Abs, Dir, Path)
 import           Pipes                              (await, each, runEffect,
@@ -185,9 +186,9 @@ instance HasIniConfig 'TestProjection where
 ----------------
 
 {-# INLINE spaceTest #-}
-spaceTest :: Detector b DIM2 -> Array F DIM3 Double -> Resolutions DIM3 -> Maybe (RLimits DIM3) -> Bool -> Maybe DynamicMask -> Space DIM3 -> DataFrameTest -> IO (DataFrameSpace DIM3)
-spaceTest det pixels rs mlimits doPolarizationCorrection mdmask space@(Space fSpace) (DataFrameTest (DataFrameQCustom att g img mmask _ _ _) samplePath) = do
-  withNPixels det $ \nPixels ->
+spaceTest :: Detector b DIM2 -> Array F DIM3 Double -> Resolutions DIM3 -> Maybe (RLimits DIM3) -> PolarisationCorrection -> Maybe DynamicMask -> Space DIM3 -> DataFrameTest -> IO (DataFrameSpace DIM3)
+spaceTest det pixels rs mlimits polarisation mdmask space@(Space fSpace) (DataFrameTest (DataFrameQCustom att g img mmask _ _ _) samplePath) =
+    withNPixels det $ \nPixels ->
     withForeignPtr (toForeignPtr pixels) $ \pix ->
     withForeignPtr fSpace $ \pSpace ->
     withGeometry g $ \geometry ->
@@ -197,16 +198,17 @@ spaceTest det pixels rs mlimits doPolarizationCorrection mdmask space@(Space fSp
     withPixelsDims pixels $ \ndim dims ->
     withResolutions rs $ \nr r ->
     withSample samplePath $ \sample -> do
-    case img of
-      (ImageDouble arr) -> unsafeWith arr $ \i -> do
-        {-# SCC "test_binoculars_space_test_double" #-} c'hkl_binoculars_space_test_double pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection) c'dmask
-      (ImageInt32 arr) -> unsafeWith arr $ \i -> do
-        {-# SCC "test_binoculars_space_test_int32_t" #-} c'hkl_binoculars_space_test_int32_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection) c'dmask
-      (ImageWord16 arr) -> unsafeWith arr $ \i -> do
-        {-# SCC "test_binoculars_space_test_uint16_t" #-} c'hkl_binoculars_space_test_uint16_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection) c'dmask
-      (ImageWord32 arr) -> unsafeWith arr $ \i -> do
-        {-# SCC "test_binoculars_space_test_uint32_t" #-} c'hkl_binoculars_space_test_uint32_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) (toEnum . fromEnum $ doPolarizationCorrection) c'dmask
-    return (DataFrameSpace img space att)
+      let c'polarisation = fromBool . unPolarisationCorrection $ polarisation
+      case img of
+        (ImageDouble arr) -> unsafeWith arr $ \i -> do
+                                        {-# SCC "test_binoculars_space_test_double" #-} c'hkl_binoculars_space_test_double pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) c'polarisation c'dmask
+        (ImageInt32 arr) -> unsafeWith arr $ \i -> do
+                                        {-# SCC "test_binoculars_space_test_int32_t" #-} c'hkl_binoculars_space_test_int32_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) c'polarisation c'dmask
+        (ImageWord16 arr) -> unsafeWith arr $ \i -> do
+                                        {-# SCC "test_binoculars_space_test_uint16_t" #-} c'hkl_binoculars_space_test_uint16_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) c'polarisation c'dmask
+        (ImageWord32 arr) -> unsafeWith arr $ \i -> do
+                                        {-# SCC "test_binoculars_space_test_uint32_t" #-} c'hkl_binoculars_space_test_uint32_t pSpace geometry sample i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) mask'' limits (toEnum nlimits) c'polarisation c'dmask
+      return (DataFrameSpace img space att)
 
 ----------
 -- Pipe --

@@ -50,6 +50,7 @@ module Hkl.Binoculars.Config
     , MaskLocation(..)
     , Meter(..)
     , NCores(..)
+    , PolarisationCorrection(..)
     , ProjectionType(..)
     , Resolutions(..)
     , RLimits(..)
@@ -742,6 +743,13 @@ instance HasFieldValue NCores where
     { fvParse =  mapRight NCores . fvParse auto
     , fvEmit = \(NCores m) -> pack . show $ m
     }
+
+-- PolarisationCorrection
+
+newtype PolarisationCorrection =
+  PolarisationCorrection { unPolarisationCorrection :: Bool }
+  deriving (Eq, Show)
+  deriving newtype HasFieldValue
 
 -- ProjectionType
 

@@ -26,7 +26,7 @@ module Hkl.C.Binoculars where
 
 import           Data.Int              (Int32)
 import           Data.Word             (Word16, Word32)
-import           Foreign.C.Types       (CBool, CDouble(..), CInt(..), CSize(..), CUInt(..), CPtrdiff)
+import           Foreign.C.Types       (CBool(..), CDouble(..), CInt(..), CSize(..), CUInt(..), CPtrdiff)
 import           Foreign.C.String      (CString, withCString)
 import           Foreign.ForeignPtr    (ForeignPtr, newForeignPtr, withForeignPtr)
 import           Foreign.Marshal.Array (withArrayLen)
@@ -371,7 +371,7 @@ type C'ProjectionTypeQCustom t = Ptr C'HklBinocularsSpace -- HklBinocularsSpace 
  -> CDouble -- uqy
  -> CDouble -- uqz
  -> CString -- const char *sample_axis
- -> CInt -- int do_polarization_correction
+ -> CBool -- int do_polarization_correction
  -> Ptr CDouble -- double *image_threshold
  -> IO ()
 
@@ -401,7 +401,7 @@ type C'ProjectionTypeHkl t = Ptr C'HklBinocularsSpace -- HklBinocularsSpace *sel
   -> Ptr CBool -- const uint8_t *mask
   -> Ptr (Ptr C'HklBinocularsAxisLimits) -- const HklBinocularsAxisLimits
   -> CSize -- size_t n_limits
-  -> CInt -- int do_polarization_correction
+  -> CBool -- int do_polarization_correction
   -> Ptr CDouble -- double *image_threshold
   -> IO ()
 

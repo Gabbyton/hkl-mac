@@ -75,7 +75,7 @@ instance HasIniConfig Common where
           , binocularsConfig'Common'ImageSumMax            :: Maybe Double
           , binocularsConfig'Common'SkipFirstPoints        :: Maybe Int
           , binocularsConfig'Common'SkipLastPoints         :: Maybe Int
-          , binocularsConfig'Common'PolarizationCorrection :: Bool
+          , binocularsConfig'Common'PolarizationCorrection :: PolarisationCorrection
           , binocularsConfig'Common'Geometry               :: Maybe Geometry
           , binocularsConfig'Common'DynamicMask            :: Maybe DynamicMask
           } deriving (Eq, Show, Generic)
@@ -105,7 +105,7 @@ instance HasIniConfig Common where
           , binocularsConfig'Common'ImageSumMax = Nothing
           , binocularsConfig'Common'SkipFirstPoints = Nothing
           , binocularsConfig'Common'SkipLastPoints = Nothing
-          , binocularsConfig'Common'PolarizationCorrection = False
+          , binocularsConfig'Common'PolarizationCorrection = PolarisationCorrection False
           , binocularsConfig'Common'Geometry = Nothing
           , binocularsConfig'Common'DynamicMask = Nothing
           }
