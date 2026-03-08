@@ -964,26 +964,38 @@ spaceQCustom :: Detector a DIM2
              -> DataFrameQCustom
              -> IO (DataFrameSpace DIM3)
 spaceQCustom det pixels rs surf mlimits subprojection uqx uqy uqz mSampleAxis polarisation mdmask space@(Space fSpace) (DataFrameQCustom att g img mmask index timescan0 scannumber) =
-  withGeometry g $ \geometry ->
-  withForeignPtr (toForeignPtr pixels) $ \pix ->
-  withForeignPtr fSpace $ \pSpace ->
+  withGeometry g $ \c'geometry ->
+  withForeignPtr (toForeignPtr pixels) $ \c'pix ->
+  withForeignPtr fSpace $ \c'pSpace ->
   withMaybeDynamicMask mdmask $ \ c'dmask ->
   withMaybeMask mmask $ \ c'mask ->
-  withMaybeLimits mlimits rs $ \nlimits limits ->
-  withMaybeSampleAxis mSampleAxis $ \sampleAxis ->
-  withNPixels det $ \nPixels ->
-  withPixelsDims pixels $ \ndim dims ->
-  withResolutions rs $ \nr r -> do
+  withMaybeLimits mlimits rs $ \nlimits c'limits ->
+  withMaybeSampleAxis mSampleAxis $ \c'sampleAxis ->
+  withNPixels det $ \c'nPixels ->
+  withPixelsDims pixels $ \ndim c'dims ->
+  withResolutions rs $ \nr c'r -> do
     let c'polarisation = fromBool . unPolarisationCorrection $ polarisation
+    let c'attenuation = CDouble . unAttenuation $ att
+    let c'ndim = toEnum ndim
+    let c'nr = toEnum nr
+    let c'surf = toEnum . fromEnum $ surf
+    let c'nlimits = toEnum nlimits
+    let c'timestamp = CDouble . unTimestamp $ index
+    let c'timescan0 = CDouble . unTimescan0 $ timescan0
+    let c'scannumber = toEnum . fromEnum . unScannumber $ scannumber
+    let c'subprojection = toEnum . fromEnum $ subprojection
+    let c'uqx = CDouble (uqx /~ radian)
+    let c'uqy = CDouble (uqy /~ radian)
+    let c'uqz = CDouble (uqz /~ radian)
     case img of
       (ImageDouble arr) -> unsafeWith arr $ \i -> do
-                                 {-# SCC "hkl_binoculars_space_qcustom_double" #-} c'hkl_binoculars_space_qcustom_double pSpace geometry i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) c'mask (toEnum $ fromEnum surf) limits (toEnum nlimits) (CDouble . unTimestamp $ index) (CDouble . unTimescan0 $ timescan0) (toEnum . fromEnum . unScannumber $ scannumber) (toEnum . fromEnum $ subprojection) (CDouble (uqx /~ radian)) (CDouble (uqy /~ radian)) (CDouble (uqz /~ radian)) sampleAxis c'polarisation c'dmask
+                                 {-# SCC "hkl_binoculars_space_qcustom_double" #-} c'hkl_binoculars_space_qcustom_double c'pSpace c'geometry i c'nPixels c'attenuation c'pix c'ndim c'dims c'r c'nr c'mask c'surf c'limits c'nlimits c'timestamp c'timescan0 c'scannumber c'subprojection c'uqx c'uqy c'uqz c'sampleAxis c'polarisation c'dmask
       (ImageInt32 arr) -> unsafeWith arr $ \i -> do
-                                 {-# SCC "hkl_binoculars_space_qcustom_int32_t" #-} c'hkl_binoculars_space_qcustom_int32_t pSpace geometry i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) c'mask (toEnum $ fromEnum surf) limits (toEnum nlimits) (CDouble . unTimestamp $ index) (CDouble . unTimescan0 $ timescan0) (toEnum . fromEnum . unScannumber $ scannumber) (toEnum . fromEnum $ subprojection) (CDouble (uqx /~ radian)) (CDouble (uqy /~ radian)) (CDouble (uqz /~ radian)) sampleAxis c'polarisation c'dmask
+                                 {-# SCC "hkl_binoculars_space_qcustom_int32_t" #-} c'hkl_binoculars_space_qcustom_int32_t c'pSpace c'geometry i c'nPixels c'attenuation c'pix c'ndim c'dims c'r c'nr c'mask c'surf c'limits c'nlimits c'timestamp c'timescan0 c'scannumber c'subprojection c'uqx c'uqy c'uqz c'sampleAxis c'polarisation c'dmask
       (ImageWord16 arr) -> unsafeWith arr $ \i -> do
-                                 {-# SCC "hkl_binoculars_space_qcustom_uint16_t" #-} c'hkl_binoculars_space_qcustom_uint16_t pSpace geometry i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) c'mask (toEnum $ fromEnum surf) limits (toEnum nlimits) (CDouble . unTimestamp $ index) (CDouble . unTimescan0 $ timescan0) (toEnum . fromEnum . unScannumber $ scannumber) (toEnum . fromEnum $ subprojection) (CDouble (uqx /~ radian)) (CDouble (uqy /~ radian)) (CDouble (uqz /~ radian)) sampleAxis c'polarisation c'dmask
+                                 {-# SCC "hkl_binoculars_space_qcustom_uint16_t" #-} c'hkl_binoculars_space_qcustom_uint16_t c'pSpace c'geometry i c'nPixels c'attenuation c'pix c'ndim c'dims c'r c'nr c'mask c'surf c'limits c'nlimits c'timestamp c'timescan0 c'scannumber c'subprojection c'uqx c'uqy c'uqz c'sampleAxis c'polarisation c'dmask
       (ImageWord32 arr) -> unsafeWith arr $ \i -> do
-                                 {-# SCC "hkl_binoculars_space_qcustom_uint32_t" #-} c'hkl_binoculars_space_qcustom_uint32_t pSpace geometry i nPixels (CDouble . unAttenuation $ att) pix (toEnum ndim) dims r (toEnum nr) c'mask (toEnum $ fromEnum surf) limits (toEnum nlimits) (CDouble . unTimestamp $ index) (CDouble . unTimescan0 $ timescan0)(toEnum . fromEnum . unScannumber $ scannumber)  (toEnum . fromEnum $ subprojection) (CDouble (uqx /~ radian)) (CDouble (uqy /~ radian)) (CDouble (uqz /~ radian)) sampleAxis c'polarisation c'dmask
+                                 {-# SCC "hkl_binoculars_space_qcustom_uint32_t" #-} c'hkl_binoculars_space_qcustom_uint32_t c'pSpace c'geometry i c'nPixels c'attenuation c'pix c'ndim c'dims c'r c'nr c'mask c'surf c'limits c'nlimits c'timestamp c'timescan0 c'scannumber c'subprojection c'uqx c'uqy c'uqz c'sampleAxis c'polarisation c'dmask
 
     return (DataFrameSpace img space att)
 
