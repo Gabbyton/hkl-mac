@@ -211,4 +211,5 @@ sixs: binoculars-ng
 #	$(PROCESS) /nfs/ruche/sixs-soleil/com-sixs/2025/Run3/Coati_AgNi322/binoculars/config.cfg 377-390
 #       TODO
 #	$(PROCESS) data/test/config_sixs_ruche_qpars.ini 290
-	$(PROCESS) data/test/config_sixs_ruche_threshold.ini 63-64
+#	$(PROCESS) data/test/config_sixs_ruche_threshold.ini 63-64
+	$(PROCESS) data/test/config_sixs_ruche_shift.ini 62-65
