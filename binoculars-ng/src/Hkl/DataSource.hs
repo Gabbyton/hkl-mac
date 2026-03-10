@@ -136,6 +136,7 @@ instance Is0DStreamable (DSDegree DSAcq) CDouble where
 
 instance Is0DStreamable (DSDouble DSAcq) Double where
     extract0DStreamValue (DataSourceAcq'Double'Hdf5 d)  = extract0DStreamValue d
+    extract0DStreamValue (DataSourceAcq'Double'Hdf5WithShift d _) = extract0DStreamValue d
     extract0DStreamValue (DataSourceAcq'Double'Const a) = pure a
 
 instance Is0DStreamable (DSScannumber DSAcq) Scannumber where
@@ -182,6 +183,7 @@ instance Is1DStreamable (DSAttenuation DSAcq) Attenuation where
 
 instance Is1DStreamable (DSDouble DSAcq) CDouble where
     extract1DStreamValue (DataSourceAcq'Double'Hdf5 d) i  = extract1DStreamValue d i
+    extract1DStreamValue (DataSourceAcq'Double'Hdf5WithShift d s) i  = extract1DStreamValue d (i + s)
     extract1DStreamValue (DataSourceAcq'Double'Const d) _ = extract0DStreamValue d
 
 instance Is1DStreamable (DSDoubles DSAcq) (Data.Vector.Storable.Vector CDouble) where
@@ -444,16 +446,24 @@ instance DataSource DSDegree where
 data family DSDouble (k :: DSKind)
 data instance DSDouble DSPath
     = DataSourcePath'Double'Hdf5 (DSWrap_ (DSDataset DIM1 Double) DSPath)
+    | DataSourcePath'Double'Hdf5WithShift (DSWrap_ (DSDataset DIM1 Double) DSPath) Int
     | DataSourcePath'Double'Ini ConfigContent Section Key
     | DataSourcePath'Double'Const Double
     deriving (Generic, Show, FromJSON, ToJSON)
 
 data instance DSDouble DSAcq
     = DataSourceAcq'Double'Hdf5 (DSWrap_ (DSDataset DIM1 Double) DSAcq)
+    | DataSourceAcq'Double'Hdf5WithShift (DSWrap_ (DSDataset DIM1 Double) DSAcq) Int
     | DataSourceAcq'Double'Const Double
     deriving Generic
 
 instance DataSource DSDouble where
+  ds'Shape (DataSourceAcq'Double'Hdf5 p) = ds'Shape p
+  ds'Shape (DataSourceAcq'Double'Hdf5WithShift p s)
+      = do (DataSourceShape'Range f (Z :. t)) <- ds'Shape p
+           pure $ DataSourceShape'Range f (Z :. (t - s))
+  ds'Shape (DataSourceAcq'Double'Const _) = pure shape1
+
   withDataSourceP f (DataSourcePath'Double'Hdf5 ps) g
       = withDataSourcesP f ps $ \p ds -> do
                                sh <- ds'Shape ds
@@ -462,6 +472,14 @@ instance DataSource DSDouble where
                                  v <- liftIO $ extract0DStreamValue ds
                                  g (DataSourcePath'Double'Const v) (DataSourceAcq'Double'Const v)
                                else g (DataSourcePath'Double'Hdf5 [p]) (DataSourceAcq'Double'Hdf5 ds)
+  withDataSourceP f (DataSourcePath'Double'Hdf5WithShift ps shift) g
+      = withDataSourcesP f ps $ \p ds -> do
+                               sh <- ds'Shape ds
+                               if sh == shape1
+                               then do
+                                 v <- liftIO $ extract0DStreamValue ds
+                                 g (DataSourcePath'Double'Const v) (DataSourceAcq'Double'Const v)
+                               else g (DataSourcePath'Double'Hdf5WithShift [p] shift) (DataSourceAcq'Double'Hdf5WithShift ds shift)
   withDataSourceP _ path@(DataSourcePath'Double'Const a) g = g path (DataSourceAcq'Double'Const a)
   withDataSourceP _ path@(DataSourcePath'Double'Ini (ConfigContent cfg) s k) g =
       eitherF (const $ throwM $ CanNotOpenDataSource'Double'Ini s k) (parse' cfg s k)
