@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
@@ -82,9 +83,9 @@ spec = do
   describe "DataSourcePath Image" $ do
          let it'datasource'path'image (t, v)
                  = do it ("emit a DataSourcePath Image: " <> unpack t) $ do
-                                      (fvEmit fieldvalue $ v) `shouldBe` t
+                                      fvEmit fieldvalue v `shouldBe` t
                       it ("parse a DataSourcePath Image: " <> show v) $ do
-                                      (fvParse fieldvalue $ t) `shouldBe` Right (v :: DSWrap_ DSImage DSPath)
+                                      fvParse fieldvalue t `shouldBe` Right (v :: DSWrap_ DSImage DSPath)
 
          let tests = [ ( "[{\"contents\":[{\"detector\":\"ImXpadS140\"},1],\"tag\":\"DataSourcePath'Image'Dummy\"}]"
                        , [DataSourcePath'Image'Dummy defaultDetector 1.0])
@@ -225,12 +226,12 @@ spec = do
        let results = [ $(inspectTest $ hasNoTypeClasses 'pro)
                      , $(inspectTest $ hasNoGenerics 'pro)
                      ]
-       if map (\r -> case r of
-                      Success _ -> True
-                      Failure _ -> False) results == [True, True]
+       if map (\case
+                Success _ -> True
+                Failure _ -> False) results == [True, True]
        then True `shouldBe` True
        else do
-         mapM_ (\r -> case r of
-                       Success m -> putStrLn m
-                       Failure m -> putStrLn m) results
+         mapM_ (\case
+                 Success m -> putStrLn m
+                 Failure m -> putStrLn m) results
          False `shouldBe` True

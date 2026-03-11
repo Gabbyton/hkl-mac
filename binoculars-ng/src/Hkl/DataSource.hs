@@ -356,7 +356,7 @@ withDataSourcesP :: (DataSource d, Location l, MonadSafe m, Show (d DSPath), Typ
                  => ScanFile l -> [d DSPath] -> (d DSPath -> d DSAcq -> m r) -> m r
 withDataSourcesP f paths g = go paths []
   where
-    msg = (show . typeOf $ paths)
+    msg = show . typeOf $ paths
     go [] acc = throwM $ HklDataSourceException'NoRemainingDataPath (msg <> show paths : acc)
     go (s : ss) acc = withDataSourceP f s g `catch` \(exl :: HklDataSourceException) ->
                       case exl of

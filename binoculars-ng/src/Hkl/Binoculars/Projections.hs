@@ -28,7 +28,7 @@ module Hkl.Binoculars.Projections
   , withSampleAxis
    ) where
 
-import           Control.Monad              (zipWithM)
+import           Control.Monad              (when, zipWithM)
 import           Control.Monad.Catch        (MonadThrow, throwM)
 import           Control.Monad.IO.Class     (MonadIO (liftIO))
 import           Control.Monad.Logger       (MonadLogger, logDebugN)
@@ -90,9 +90,7 @@ saveCube o conf rs = do
       withCString conf $ \config ->
       withForeignPtr fp $ \p -> do
       status <- c'hkl_binoculars_cube_save_hdf5 fn config p
-      if status < 0
-        then throwM SaveCube'Failed
-        else pure ()
+      when (status < 0) $ throwM SaveCube'Failed
     EmptyCube -> throwM SaveCube'IsEmpty
 
 newLimits :: Limits -> Double -> IO (ForeignPtr C'HklBinocularsAxisLimits)

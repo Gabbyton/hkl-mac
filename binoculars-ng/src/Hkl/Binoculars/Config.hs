@@ -562,8 +562,7 @@ instance FieldParsable InputRange where
                                 <*> signed decimal)
 
       inputRangeP' :: Parser InputRange
-      inputRangeP' = InputRange
-                     <$> (Numeric.Interval.singleton <$> signed decimal)
+      inputRangeP' = InputRange . Numeric.Interval.singleton <$> signed decimal
 
 -- InputTmpl
 
