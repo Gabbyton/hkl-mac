@@ -282,14 +282,14 @@ class HasIniParser a where
 readConfig :: Maybe FilePath -> IO ConfigContent
 readConfig mf = do
   cfg <- readFile =<< case mf of
-                       Nothing  -> getDataFileName "data/test/config_manip1.cfg"
-                       (Just f) -> pure f
+                       Nothing -> getDataFileName "data/test/config_manip1.cfg"
+                       Just f  -> pure f
   return $ ConfigContent $ unlines $ [fixHeader l | l <- lines cfg]
     where
       fixHeader :: Text -> Text
       fixHeader l = case findIndex (== '#' ) l of
-        Nothing  -> l
-        (Just n) -> take n l
+        Nothing -> l
+        Just n  -> take n l
 
 class HasIniConfig (a :: k) where
   data Config a
@@ -1112,8 +1112,8 @@ destination' proj msub (ConfigRange rs) ml dtmpl overwrite =
         interval = foldl' hull Numeric.Interval.empty intervals
 
         limits = case ml of
-                   Nothing   -> "nolimits"
-                   (Just ls) -> fieldEmitter ls
+                   Nothing -> "nolimits"
+                   Just ls -> fieldEmitter ls
 
         intervals = Data.List.NonEmpty.map unInputRange rs
 
