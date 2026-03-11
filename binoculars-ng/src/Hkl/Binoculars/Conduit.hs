@@ -212,7 +212,7 @@ instance LenC QxQyQzPath where
             case head ss of
               (Just n) -> do
                    yield $ fromIntegral n - case ma of
-                                              NoAttenuation           -> 0
+                                              NoAttenuation             -> 0
                                               (AttenuationPath _ off _) -> off
                    loop
               Nothing  -> error "can not extract length"

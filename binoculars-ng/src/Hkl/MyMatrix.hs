@@ -5,9 +5,10 @@ module Hkl.MyMatrix
        , toEulerians
        ) where
 
-import Prelude hiding ((<>))
-import Numeric.LinearAlgebra (Matrix, atIndex, fromLists, inv, (<>))
-import Numeric.Units.Dimensional.Prelude (Angle, (*~), radian)
+import           Numeric.LinearAlgebra             (Matrix, atIndex, fromLists,
+                                                    inv, (<>))
+import           Numeric.Units.Dimensional.Prelude (Angle, radian, (*~))
+import           Prelude                           hiding ((<>))
 
 data Basis = PyFAIB -- the pyFAI (1, 2, 3) detector coordinates
            | HklB -- the hkl coordinates
@@ -16,10 +17,10 @@ data Basis = PyFAIB -- the pyFAI (1, 2, 3) detector coordinates
 data MyMatrix a = MyMatrix Basis (Matrix a) deriving (Show)
 
 changeBase :: MyMatrix Double -> Basis -> MyMatrix Double
-changeBase (MyMatrix PyFAIB m) HklB = MyMatrix HklB (passage m p2)
-changeBase (MyMatrix HklB m) PyFAIB = MyMatrix PyFAIB (passage m p1)
+changeBase (MyMatrix PyFAIB m) HklB     = MyMatrix HklB (passage m p2)
+changeBase (MyMatrix HklB m) PyFAIB     = MyMatrix PyFAIB (passage m p1)
 changeBase m@(MyMatrix PyFAIB _) PyFAIB = m
-changeBase m@(MyMatrix HklB _) HklB = m
+changeBase m@(MyMatrix HklB _) HklB     = m
 
 passage :: Matrix Double -> Matrix Double -> Matrix Double
 passage r p = inv p <> r <> p
