@@ -4,4 +4,5 @@ parallel ./cleanfile ::: ../hkl.h ../hkl/*.[ch] ../tests/*.[ch] ../tests/tap/*.[
 parallel ./indent ::: ../hkl.h ../hkl/*.[ch] ../tests/*.[ch] ../tests/tap/*.[ch] ../gui/*.[ch] ../binoculars-ng/binoculars/*.[ch]
 parallel ./indent-c++ ::: ../hkl3d/*.cpp ../hkl3d/*.h
 parallel ./indent-python ::: ../tests/bindings/*.py
+parallel ./indent-haskell ::: ../binoculars-ng/src/ ../binoculars-ng/test/
 find .. -name "*flymake*" -exec rm -f {} \;
