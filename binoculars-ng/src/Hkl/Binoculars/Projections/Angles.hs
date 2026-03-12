@@ -10,7 +10,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-
-    Copyright  : Copyright (C) 2014-2025 Synchrotron SOLEIL
+    Copyright  : Copyright (C) 2014-2026 Synchrotron SOLEIL
                                          L'Orme des Merisiers Saint-Aubin
                                          BP 48 91192 GIF-sur-YVETTE CEDEX
     License    : GPL3+
@@ -72,7 +72,6 @@ instance HasIniConfig 'AnglesProjection where
         , binocularsConfig'Angles'ProjectionResolution   :: Resolutions DIM3
         , binocularsConfig'Angles'ProjectionLimits       :: Maybe (RLimits DIM3)
         , binocularsConfig'Angles'SampleAxis             :: SampleAxis
-        , binocularsConfig'Angles'DataPath               :: DSWrap_ DSDataFrameQCustom DSPath
         } deriving (Show)
 
   newtype Args 'AnglesProjection
@@ -84,7 +83,6 @@ instance HasIniConfig 'AnglesProjection where
         , binocularsConfig'Angles'ProjectionType = AnglesProjection
         , binocularsConfig'Angles'ProjectionResolution = Resolutions3 1 1 1
         , binocularsConfig'Angles'ProjectionLimits = Nothing
-        , binocularsConfig'Angles'DataPath = default'DataSource'DataFrameQCustom
         , binocularsConfig'Angles'SampleAxis = SampleAxis "omega"
         }
 
@@ -104,16 +102,11 @@ instance HasIniConfig 'AnglesProjection where
                                                                                         RealSpaceProjection -> undefined
                                                                                         PixelsProjection -> undefined
                                                                                         TestProjection  -> undefined
-           let binocularsConfig'Angles'DataPath = eitherF (const $ guess'DataSource'DataFrameQCustom binocularsConfig'Angles'Common Nothing content) (parse' cfg "input" "datapath")
-                                                  (\case
-                                                    Nothing -> guess'DataSource'DataFrameQCustom binocularsConfig'Angles'Common Nothing content
-                                                    Just d  ->  overload'DataSource'DataFrameQCustom binocularsConfig'Angles'Common Nothing d)
            pure BinocularsConfig'Angles{..}
 
   toIni c = toIni (binocularsConfig'Angles'Common c)
             `mergeIni`
-            Ini { iniSections = fromList [ ("input", elemFDef' "datapath" binocularsConfig'Angles'DataPath c defaultConfig
-                                                     <> elemFDef "sample_axis" binocularsConfig'Angles'SampleAxis c defaultConfig
+            Ini { iniSections = fromList [ ("input", elemFDef "sample_axis" binocularsConfig'Angles'SampleAxis c defaultConfig
                                                      [ "the name of the sample axis"
                                                      , ""
                                                      , "default value: `omega`"
@@ -125,6 +118,12 @@ instance HasIniConfig 'AnglesProjection where
                                            )]
                 , iniGlobals = []
                 }
+
+getDataPath :: Config 'AnglesProjection -> DSWrap_ DSDataFrameQCustom DSPath
+getDataPath c
+    = let common = binocularsConfig'Angles'Common c
+          content = binocularsConfig'Common'_Content common
+      in guess'DataSource'DataFrameQCustom common Nothing content
 
 -------------------------
 -- Angles Projection --
@@ -183,11 +182,11 @@ processAnglesP = do
   -- directly from the specific config
   let mlimits = binocularsConfig'Angles'ProjectionLimits conf
   let res = binocularsConfig'Angles'ProjectionResolution conf
-  let datapaths = binocularsConfig'Angles'DataPath conf
   let projectionType = binocularsConfig'Angles'ProjectionType conf
   let sampleAxis = binocularsConfig'Angles'SampleAxis conf
 
   -- built from the config
+  let datapaths = getDataPath conf
   output' <- liftIO $ destination' projectionType Nothing inputRange mlimits destination overwrite
   filenames <- InputFn'List <$> files nexusDir inputRange tmpl
   pixels <- liftIO $ getPixelsCoordinates det centralPixel' sampleDetectorDistance detrot Normalisation

@@ -78,7 +78,8 @@ instance HasIniConfig Common where
           , binocularsConfig'Common'PolarizationCorrection :: PolarisationCorrection
           , binocularsConfig'Common'Geometry               :: Maybe Geometry
           , binocularsConfig'Common'DynamicMask            :: Maybe DynamicMask
-          } deriving (Eq, Show, Generic)
+          , binocularsConfig'Common'_Content               :: ConfigContent  -- TO DELETE
+          } deriving (Show, Generic)
 
     data Args Common
         = Args'Common (Maybe ConfigRange)
@@ -108,6 +109,7 @@ instance HasIniConfig Common where
           , binocularsConfig'Common'PolarizationCorrection = PolarisationCorrection False
           , binocularsConfig'Common'Geometry = Nothing
           , binocularsConfig'Common'DynamicMask = Nothing
+          , binocularsConfig'Common'_Content = ConfigContent "" -- TODELETE
           }
 
     toIni c = Ini { iniSections = fromList [ ("dispatcher", elemFDef "ncores" binocularsConfig'Common'NCores c defaultConfig
@@ -327,7 +329,7 @@ instance HasIniConfig Common where
                 , iniGlobals = []
                 }
 
-    getConfig (ConfigContent cfg) (Args'Common mr) (Capabilities ncapmax ncoresmax)
+    getConfig content@(ConfigContent cfg) (Args'Common mr) (Capabilities ncapmax ncoresmax)
         = do
          let minputtypedeprecated = eitherF (const Nothing) (parse' cfg "input" "type") id
 
@@ -407,4 +409,6 @@ instance HasIniConfig Common where
                                                             Just g -> Just g
                                             )
          binocularsConfig'Common'DynamicMask <- parseMb cfg "input" "dynamic_mask"
+         let binocularsConfig'Common'_Content = content  -- TO DELETE
+
          pure BinocularsConfig'Common{..}

@@ -32,15 +32,12 @@ module Hkl.Binoculars.Projections.QCustom
     , DataSource(..)
     , DSDataFrameQCustom(..)
     , FramesP(..)
-    , default'DataSource'DataFrameQCustom
     , guess'DataSource'DataFrameQCustom
     , newQCustom
-    , overload'DataSource'DataFrameQCustom
     , processQCustom
     , updateQCustom
     ) where
 
-import           Control.Applicative               ((<|>))
 import           Control.Concurrent.Async          (mapConcurrently)
 import           Control.Monad                     (forM_, forever)
 import           Control.Monad.Catch               (MonadThrow)
@@ -128,34 +125,6 @@ instance Is1DStreamable (DSDataFrameQCustom DSAcq) DataFrameQCustom where
       <*> extract0DStreamValue t0
       <*> extract0DStreamValue s
 
-default'DataSource'DataFrameQCustom :: DSWrap_ DSDataFrameQCustom DSPath
-default'DataSource'DataFrameQCustom
-  = [ DataSource'DataFrameQCustom
-      [ DataSourcePath'Attenuation
-        [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/attenuation") ] ]
-        2 0 Nothing
-      ]
-      [ DataSourcePath'Geometry
-        (Geometry'Factory Uhv Nothing)
-        [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "SIXS/Monochromator/wavelength") ] ]
-        [DataSourcePath'List
-         [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/UHV_MU") ] ]
-         , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/UHV_OMEGA") ] ]
-         , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/UHV_DELTA") ] ]
-         , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/UHV_GAMMA") ] ]
-         ]
-        ]
-      ]
-      [ DataSourcePath'Image'Hdf5
-        defaultDetector
-        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/xpad_image") ]
-      ]
-      [ DataSourcePath'Mask (MaskLocation "") defaultDetector ]
-      [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
-      [ DataSourcePath'Timescan0'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
-      [ DataSourcePath'Scannumber ]
-    ]
-
 instance HasFieldComment [DSDataFrameQCustom DSPath] where
   fieldComment _ = [ "`datapath` internal value used to find the data in the data file."
                    , ""
@@ -179,7 +148,6 @@ instance HasIniConfig 'QCustomProjection where
         , binocularsConfig'QCustom'ProjectionType         :: ProjectionType
         , binocularsConfig'QCustom'ProjectionResolution   :: Resolutions DIM3
         , binocularsConfig'QCustom'ProjectionLimits       :: Maybe (RLimits DIM3)
-        , binocularsConfig'QCustom'DataPath               :: DSWrap_ DSDataFrameQCustom DSPath
         , binocularsConfig'QCustom'SubProjection          :: Maybe HklBinocularsQCustomSubProjectionEnum
         , binocularsConfig'QCustom'Uqx                    :: Degree
         , binocularsConfig'QCustom'Uqy                    :: Degree
@@ -197,7 +165,6 @@ instance HasIniConfig 'QCustomProjection where
         , binocularsConfig'QCustom'ProjectionType = QCustomProjection
         , binocularsConfig'QCustom'ProjectionResolution = Resolutions3 0.01 0.01 0.01
         , binocularsConfig'QCustom'ProjectionLimits  = Nothing
-        , binocularsConfig'QCustom'DataPath = default'DataSource'DataFrameQCustom
         , binocularsConfig'QCustom'SubProjection = Just HklBinocularsQCustomSubProjectionEnum'QxQyQz
         , binocularsConfig'QCustom'Uqx = Degree (0.0 *~ degree)
         , binocularsConfig'QCustom'Uqy = Degree (0.0 *~ degree)
@@ -225,10 +192,6 @@ instance HasIniConfig 'QCustomProjection where
 
            binocularsConfig'QCustom'ProjectionResolution <- parseFDef cfg "projection" "resolution" (binocularsConfig'QCustom'ProjectionResolution defaultConfig)
            binocularsConfig'QCustom'ProjectionLimits <- parseMb cfg "projection" "limits"
-           let binocularsConfig'QCustom'DataPath = eitherF (const $ guess'DataSource'DataFrameQCustom binocularsConfig'QCustom'Common binocularsConfig'QCustom'SubProjection content) (parse' cfg "input" "datapath")
-                                                   (\case
-                                                     Nothing -> guess'DataSource'DataFrameQCustom binocularsConfig'QCustom'Common binocularsConfig'QCustom'SubProjection content
-                                                     Just d ->  overload'DataSource'DataFrameQCustom binocularsConfig'QCustom'Common binocularsConfig'QCustom'SubProjection d)
            binocularsConfig'QCustom'Uqx <- parseFDef cfg "projection" "uqx" (binocularsConfig'QCustom'Uqx defaultConfig)
            binocularsConfig'QCustom'Uqy <- parseFDef cfg "projection" "uqy" (binocularsConfig'QCustom'Uqy defaultConfig)
            binocularsConfig'QCustom'Uqz <- parseFDef cfg "projection" "uqz" (binocularsConfig'QCustom'Uqz defaultConfig)
@@ -274,7 +237,7 @@ instance HasIniConfig 'QCustomProjection where
   toIni c = toIni (binocularsConfig'QCustom'Common c)
             `mergeIni`
             Ini { iniSections = fromList [ ("input",    elemFDef' "surface_orientation" binocularsConfig'QCustom'HklBinocularsSurfaceOrientationEnum c defaultConfig
-                                                     <> elemFDef' "datapath" binocularsConfig'QCustom'DataPath c defaultConfig
+--                                                      <> elemFDef' "datapath" binocularsConfig'QCustom'DataPath c defaultConfig
                                            )
                                          , ("projection",    elemFDef' "type" binocularsConfig'QCustom'ProjectionType c defaultConfig
                                                           <> elemFDef' "resolution" binocularsConfig'QCustom'ProjectionResolution c defaultConfig
@@ -416,15 +379,6 @@ mkDetector'Sixs'Sbs det@(Detector2D d _ _) sn
         DataSourcePath'Image'Img det "/nfs/ruche/sixs-soleil/com-sixs/2025/Run1/Rigaku_99240224/Scan%d/Beam18keV4_scan%d_%06d.img" sn
     ]
 
-overload'DataSourcePath'Attenuation :: Maybe Double -> Maybe Float -> DSWrap_ DSAttenuation DSPath -> DSWrap_ DSAttenuation DSPath
-overload'DataSourcePath'Attenuation ma m'
-    = Prelude.map
-      ( \case
-         DataSourcePath'Attenuation p o a m -> DataSourcePath'Attenuation p o (fromMaybe a ma) (m' <|> m)
-         ap@DataSourcePath'ApplyedAttenuationFactor{} -> ap
-         ap@DataSourcePath'NoAttenuation -> ap
-      )
-
 overload'DataSourcePath'Timestamp :: Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimestamp DSPath -> DSWrap_ DSTimestamp DSPath
 overload'DataSourcePath'Timestamp msub
     = Prelude.map
@@ -500,15 +454,6 @@ overload'DataSourcePath'Double ma
     = Prelude.map
       (\wp -> maybe wp DataSourcePath'Double'Const ma)
 
-overload'DataSourcePath'Geometry ::  Maybe Double -> DSWrap_ DSGeometry DSPath -> DSWrap_ DSGeometry DSPath
-overload'DataSourcePath'Geometry mw
-    = Prelude.map
-      (\case
-        DataSourcePath'Geometry g' wp as -> DataSourcePath'Geometry g' (overload'DataSourcePath'Double mw wp) as
-        (DataSourcePath'Geometry'Fix wp) -> DataSourcePath'Geometry'Fix (overload'DataSourcePath'Double mw wp)
-      )
-
-
 overload'DataSourcePath'Image :: Detector Hkl DIM2 -> Maybe (DSWrap_ DSImage DSPath) -> DSWrap_ DSImage DSPath -> DSWrap_ DSImage DSPath
 overload'DataSourcePath'Image _ (Just i) _ = i
 overload'DataSourcePath'Image det Nothing imgs
@@ -519,44 +464,10 @@ overload'DataSourcePath'Image det Nothing imgs
         DataSourcePath'Image'Img _ tmpl sn ->DataSourcePath'Image'Img det tmpl sn
       ) imgs
 
-overload'DataSourcePath'Mask :: Config Common -> DSWrap_ DSMask DSPath -> DSWrap_ DSMask DSPath
-overload'DataSourcePath'Mask c
-    = Prelude.map
-      (\case
-        DataSourcePath'Mask'NoMask -> mk'DataSourcePath'Mask c
-        DataSourcePath'Mask path _ -> let new_path = fromMaybe path (binocularsConfig'Common'Maskmatrix c)                                    in
-                                       DataSourcePath'Mask new_path (binocularsConfig'Common'Detector c)
-      )
-
-overload'DataSource'DataFrameQCustom :: Config Common
-                                         -> Maybe HklBinocularsQCustomSubProjectionEnum
-                                         -> DSWrap_ DSDataFrameQCustom DSPath
-                                         -> DSWrap_ DSDataFrameQCustom DSPath
-overload'DataSource'DataFrameQCustom common msub
-    = Prelude.map
-      (\(DataSource'DataFrameQCustom attenuationPath' geometryPath imagePath maskPath indexP timescan0P scannumberPath) ->
-       let mAttCoef = binocularsConfig'Common'AttenuationCoefficient common
-           mMaxAtt = binocularsConfig'Common'AttenuationMax common
-           mWavelength = binocularsConfig'Common'Wavelength common
-           detector =  binocularsConfig'Common'Detector common
-           mImage = binocularsConfig'Common'Image common
-
-           newAttenuationPath = overload'DataSourcePath'Attenuation mAttCoef mMaxAtt attenuationPath'
-           newGeometryPath = overload'DataSourcePath'Geometry mWavelength geometryPath
-           newImagePath = overload'DataSourcePath'Image detector mImage imagePath
-           newMaskPath = overload'DataSourcePath'Mask common maskPath
-           newTimestampPath = overload'DataSourcePath'Timestamp msub indexP
-           newTimescan0Path = overload'DataSourcePath'Timescan0 msub timescan0P
-           newScannumberPath = scannumberPath -- this is not overloadable
-      in
-        DataSource'DataFrameQCustom newAttenuationPath newGeometryPath newImagePath newMaskPath newTimestampPath newTimescan0Path newScannumberPath
-      )
-
-
 guess'DataSource'DataFrameQCustom :: Config Common
-                                      -> Maybe HklBinocularsQCustomSubProjectionEnum
-                                      -> ConfigContent
-                                      -> DSWrap_ DSDataFrameQCustom DSPath
+                                  -> Maybe HklBinocularsQCustomSubProjectionEnum
+                                  -> ConfigContent
+                                  -> DSWrap_ DSDataFrameQCustom DSPath
 guess'DataSource'DataFrameQCustom common msub cfg =
     do
       let inputtype = binocularsConfig'Common'InputType common
@@ -665,11 +576,11 @@ guess'DataSource'DataFrameQCustom common msub cfg =
               ]
       let sixs'Uhv'Delta
             = [ DataSourcePath'Double'Ini cfg "geometry.values" "delta"
-              , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta")
-                                           , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_DELTA")
-                                           , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/delta"))
-                                           , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta_xps")
-                                           ]
+              , DataSourcePath'Double'Hdf5WithShift  [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta")
+                                                     , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_DELTA")
+                                                     , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/delta"))
+                                                     , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta_xps")
+                                                     ] 1
               ]
       let sixs'Uhv'Gamma
             = [ DataSourcePath'Double'Ini cfg "geometry.values" "gamma"
@@ -948,6 +859,13 @@ guess'DataSource'DataFrameQCustom common msub cfg =
          SixsSbsUhv -> dataSourcePath'DataFrameQCustom'Sixs'Sbs dataSourcePath'Geometry'Sixs'Uhv sn0
          SixsSbsUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs dataSourcePath'Geometry'Sixs'UhvGisaxs sn0
 
+getDataPath :: Config 'QCustomProjection -> DSWrap_ DSDataFrameQCustom DSPath
+getDataPath c
+    = let sub = binocularsConfig'QCustom'SubProjection c
+          common = binocularsConfig'QCustom'Common c
+          content = binocularsConfig'Common'_Content common
+      in guess'DataSource'DataFrameQCustom common sub content
+
 
 {-# INLINE spaceQCustom #-}
 spaceQCustom :: Detector a DIM2
@@ -1003,7 +921,9 @@ spaceQCustom det pixels rs surf mlimits subprojection uqx uqy uqz mSampleAxis po
 -- Pipe --
 ----------
 
-processQCustomP :: (MonadIO m, MonadLogger m, MonadReader (Config 'QCustomProjection) m, MonadThrow m)
+processQCustomP :: ( MonadIO m, MonadLogger m
+                  , MonadReader (Config 'QCustomProjection) m
+                  , MonadThrow m)
                 => m ()
 processQCustomP = do
   (conf :: Config 'QCustomProjection) <- ask
@@ -1030,13 +950,14 @@ processQCustomP = do
   let mlimits = binocularsConfig'QCustom'ProjectionLimits conf
   let res = binocularsConfig'QCustom'ProjectionResolution conf
   let surfaceOrientation = binocularsConfig'QCustom'HklBinocularsSurfaceOrientationEnum conf
-  let datapaths = binocularsConfig'QCustom'DataPath conf
   let subprojection = fromJust (binocularsConfig'QCustom'SubProjection conf) -- should not be Maybe
   let projectionType = binocularsConfig'QCustom'ProjectionType conf
   let (Degree uqx) = binocularsConfig'QCustom'Uqx conf
   let (Degree uqy) = binocularsConfig'QCustom'Uqy conf
   let (Degree uqz) = binocularsConfig'QCustom'Uqz conf
   let mSampleAxis = binocularsConfig'QCustom'SampleAxis conf
+
+  let datapaths = getDataPath conf
 
   -- built from the config
   output' <- liftIO $ destination' projectionType (Just subprojection) inputRange mlimits destination overwrite

@@ -98,13 +98,6 @@ instance Is1DStreamable (DSDataFrameTest DSAcq) DataFrameTest where
       <$> extract1DStreamValue q i
       <*> extract0DStreamValue s
 
-defaultDataSource'DataFrameTest :: DSWrap_ DSDataFrameTest DSPath
-defaultDataSource'DataFrameTest
-    = [ DSDataFrameTest
-        default'DataSource'DataFrameQCustom
-        default'DataSource'Sample
-      ]
-
 instance HasFieldComment [DSDataFrameTest DSPath] where
   fieldComment _ = [ "`datapath` internal value used to find the data in the data file."
                    , ""
@@ -120,18 +113,6 @@ instance HasFieldValue [DSDataFrameTest DSPath] where
 -- Config --
 ------------
 
-overload'DataSourcePath'DataFrameTest :: Config Common
-                                      -> Config Sample
-                                      -> DSWrap_ DSDataFrameTest DSPath
-                                      -> DSWrap_ DSDataFrameTest DSPath
-overload'DataSourcePath'DataFrameTest common sample
-    = Prelude.map
-      ( \(DSDataFrameTest qCustomPath samplePath) ->
-            let newQCustomPath = overload'DataSource'DataFrameQCustom common Nothing qCustomPath
-                newSamplePath = overload'DataSource'Sample sample samplePath
-            in DSDataFrameTest newQCustomPath newSamplePath
-      )
-
 instance HasIniConfig 'TestProjection where
   data Config 'TestProjection
     = BinocularsConfig'Test
@@ -140,7 +121,6 @@ instance HasIniConfig 'TestProjection where
       , binocularsConfig'Test'ProjectionType         :: ProjectionType
       , binocularsConfig'Test'ProjectionResolution   :: Resolutions DIM3
       , binocularsConfig'Test'ProjectionLimits       :: Maybe (RLimits DIM3)
-      , binocularsConfig'Test'DataPath               :: DSWrap_ DSDataFrameTest DSPath
       } deriving (Generic)
 
   newtype Args 'TestProjection = Args'TestProjection (Maybe ConfigRange)
@@ -152,7 +132,6 @@ instance HasIniConfig 'TestProjection where
         , binocularsConfig'Test'ProjectionType = TestProjection
         , binocularsConfig'Test'ProjectionResolution = Resolutions3 0.01 0.01 0.01
         , binocularsConfig'Test'ProjectionLimits  = Nothing
-        , binocularsConfig'Test'DataPath = defaultDataSource'DataFrameTest
         }
 
   getConfig content@(ConfigContent cfg) (Args'TestProjection mr) capabilities
@@ -161,18 +140,13 @@ instance HasIniConfig 'TestProjection where
            binocularsConfig'Test'ProjectionType <- parseFDef cfg "projection" "type" (binocularsConfig'Test'ProjectionType defaultConfig)
            binocularsConfig'Test'ProjectionResolution <- parseFDef cfg "projection" "resolution" (binocularsConfig'Test'ProjectionResolution defaultConfig)
            binocularsConfig'Test'ProjectionLimits <- parseMb cfg "projection" "limits"
-           let binocularsConfig'Test'DataPath = eitherF (const $ guess'DataSourcePath'DataFrameTest binocularsConfig'Test'Common binocularsConfig'Test'Sample content) (parse' cfg "input" "datapath")
-                                                (\case
-                                                  Nothing -> guess'DataSourcePath'DataFrameTest binocularsConfig'Test'Common binocularsConfig'Test'Sample content
-                                                  Just d  ->  overload'DataSourcePath'DataFrameTest binocularsConfig'Test'Common binocularsConfig'Test'Sample d)
            pure BinocularsConfig'Test{..}
 
   toIni c = toIni (binocularsConfig'Test'Common c)
             `mergeIni`
             toIni (binocularsConfig'Test'Sample c)
             `mergeIni`
-            Ini { iniSections = fromList [ ("input", elemFDef' "datapath" binocularsConfig'Test'DataPath c defaultConfig)
-                                         , ("projection", elemFDef' "type" binocularsConfig'Test'ProjectionType c defaultConfig
+            Ini { iniSections = fromList [ ("projection", elemFDef' "type" binocularsConfig'Test'ProjectionType c defaultConfig
                                                           <> elemFDef' "resolution" binocularsConfig'Test'ProjectionResolution c defaultConfig
                                                           <> elemFMbDef' "limits" binocularsConfig'Test'ProjectionLimits c defaultConfig
                                            )
@@ -180,6 +154,13 @@ instance HasIniConfig 'TestProjection where
                 , iniGlobals = []
                 }
 
+
+getDataPath :: Config 'TestProjection -> DSWrap_ DSDataFrameTest DSPath
+getDataPath c
+    = let sample = binocularsConfig'Test'Sample c
+          common = binocularsConfig'Test'Common c
+          content = binocularsConfig'Common'_Content common
+      in guess'DataSourcePath'DataFrameTest common sample content
 
 ----------------
 -- Projection --
@@ -241,11 +222,11 @@ processTestP = do
   -- directly from the specific config
   let mlimits = binocularsConfig'Test'ProjectionLimits conf
   let res = binocularsConfig'Test'ProjectionResolution conf
-  let datapaths = binocularsConfig'Test'DataPath conf
   let projectionType = binocularsConfig'Test'ProjectionType conf
 
 
   -- built from the config
+  let datapaths = getDataPath conf
   output' <- liftIO $ destination' projectionType Nothing inputRange mlimits destination overwrite
   filenames <- InputFn'List <$> files nexusDir inputRange tmpl
   pixels <- liftIO $ getPixelsCoordinates det centralPixel' sampleDetectorDistance detrot NoNormalisation

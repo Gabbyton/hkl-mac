@@ -101,14 +101,6 @@ instance Is1DStreamable (DSDataFrameHkl DSAcq) DataFrameHkl where
           <$> extract1DStreamValue q i
           <*> extract0DStreamValue s
 
-defaultDataSource'DataFrameHkl :: DSWrap_ DSDataFrameHkl DSPath
-defaultDataSource'DataFrameHkl
-    = [ DSDataFrameHkl
-        default'DataSource'DataFrameQCustom
-        default'DataSource'Sample
-      ]
-
-
 instance HasFieldComment [DSDataFrameHkl DSPath] where
   fieldComment _ = [ "`datapath` internal value used to find the data in the data file."
                    , ""
@@ -124,18 +116,6 @@ instance HasFieldValue [DSDataFrameHkl DSPath] where
 -- Config --
 ------------
 
-overload'DataSourcePath'DataFrameHkl :: Config Common
-                                     -> Config Sample
-                                     -> DSWrap_ DSDataFrameHkl DSPath
-                                     -> DSWrap_ DSDataFrameHkl DSPath
-overload'DataSourcePath'DataFrameHkl common sample
-    = Prelude.map
-      (\(DSDataFrameHkl qCustomPath samplePath) ->
-           let newQCustomPath = overload'DataSource'DataFrameQCustom common Nothing qCustomPath
-               newSamplePath = overload'DataSource'Sample sample samplePath
-           in DSDataFrameHkl newQCustomPath newSamplePath
-      )
-
 instance HasIniConfig 'HklProjection where
   data Config 'HklProjection
     = BinocularsConfig'Hkl
@@ -144,7 +124,6 @@ instance HasIniConfig 'HklProjection where
       , binocularsConfig'Hkl'ProjectionType         :: ProjectionType
       , binocularsConfig'Hkl'ProjectionResolution   :: Resolutions DIM3
       , binocularsConfig'Hkl'ProjectionLimits       :: Maybe (RLimits DIM3)
-      , binocularsConfig'Hkl'DataPath               :: DSWrap_ DSDataFrameHkl DSPath
       } deriving (Generic)
 
   newtype Args 'HklProjection
@@ -157,7 +136,6 @@ instance HasIniConfig 'HklProjection where
         , binocularsConfig'Hkl'ProjectionType = HklProjection
         , binocularsConfig'Hkl'ProjectionResolution = Resolutions3 0.01 0.01 0.01
         , binocularsConfig'Hkl'ProjectionLimits  = Nothing
-        , binocularsConfig'Hkl'DataPath = defaultDataSource'DataFrameHkl
         }
 
   getConfig content@(ConfigContent cfg) (Args'HklProjection mr) capabilities
@@ -166,18 +144,13 @@ instance HasIniConfig 'HklProjection where
            binocularsConfig'Hkl'ProjectionType <- parseFDef cfg "projection" "type" (binocularsConfig'Hkl'ProjectionType defaultConfig)
            binocularsConfig'Hkl'ProjectionResolution <- parseFDef cfg "projection" "resolution" (binocularsConfig'Hkl'ProjectionResolution defaultConfig)
            binocularsConfig'Hkl'ProjectionLimits <- parseMb cfg "projection" "limits"
-           let binocularsConfig'Hkl'DataPath = eitherF (const $ guess'DataSourcePath'DataFrameHkl binocularsConfig'Hkl'Common binocularsConfig'Hkl'Sample content) (parse' cfg "input" "datapath")
-                                               (\case
-                                                 Nothing -> guess'DataSourcePath'DataFrameHkl binocularsConfig'Hkl'Common binocularsConfig'Hkl'Sample content
-                                                 Just d  ->  overload'DataSourcePath'DataFrameHkl binocularsConfig'Hkl'Common binocularsConfig'Hkl'Sample d)
            pure BinocularsConfig'Hkl{..}
 
   toIni c = toIni (binocularsConfig'Hkl'Common c)
             `mergeIni`
             toIni (binocularsConfig'Hkl'Sample c)
             `mergeIni`
-            Ini { iniSections = fromList [ ("input", elemFDef' "datapath" binocularsConfig'Hkl'DataPath c defaultConfig)
-                                         , ("projection", elemFDef' "type" binocularsConfig'Hkl'ProjectionType c defaultConfig
+            Ini { iniSections = fromList [ ("projection", elemFDef' "type" binocularsConfig'Hkl'ProjectionType c defaultConfig
                                                           <> elemFDef' "resolution" binocularsConfig'Hkl'ProjectionResolution c defaultConfig
                                                           <> elemFMbDef' "limits" binocularsConfig'Hkl'ProjectionLimits c defaultConfig
                                            )
@@ -185,6 +158,12 @@ instance HasIniConfig 'HklProjection where
                 , iniGlobals = []
                 }
 
+getDataPath :: Config 'HklProjection -> DSWrap_ DSDataFrameHkl DSPath
+getDataPath c
+    = let sample = binocularsConfig'Hkl'Sample c
+          common = binocularsConfig'Hkl'Common c
+          content = binocularsConfig'Common'_Content common
+      in guess'DataSourcePath'DataFrameHkl common sample content
 
 ----------------
 -- Projection --
@@ -246,11 +225,11 @@ processHklP = do
   -- directly from the specific config
   let mlimits = binocularsConfig'Hkl'ProjectionLimits conf
   let res = binocularsConfig'Hkl'ProjectionResolution conf
-  let datapaths = binocularsConfig'Hkl'DataPath conf
   let projectionType = binocularsConfig'Hkl'ProjectionType conf
 
 
   -- built from the config
+  let datapaths = getDataPath conf
   output' <- liftIO $ destination' projectionType Nothing inputRange mlimits destination overwrite
   filenames <- InputFn'List <$> files nexusDir inputRange tmpl
   pixels <- liftIO $ getPixelsCoordinates det centralPixel' sampleDetectorDistance detrot NoNormalisation
