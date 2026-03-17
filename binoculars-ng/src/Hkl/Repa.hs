@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeOperators         #-}
 
 {-
-    Copyright  : Copyright (C) 2014-2025 Synchrotron SOLEIL
+    Copyright  : Copyright (C) 2014-2026 Synchrotron SOLEIL
                                          L'Orme des Merisiers Saint-Aubin
                                          BP 48 91192 GIF-sur-YVETTE CEDEX
     License    : GPL3+
@@ -61,27 +61,9 @@ class Source r e where
  -- | O(1). Take the extent (size) of an array.
  extent :: Shape sh => Array r sh e -> sh
 
- -- | O(1). Shape polymorphic indexing.
- index, unsafeIndex
-        :: Shape sh => Array r sh e -> sh -> e
-
- {-# INLINE index #-}
- index arr ix           = arr `linearIndex`       toIndex (extent arr) ix
-
- {-# INLINE unsafeIndex #-}
- unsafeIndex arr ix     = arr `unsafeLinearIndex` toIndex (extent arr) ix
-
  -- | O(1). Linear indexing into underlying, row-major, array representation.
- linearIndex, unsafeLinearIndex
+ linearIndex
         :: Shape sh => Array r sh e -> Int -> e
-
- {-# INLINE unsafeLinearIndex #-}
- unsafeLinearIndex      = linearIndex
-
- -- | Ensure an array's data structure is fully evaluated.
- deepSeqArray
-        :: Shape sh => Array r sh e -> b -> b
-
 
 -- | Read elements from a foreign buffer.
 instance Storable a => Source F a where
@@ -98,20 +80,11 @@ instance Storable a => Source F a where
   = error "Repa: foreign array index out of bounds"
  {-# INLINE linearIndex #-}
 
- unsafeLinearIndex (AForeignPtr _ _ fptr) ix
-        = unsafePerformIO
-        $ withForeignPtr fptr
-        $ \ptr -> peekElemOff ptr ix
- {-# INLINE unsafeLinearIndex #-}
-
  extent (AForeignPtr sh _ _)
         = sh
  {-# INLINE extent #-}
 
- deepSeqArray (AForeignPtr sh len fptr) x
-  = sh `deepSeq` len `seq` fptr `seq` x
- {-# INLINE deepSeqArray #-}
-
+stage :: String
 stage   = "Data.Array.Repa.Index"
 
 data F
@@ -153,12 +126,6 @@ class Eq sh => Shape sh where
 
         -- | Get the total number of elements in an array with this shape.
         size    :: sh -> Int
-
-        -- | Check whether this shape is small enough so that its flat
-        --      indices an be represented as `Int`. If this returns `False` then your
-        --      array is too big. Mostly used for writing QuickCheck tests.
-        sizeIsValid :: sh -> Bool
-
 
         -- | Convert an index into its equivalent flat, linear, row-major version.
         toIndex :: sh   -- ^ Shape of the array.
@@ -246,10 +213,6 @@ instance Shape Z where
         {-# INLINE [1] size #-}
         size _                  = 1
 
-        {-# INLINE [1] sizeIsValid #-}
-        sizeIsValid _           = True
-
-
         {-# INLINE [1] toIndex #-}
         toIndex _ _             = 0
 
@@ -293,14 +256,6 @@ instance Shape sh => Shape (sh :. Int) where
         {-# INLINE [1] size #-}
         size  (sh1 :. n)
                 = size sh1 * n
-
-        {-# INLINE [1] sizeIsValid #-}
-        sizeIsValid (sh1 :. n)
-                | size sh1 > 0
-                = n <= maxBound `div` size sh1
-
-                | otherwise
-                = False
 
         {-# INLINE [1] toIndex #-}
         toIndex (sh1 :. sh2) (sh1' :. sh2')
