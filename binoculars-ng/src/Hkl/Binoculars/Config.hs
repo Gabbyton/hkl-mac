@@ -79,7 +79,6 @@ module Hkl.Binoculars.Config
 
 
 import           Control.Applicative               (many, optional, (<|>))
-import           Control.Lens                      (makeLenses)
 import           Control.Monad.Catch               (MonadCatch, MonadThrow,
                                                     throwM, try)
 import           Control.Monad.Catch.Pure          (runCatch)
@@ -103,12 +102,11 @@ import           Data.HashMap.Strict               (HashMap, unionWith)
 import           Data.Ini                          (Ini (..), printIni)
 import           Data.Ini.Config                   (IniParser, fieldMbOf,
                                                     fieldOf, parseIniFile,
-                                                    section, sectionMb)
-import           Data.Ini.Config.Bidir             (FieldValue (..), IniSpec,
-                                                    bool, field, getIniValue,
-                                                    ini, listWithSeparator,
-                                                    number, parseIni, section,
-                                                    text, (.=))
+                                                    section, sectionDef,
+                                                    sectionMb)
+import           Data.Ini.Config.Bidir             (FieldValue (..), bool,
+                                                    listWithSeparator, number,
+                                                    text)
 import           Data.List                         (elemIndex, find, isInfixOf)
 import           Data.List.NonEmpty                (NonEmpty (..), head, map)
 import           Data.Maybe                        (catMaybes, fromMaybe)
@@ -817,6 +815,9 @@ instance HasFieldComment ProjectionType where
                       , "Some projections can be customize using the `subprojection` parameter."
                       ]
 
+instance HasIniParser ProjectionType where
+    iniParser = sectionDef "projection" QxQyQzProjection (fieldOf "type" auto')
+
 ms :: String
 ms = "#;"
 
@@ -1077,17 +1078,8 @@ newtype BinocularsPreConfig =
   BinocularsPreConfig { _binocularsPreConfigProjectionType :: ProjectionType }
                          deriving (Eq, Show)
 
-makeLenses ''BinocularsPreConfig
-
-binocularsPreConfigDefault :: BinocularsPreConfig
-binocularsPreConfigDefault = BinocularsPreConfig
-  { _binocularsPreConfigProjectionType = QxQyQzProjection }
-
-binocularsPreConfigSpec :: IniSpec BinocularsPreConfig ()
-binocularsPreConfigSpec = do
-  Data.Ini.Config.Bidir.section "projection" $ do
-    binocularsPreConfigProjectionType .= field "type" parsable
-
+instance HasIniParser BinocularsPreConfig where
+    iniParser = BinocularsPreConfig <$> iniParser
 
 ---------------
 -- functions --
@@ -1197,9 +1189,7 @@ getMask loc d sn@(Scannumber i)
 
 
 getPreConfig' :: ConfigContent -> Either String BinocularsPreConfig
-getPreConfig' (ConfigContent cfg) = do
-  let r = parseIni cfg (ini binocularsPreConfigDefault binocularsPreConfigSpec)
-  mapRight getIniValue r
+getPreConfig' (ConfigContent cfg) = parseIniFile cfg iniParser
 
 getPreConfig :: Maybe FilePath -> IO (Either String BinocularsPreConfig)
 getPreConfig mf = getPreConfig' <$> readConfig mf
