@@ -76,7 +76,7 @@ instance HasIniConfig Common where
           , binocularsConfig'Common'SkipFirstPoints        :: Maybe Int
           , binocularsConfig'Common'SkipLastPoints         :: Maybe Int
           , binocularsConfig'Common'PolarizationCorrection :: PolarisationCorrection
-          , binocularsConfig'Common'Geometry               :: Maybe Geometry
+          , binocularsConfig'Common'Geometry               :: Geometry
           , binocularsConfig'Common'DynamicMask            :: Maybe DynamicMask
           , binocularsConfig'Common'_Content               :: ConfigContent  -- TO DELETE
           } deriving (Show, Generic)
@@ -107,7 +107,7 @@ instance HasIniConfig Common where
           , binocularsConfig'Common'SkipFirstPoints = Nothing
           , binocularsConfig'Common'SkipLastPoints = Nothing
           , binocularsConfig'Common'PolarizationCorrection = PolarisationCorrection False
-          , binocularsConfig'Common'Geometry = Nothing
+          , binocularsConfig'Common'Geometry = Geometry'Factory Uhv Nothing
           , binocularsConfig'Common'DynamicMask = Nothing
           , binocularsConfig'Common'_Content = ConfigContent "" -- TODELETE
           }
@@ -406,7 +406,7 @@ instance HasIniConfig Common where
          binocularsConfig'Common'Geometry <- eitherF error (parseIniFile cfg iniParser'Maybe'Geometry)
                                             (\mg -> pure $ case mg of
                                                             Nothing -> binocularsConfig'Common'Geometry defaultConfig
-                                                            Just g -> Just g
+                                                            Just g -> g
                                             )
          binocularsConfig'Common'DynamicMask <- parseMb cfg "input" "dynamic_mask"
          let binocularsConfig'Common'_Content = content  -- TO DELETE
