@@ -352,41 +352,6 @@ mkDetector'Sixs'Sbs det@(Detector2D d _ _) sn
         DataSourcePath'Image'Img det "/nfs/ruche/sixs-soleil/com-sixs/2025/Run1/Rigaku_99240224/Scan%d/Beam18keV4_scan%d_%06d.img" sn
     ]
 
-overload'DataSourcePath'Timestamp :: Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimestamp DSPath -> DSWrap_ DSTimestamp DSPath
-overload'DataSourcePath'Timestamp msub
-    = Prelude.map
-      ( \idx -> case msub of
-                 Nothing -> DataSourcePath'Timestamp'NoTimestamp
-                 (Just sub) -> case sub of
-                                HklBinocularsQCustomSubProjectionEnum'QxQyQz -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QTthTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QparQperTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QparQper -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QPhiQx -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QPhiQy -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QPhiQz -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QStereo -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'DeltalabGammalabSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'XYZ -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'YZTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QQparQper -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QparsQperTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QparQperSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QSampleaxisTth -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QSampleaxisTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QxQyTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QxQzTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QyQzTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'TthAzimuth -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QTimescan0 -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QScannumber -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'TthScannumber -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'PhixQThetax -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'PhiyQThetay -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'PhizQThetaz -> DataSourcePath'Timestamp'NoTimestamp
-      )
-
 overload'DataSourcePath'Timescan0 :: Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimescan0 DSPath -> DSWrap_ DSTimescan0 DSPath
 overload'DataSourcePath'Timescan0 msub
     = Prelude.map
@@ -823,6 +788,73 @@ mk'Mask'Path c
                     (binocularsConfig'Common'Detector c)
       ]
 
+
+-- Timestamp Path
+
+overload'DataSourcePath'Timestamp :: Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimestamp DSPath -> DSWrap_ DSTimestamp DSPath
+overload'DataSourcePath'Timestamp msub
+    = Prelude.map
+      ( \idx -> case msub of
+                 Nothing -> DataSourcePath'Timestamp'NoTimestamp
+                 (Just sub) -> case sub of
+                                HklBinocularsQCustomSubProjectionEnum'QxQyQz -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'QTthTimestamp -> idx
+                                HklBinocularsQCustomSubProjectionEnum'QTimestamp -> idx
+                                HklBinocularsQCustomSubProjectionEnum'QparQperTimestamp -> idx
+                                HklBinocularsQCustomSubProjectionEnum'QparQper -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'QPhiQx -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'QPhiQy -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'QPhiQz -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'QStereo -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'DeltalabGammalabSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'XYZ -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'YZTimestamp -> idx
+                                HklBinocularsQCustomSubProjectionEnum'QQparQper -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'QparsQperTimestamp -> idx
+                                HklBinocularsQCustomSubProjectionEnum'QparQperSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'QSampleaxisTth -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'QSampleaxisTimestamp -> idx
+                                HklBinocularsQCustomSubProjectionEnum'QxQyTimestamp -> idx
+                                HklBinocularsQCustomSubProjectionEnum'QxQzTimestamp -> idx
+                                HklBinocularsQCustomSubProjectionEnum'QyQzTimestamp -> idx
+                                HklBinocularsQCustomSubProjectionEnum'TthAzimuth -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'QTimescan0 -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'QScannumber -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'TthScannumber -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'PhixQThetax -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'PhiyQThetay -> DataSourcePath'Timestamp'NoTimestamp
+                                HklBinocularsQCustomSubProjectionEnum'PhizQThetaz -> DataSourcePath'Timestamp'NoTimestamp
+      )
+
+mk'Timestamp'Path :: InputType -> Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimestamp DSPath
+mk'Timestamp'Path inputtype msub =
+    let
+        mkTimeStamp'Sbs :: DSWrap_ DSTimestamp DSPath
+        mkTimeStamp'Sbs = overload'DataSourcePath'Timestamp msub [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/sensors_timestamps") ] ]
+
+        mkTimeStamp'Fly :: DSWrap_ DSTimestamp DSPath
+        mkTimeStamp'Fly = overload'DataSourcePath'Timestamp msub [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
+
+    in case inputtype of
+      CristalK6C        -> mkTimeStamp'Sbs
+      Custom            -> undefined
+      DiffabsCirpad     -> mkTimeStamp'Sbs
+      MarsFlyscan       -> mkTimeStamp'Fly
+      MarsSbs           -> mkTimeStamp'Sbs
+      SixsFlyMedH       -> mkTimeStamp'Fly
+      SixsFlyMedHGisaxs -> mkTimeStamp'Fly
+      SixsFlyMedV       -> mkTimeStamp'Fly
+      SixsFlyMedVGisaxs -> mkTimeStamp'Fly
+      SixsFlyUhv        -> mkTimeStamp'Fly
+      SixsFlyUhvGisaxs  -> mkTimeStamp'Fly
+      SixsSbsMedH       -> mkTimeStamp'Sbs
+      SixsSbsMedHGisaxs -> mkTimeStamp'Sbs
+      SixsSbsMedV       -> mkTimeStamp'Sbs
+      SixsSbsMedVGisaxs -> mkTimeStamp'Sbs
+      SixsSbsUhv        -> mkTimeStamp'Sbs
+      SixsSbsUhvGisaxs  -> mkTimeStamp'Sbs
+
+
 guess'DataSource'DataFrameQCustom :: Config Common
                                   -> Maybe HklBinocularsQCustomSubProjectionEnum
                                   -> ConfigContent
@@ -840,15 +872,6 @@ guess'DataSource'DataFrameQCustom common msub cfg =
       -- scan number 0
       let sn0 = getInitialScannumber $ binocularsConfig'Common'InputRange common
 
-      -- timestamp
-      let mkTimeStamp'Sbs :: Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimestamp DSPath
-          mkTimeStamp'Sbs msub'
-            = overload'DataSourcePath'Timestamp msub' [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/sensors_timestamps") ] ]
-
-      let mkTimeStamp'Fly :: Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimestamp DSPath
-          mkTimeStamp'Fly msub'
-            = overload'DataSourcePath'Timestamp msub' [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
-
       -- timescan0
       let mkTimescan0'Sbs :: Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimescan0 DSPath
           mkTimescan0'Sbs msub'
@@ -858,26 +881,26 @@ guess'DataSource'DataFrameQCustom common msub cfg =
           mkTimescan0'Fly msub'
             = overload'DataSourcePath'Timescan0 msub' [ DataSourcePath'Timescan0'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
 
-      let dataSourcePath'DataFrameQCustom'Sixs'Fly :: DSWrap_ DSAttenuation DSPath -> DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSMask DSPath -> DSWrap_ DSDataFrameQCustom DSPath
-          dataSourcePath'DataFrameQCustom'Sixs'Fly att g i m
+      let dataSourcePath'DataFrameQCustom'Sixs'Fly :: DSWrap_ DSAttenuation DSPath -> DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSMask DSPath -> DSWrap_ DSTimestamp DSPath -> DSWrap_ DSDataFrameQCustom DSPath
+          dataSourcePath'DataFrameQCustom'Sixs'Fly att g i m t
               = [ DataSource'DataFrameQCustom
                   att
                   g
                   i
                   m
-                  (mkTimeStamp'Fly msub)
+                  t
                   (mkTimescan0'Fly msub)
                   [ DataSourcePath'Scannumber ]
                 ]
 
-      let dataSourcePath'DataFrameQCustom'Sixs'Sbs :: DSWrap_ DSAttenuation DSPath -> DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSMask DSPath -> DSWrap_ DSDataFrameQCustom DSPath
-          dataSourcePath'DataFrameQCustom'Sixs'Sbs att g i m
+      let dataSourcePath'DataFrameQCustom'Sixs'Sbs :: DSWrap_ DSAttenuation DSPath -> DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSMask DSPath -> DSWrap_ DSTimestamp DSPath -> DSWrap_ DSDataFrameQCustom DSPath
+          dataSourcePath'DataFrameQCustom'Sixs'Sbs att g i m t
               = [ DataSource'DataFrameQCustom
                   att
                   g
                   i
                   m
-                  ( mkTimeStamp'Sbs msub )
+                  t
                   ( mkTimescan0'Sbs msub )
                   [ DataSourcePath'Scannumber ]
                 ]
@@ -886,6 +909,7 @@ guess'DataSource'DataFrameQCustom common msub cfg =
       let geometry'Path = mk'Geometry'Path inputtype mWavelength cfg
       let image'Path = mk'Image'Path inputtype mImage detector sn0
       let mask'Path = mk'Mask'Path common
+      let timestamp'Path = mk'Timestamp'Path inputtype msub
 
       case inputtype of
          CristalK6C -> [ DataSource'DataFrameQCustom
@@ -893,7 +917,7 @@ guess'DataSource'DataFrameQCustom common msub cfg =
                         geometry'Path
                         image'Path
                         mask'Path
-                        (mkTimeStamp'Sbs msub)
+                        timestamp'Path
                         (mkTimescan0'Sbs msub)
                         [ DataSourcePath'Scannumber ]
                       ]
@@ -903,7 +927,7 @@ guess'DataSource'DataFrameQCustom common msub cfg =
                            geometry'Path
                            image'Path
                            mask'Path
-                           (mkTimeStamp'Sbs msub)
+                           timestamp'Path
                            (mkTimescan0'Sbs msub)
                            [ DataSourcePath'Scannumber ]
                          ]
@@ -912,7 +936,7 @@ guess'DataSource'DataFrameQCustom common msub cfg =
                          geometry'Path
                          image'Path
                          mask'Path
-                         (mkTimeStamp'Fly msub)
+                         timestamp'Path
                          (mkTimescan0'Sbs msub)
                          [ DataSourcePath'Scannumber ]
                        ]
@@ -921,22 +945,22 @@ guess'DataSource'DataFrameQCustom common msub cfg =
                      geometry'Path
                      image'Path
                      mask'Path
-                     (mkTimeStamp'Sbs msub)
+                     timestamp'Path
                      (mkTimescan0'Sbs msub)
                      [ DataSourcePath'Scannumber ]
                    ]
-         SixsFlyMedH -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path
-         SixsFlyMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path
-         SixsFlyMedV -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path
-         SixsFlyMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path
-         SixsFlyUhv -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path
-         SixsFlyUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path
-         SixsSbsMedH -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path
-         SixsSbsMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path
-         SixsSbsMedV -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path
-         SixsSbsMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path
-         SixsSbsUhv -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path
-         SixsSbsUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path
+         SixsFlyMedH -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsFlyMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsFlyMedV -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsFlyMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsFlyUhv -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsFlyUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsSbsMedH -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsSbsMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsSbsMedV -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsSbsMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsSbsUhv -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
+         SixsSbsUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path
 
 getDataPath :: Config 'QCustomProjection -> DSWrap_ DSDataFrameQCustom DSPath
 getDataPath c
