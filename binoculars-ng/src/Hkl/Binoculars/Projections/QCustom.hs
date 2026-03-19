@@ -705,28 +705,25 @@ mk'Image'Path inputtype mImage detector sn =
                      [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/data_05") ]
                    ]
       Custom -> undefined
-      DiffabsCirpad -> (overload'DataSourcePath'Image detector mImage
-                       [ DataSourcePath'Image'Hdf5
-                         detector
-                         [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/dt/cirpad.1/image")) ]
-                       ]
-                      )
-      MarsFlyscan -> (overload'DataSourcePath'Image detector mImage
-                     [ DataSourcePath'Image'Hdf5
-                       detector
-                       [ DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_image"))
-                       , DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_quad_image"))
-                       ]
-                     ]
-                    )
-      MarsSbs -> (overload'DataSourcePath'Image detector mImage
-                 [ DataSourcePath'Image'Hdf5
-                   detector
-                   [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "d03-1-c00/dt/merlin-quad/image"))
-                   , DataSourcePath'Dataset (hdf5p $ datasetpattr ("interpretation", "image"))
-                   ]
-                 ]
-                )
+      DiffabsCirpad -> overload'DataSourcePath'Image detector mImage
+                      [ DataSourcePath'Image'Hdf5
+                        detector
+                        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/dt/cirpad.1/image")) ]
+                      ]
+      MarsFlyscan -> overload'DataSourcePath'Image detector mImage
+                    [ DataSourcePath'Image'Hdf5
+                      detector
+                      [ DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_image"))
+                      , DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_quad_image"))
+                      ]
+                    ]
+      MarsSbs -> overload'DataSourcePath'Image detector mImage
+                [ DataSourcePath'Image'Hdf5
+                  detector
+                  [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "d03-1-c00/dt/merlin-quad/image"))
+                  , DataSourcePath'Dataset (hdf5p $ datasetpattr ("interpretation", "image"))
+                  ]
+                ]
       SixsFlyMedH -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
       SixsFlyMedHGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
       SixsFlyMedV -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)

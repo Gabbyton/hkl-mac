@@ -11,8 +11,6 @@
 {-# LANGUAGE PolyKinds                  #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
@@ -1103,9 +1101,7 @@ destination' proj msub (ConfigRange rs) ml dtmpl overwrite =
 
         interval = foldl' hull Numeric.Interval.empty intervals
 
-        limits = case ml of
-                   Nothing -> "nolimits"
-                   Just ls -> fieldEmitter ls
+        limits = maybe "nolimits" fieldEmitter ml
 
         intervals = Data.List.NonEmpty.map unInputRange rs
 
