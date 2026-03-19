@@ -295,58 +295,61 @@ instance HasIniConfig 'QCustomProjection where
 -- Attenuation Path
 
 mk'Attenuation'Path :: InputType -> Maybe Double -> Maybe Float -> Maybe Int  -> DSWrap_ DSAttenuation DSPath
-mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuationShift =
-    let no = [ DataSourcePath'NoAttenuation ]
-        sixsFly  = [ DataSourcePath'Attenuation
-                     [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation")
-                                                 , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation_old")
-                                                 ]
-                     ]
-                     (fromMaybe 2 mAttenuationShift) 0 mAttenuationMax
-                   ]
-        sixsSBS = [ DataSourcePath'Attenuation
-                    [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic/att"))
-                                                , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att"))
-                                                , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att_old"))
-                                                , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att"))
-                                                , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att_old"))
+mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuationShift = Prelude.map f attenuation
+    where
+      f att = case mAttenuationCoefficient of
+                Nothing -> case att of
+                            DataSourcePath'NoAttenuation -> DataSourcePath'NoAttenuation
+                            DataSourcePath'Attenuation{} -> DataSourcePath'NoAttenuation
+                            -- logWarnN "The current configuration extract the attenuation from the data files."
+                            -- logWarnN "You forgot to provide the attenuation coefficient in the config file."
+                            -- logWarnN "I continue without attenuation correction"
+                            -- logWarnN "Add attenuation_coefficient=<something> under the [input] section, to fix this"
+                            -- return DataSourcePath'NoAttenuation
+                            applyed@DataSourcePath'ApplyedAttenuationFactor{} -> applyed
+                Just coef -> case att of
+                              DataSourcePath'NoAttenuation         -> DataSourcePath'NoAttenuation
+                              DataSourcePath'Attenuation p o _ m -> DataSourcePath'Attenuation p o coef m
+                              DataSourcePath'ApplyedAttenuationFactor _ -> undefined
+
+      no = [ DataSourcePath'NoAttenuation ]
+
+      sixs'Fly  = [ DataSourcePath'Attenuation
+                    [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation")
+                                                , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation_old")
                                                 ]
                     ]
-                    (fromMaybe 0 mAttenuationShift) 0 mAttenuationMax
+                    (fromMaybe 2 mAttenuationShift) 0 mAttenuationMax
                   ]
-        attenuation = case inputtype of
-                        CristalK6C        -> no
-                        Custom            -> no
-                        DiffabsCirpad     -> no
-                        MarsFlyscan       -> no
-                        MarsSbs           -> no
-                        SixsFlyMedH       -> sixsFly
-                        SixsFlyMedHGisaxs -> sixsFly
-                        SixsFlyMedV       -> sixsFly
-                        SixsFlyMedVGisaxs -> sixsFly
-                        SixsFlyUhv        -> sixsFly
-                        SixsFlyUhvGisaxs  -> sixsFly
-                        SixsSbsMedH       -> sixsSBS
-                        SixsSbsMedHGisaxs -> sixsSBS
-                        SixsSbsMedV       -> sixsSBS
-                        SixsSbsMedVGisaxs -> sixsSBS
-                        SixsSbsUhv        -> sixsSBS
-                        SixsSbsUhvGisaxs  -> sixsSBS
-        f att = case mAttenuationCoefficient of
-                  Nothing -> case att of
-                              DataSourcePath'NoAttenuation -> DataSourcePath'NoAttenuation
-                              DataSourcePath'Attenuation{} -> DataSourcePath'NoAttenuation
-                              -- logWarnN "The current configuration extract the attenuation from the data files."
-                              -- logWarnN "You forgot to provide the attenuation coefficient in the config file."
-                              -- logWarnN "I continue without attenuation correction"
-                              -- logWarnN "Add attenuation_coefficient=<something> under the [input] section, to fix this"
-                              -- return DataSourcePath'NoAttenuation
-                              applyed@DataSourcePath'ApplyedAttenuationFactor{} -> applyed
-                  Just coef -> case att of
-                                DataSourcePath'NoAttenuation         -> DataSourcePath'NoAttenuation
-                                DataSourcePath'Attenuation p o _ m -> DataSourcePath'Attenuation p o coef m
-                                DataSourcePath'ApplyedAttenuationFactor _ -> undefined
-    in Prelude.map f attenuation
+      sixs'Sbs = [ DataSourcePath'Attenuation
+                   [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic/att"))
+                                               , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att"))
+                                               , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att_old"))
+                                               , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att"))
+                                               , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att_old"))
+                                               ]
+                   ]
+                   (fromMaybe 0 mAttenuationShift) 0 mAttenuationMax
+                 ]
+
+      attenuation = case inputtype of
+                      CristalK6C        -> no
+                      Custom            -> no
+                      DiffabsCirpad     -> no
+                      MarsFlyscan       -> no
+                      MarsSbs           -> no
+                      SixsFlyMedH       -> sixs'Fly
+                      SixsFlyMedHGisaxs -> sixs'Fly
+                      SixsFlyMedV       -> sixs'Fly
+                      SixsFlyMedVGisaxs -> sixs'Fly
+                      SixsFlyUhv        -> sixs'Fly
+                      SixsFlyUhvGisaxs  -> sixs'Fly
+                      SixsSbsMedH       -> sixs'Sbs
+                      SixsSbsMedHGisaxs -> sixs'Sbs
+                      SixsSbsMedV       -> sixs'Sbs
+                      SixsSbsMedVGisaxs -> sixs'Sbs
+                      SixsSbsUhv        -> sixs'Sbs
+                      SixsSbsUhvGisaxs  -> sixs'Sbs
 
 
 -- Geometry Path
@@ -723,58 +726,60 @@ mk'Mask'Path c
 -- Timestamp Path
 
 mk'Timestamp'Path :: InputType -> Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimestamp DSPath
-mk'Timestamp'Path inputtype msub =
-    let mkTimeStamp'Sbs = [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/sensors_timestamps") ] ]
-        mkTimeStamp'Fly = [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
-        timestamp = case inputtype of
-                      CristalK6C        -> mkTimeStamp'Sbs
-                      Custom            -> undefined
-                      DiffabsCirpad     -> mkTimeStamp'Sbs
-                      MarsFlyscan       -> mkTimeStamp'Fly
-                      MarsSbs           -> mkTimeStamp'Sbs
-                      SixsFlyMedH       -> mkTimeStamp'Fly
-                      SixsFlyMedHGisaxs -> mkTimeStamp'Fly
-                      SixsFlyMedV       -> mkTimeStamp'Fly
-                      SixsFlyMedVGisaxs -> mkTimeStamp'Fly
-                      SixsFlyUhv        -> mkTimeStamp'Fly
-                      SixsFlyUhvGisaxs  -> mkTimeStamp'Fly
-                      SixsSbsMedH       -> mkTimeStamp'Sbs
-                      SixsSbsMedHGisaxs -> mkTimeStamp'Sbs
-                      SixsSbsMedV       -> mkTimeStamp'Sbs
-                      SixsSbsMedVGisaxs -> mkTimeStamp'Sbs
-                      SixsSbsUhv        -> mkTimeStamp'Sbs
-                      SixsSbsUhvGisaxs  -> mkTimeStamp'Sbs
-        f idx = case msub of
-                  Nothing -> DataSourcePath'Timestamp'NoTimestamp
-                  Just sub -> case sub of
-                               HklBinocularsQCustomSubProjectionEnum'QxQyQz -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'QTthTimestamp -> idx
-                               HklBinocularsQCustomSubProjectionEnum'QTimestamp -> idx
-                               HklBinocularsQCustomSubProjectionEnum'QparQperTimestamp -> idx
-                               HklBinocularsQCustomSubProjectionEnum'QparQper -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'QPhiQx -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'QPhiQy -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'QPhiQz -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'QStereo -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'DeltalabGammalabSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'XYZ -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'YZTimestamp -> idx
-                               HklBinocularsQCustomSubProjectionEnum'QQparQper -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'QparsQperTimestamp -> idx
-                               HklBinocularsQCustomSubProjectionEnum'QparQperSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'QSampleaxisTth -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'QSampleaxisTimestamp -> idx
-                               HklBinocularsQCustomSubProjectionEnum'QxQyTimestamp -> idx
-                               HklBinocularsQCustomSubProjectionEnum'QxQzTimestamp -> idx
-                               HklBinocularsQCustomSubProjectionEnum'QyQzTimestamp -> idx
-                               HklBinocularsQCustomSubProjectionEnum'TthAzimuth -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'QTimescan0 -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'QScannumber -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'TthScannumber -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'PhixQThetax -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'PhiyQThetay -> DataSourcePath'Timestamp'NoTimestamp
-                               HklBinocularsQCustomSubProjectionEnum'PhizQThetaz -> DataSourcePath'Timestamp'NoTimestamp
-    in Prelude.map f timestamp
+mk'Timestamp'Path inputtype msub = Prelude.map f timestamp
+    where
+      f idx = case msub of
+                Nothing -> DataSourcePath'Timestamp'NoTimestamp
+                Just sub -> case sub of
+                             HklBinocularsQCustomSubProjectionEnum'QxQyQz -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'QTthTimestamp -> idx
+                             HklBinocularsQCustomSubProjectionEnum'QTimestamp -> idx
+                             HklBinocularsQCustomSubProjectionEnum'QparQperTimestamp -> idx
+                             HklBinocularsQCustomSubProjectionEnum'QparQper -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'QPhiQx -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'QPhiQy -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'QPhiQz -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'QStereo -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'DeltalabGammalabSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'XYZ -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'YZTimestamp -> idx
+                             HklBinocularsQCustomSubProjectionEnum'QQparQper -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'QparsQperTimestamp -> idx
+                             HklBinocularsQCustomSubProjectionEnum'QparQperSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'QSampleaxisTth -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'QSampleaxisTimestamp -> idx
+                             HklBinocularsQCustomSubProjectionEnum'QxQyTimestamp -> idx
+                             HklBinocularsQCustomSubProjectionEnum'QxQzTimestamp -> idx
+                             HklBinocularsQCustomSubProjectionEnum'QyQzTimestamp -> idx
+                             HklBinocularsQCustomSubProjectionEnum'TthAzimuth -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'QTimescan0 -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'QScannumber -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'TthScannumber -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'PhixQThetax -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'PhiyQThetay -> DataSourcePath'Timestamp'NoTimestamp
+                             HklBinocularsQCustomSubProjectionEnum'PhizQThetaz -> DataSourcePath'Timestamp'NoTimestamp
+
+      timestamp =
+          let sbs = [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/sensors_timestamps") ] ]
+              fly = [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
+          in case inputtype of
+               CristalK6C        -> sbs
+               Custom            -> undefined
+               DiffabsCirpad     -> sbs
+               MarsFlyscan       -> fly
+               MarsSbs           -> sbs
+               SixsFlyMedH       -> fly
+               SixsFlyMedHGisaxs -> fly
+               SixsFlyMedV       -> fly
+               SixsFlyMedVGisaxs -> fly
+               SixsFlyUhv        -> fly
+               SixsFlyUhvGisaxs  -> fly
+               SixsSbsMedH       -> sbs
+               SixsSbsMedHGisaxs -> sbs
+               SixsSbsMedV       -> sbs
+               SixsSbsMedVGisaxs -> sbs
+               SixsSbsUhv        -> sbs
+               SixsSbsUhvGisaxs  -> sbs
 
 
 -- Timescan0 Path
