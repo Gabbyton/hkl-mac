@@ -292,66 +292,6 @@ instance HasIniConfig 'QCustomProjection where
 -- Input Path's --
 ------------------
 
-mkDetector'Sixs'Fly :: Detector Hkl DIM2 -> Scannumber -> DSWrap_ DSImage DSPath
-mkDetector'Sixs'Fly det@(Detector2D d _ _) sn
-  = [case d of
-      HklBinocularsDetectorEnum'ImxpadS140 ->
-        DataSourcePath'Image'Hdf5
-        det
-        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/xpad_image"))
-        , DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/xpad_s140_image"))
-        ]
-      HklBinocularsDetectorEnum'XpadFlatCorrected -> undefined
-      HklBinocularsDetectorEnum'ImxpadS70 ->
-        DataSourcePath'Image'Hdf5
-        det
-        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/xpad_s70_image") ]
-      HklBinocularsDetectorEnum'DectrisEiger1M ->
-        DataSourcePath'Image'Hdf5
-        det
-        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/eiger_image") ]
-      HklBinocularsDetectorEnum'Ufxc ->
-        DataSourcePath'Image'Hdf5
-        det
-        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/ufxc_sixs_image") ]
-      HklBinocularsDetectorEnum'Merlin -> undefined
-      HklBinocularsDetectorEnum'MerlinMedipix3rxQuad -> undefined
-      HklBinocularsDetectorEnum'MerlinMedipix3rxQuad512 ->
-        DataSourcePath'Image'Hdf5
-        det
-        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/merlin_image") ]
-      HklBinocularsDetectorEnum'Cirpad -> undefined
-      HklBinocularsDetectorEnum'RigakuXspa1M ->
-        DataSourcePath'Image'Img det "/nfs/ruche/sixs-soleil/com-sixs/2025/Run1/Rigaku_99240224/Scan%d/Beam18keV4_scan%d_%06d.img" sn
-    ]
-
-mkDetector'Sixs'Sbs :: Detector Hkl DIM2 -> Scannumber -> DSWrap_ DSImage DSPath
-mkDetector'Sixs'Sbs det@(Detector2D d _ _) sn
-  = [case d of
-      HklBinocularsDetectorEnum'ImxpadS140 ->
-        DataSourcePath'Image'Hdf5
-        det
-        [ DataSourcePath'Dataset (hdf5p (datasetpattr ("long_name", "i14-c-c00/dt/xpad.s140/image")))
-        , DataSourcePath'Dataset (hdf5p (datasetpattr ("long_name", "i14-c-c00/dt/xpad.1/image")))
-        ]
-      HklBinocularsDetectorEnum'XpadFlatCorrected -> undefined
-      HklBinocularsDetectorEnum'ImxpadS70 ->
-        DataSourcePath'Image'Hdf5
-        det
-        [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/dt/xpad.s70/image")) ]
-      HklBinocularsDetectorEnum'DectrisEiger1M ->
-        DataSourcePath'Image'Hdf5
-        det
-        [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/dt/eiger.1/image")) ]
-      HklBinocularsDetectorEnum'Ufxc -> undefined
-      HklBinocularsDetectorEnum'Merlin -> undefined
-      HklBinocularsDetectorEnum'MerlinMedipix3rxQuad -> undefined
-      HklBinocularsDetectorEnum'MerlinMedipix3rxQuad512 -> undefined
-      HklBinocularsDetectorEnum'Cirpad -> undefined
-      HklBinocularsDetectorEnum'RigakuXspa1M ->
-        DataSourcePath'Image'Img det "/nfs/ruche/sixs-soleil/com-sixs/2025/Run1/Rigaku_99240224/Scan%d/Beam18keV4_scan%d_%06d.img" sn
-    ]
-
 -- Attenuation Path
 
 mk'Attenuation'Path :: InputType -> Maybe Double -> Maybe Float -> Maybe Int  -> DSWrap_ DSAttenuation DSPath
@@ -675,57 +615,99 @@ mk'Geometry'Path inputtype mWavelength cfg =
 
 -- Image Path
 
-overload'DataSourcePath'Image :: Detector Hkl DIM2 -> Maybe (DSWrap_ DSImage DSPath) -> DSWrap_ DSImage DSPath -> DSWrap_ DSImage DSPath
-overload'DataSourcePath'Image _ (Just i) _ = i
-overload'DataSourcePath'Image det Nothing imgs
-    = Prelude.map
-      (\case
-        DataSourcePath'Image'Dummy _ v -> DataSourcePath'Image'Dummy det v
-        DataSourcePath'Image'Hdf5 _ p -> DataSourcePath'Image'Hdf5 det p
-        DataSourcePath'Image'Img _ tmpl sn -> DataSourcePath'Image'Img det tmpl sn
-      ) imgs
-
-
 mk'Image'Path :: InputType -> Maybe (DSWrap_ DSImage DSPath) -> Detector Hkl DIM2 -> Scannumber -> DSWrap_ DSImage DSPath
-mk'Image'Path inputtype mImage detector sn =
-    case inputtype of
-      CristalK6C -> [ DataSourcePath'Image'Hdf5
-                     detector
-                     [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/data_05") ]
-                   ]
-      Custom -> undefined
-      DiffabsCirpad -> overload'DataSourcePath'Image detector mImage
-                      [ DataSourcePath'Image'Hdf5
+mk'Image'Path inputtype mImage detector@(Detector2D d _ _) sn = fromMaybe image mImage
+    where
+      sixs'Fly = [case d of
+                    HklBinocularsDetectorEnum'ImxpadS140 ->
+                        DataSourcePath'Image'Hdf5
                         detector
-                        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/dt/cirpad.1/image")) ]
-                      ]
-      MarsFlyscan -> overload'DataSourcePath'Image detector mImage
-                    [ DataSourcePath'Image'Hdf5
-                      detector
-                      [ DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_image"))
-                      , DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_quad_image"))
-                      ]
-                    ]
-      MarsSbs -> overload'DataSourcePath'Image detector mImage
-                [ DataSourcePath'Image'Hdf5
-                  detector
-                  [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "d03-1-c00/dt/merlin-quad/image"))
-                  , DataSourcePath'Dataset (hdf5p $ datasetpattr ("interpretation", "image"))
-                  ]
-                ]
-      SixsFlyMedH -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
-      SixsFlyMedHGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
-      SixsFlyMedV -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
-      SixsFlyMedVGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
-      SixsFlyUhv -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
-      SixsFlyUhvGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
-      SixsSbsMedH -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
-      SixsSbsMedHGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
-      SixsSbsMedV -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
-      SixsSbsMedVGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
-      SixsSbsUhv -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
-      SixsSbsUhvGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
+                        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/xpad_image"))
+                        , DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/xpad_s140_image"))
+                        ]
+                    HklBinocularsDetectorEnum'XpadFlatCorrected -> undefined
+                    HklBinocularsDetectorEnum'ImxpadS70 ->
+                        DataSourcePath'Image'Hdf5
+                        detector
+                        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/xpad_s70_image") ]
+                    HklBinocularsDetectorEnum'DectrisEiger1M ->
+                        DataSourcePath'Image'Hdf5
+                        detector
+                        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/eiger_image") ]
+                    HklBinocularsDetectorEnum'Ufxc ->
+                        DataSourcePath'Image'Hdf5
+                        detector
+                        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/ufxc_sixs_image") ]
+                    HklBinocularsDetectorEnum'Merlin -> undefined
+                    HklBinocularsDetectorEnum'MerlinMedipix3rxQuad -> undefined
+                    HklBinocularsDetectorEnum'MerlinMedipix3rxQuad512 ->
+                        DataSourcePath'Image'Hdf5
+                        detector
+                        [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/merlin_image") ]
+                    HklBinocularsDetectorEnum'Cirpad -> undefined
+                    HklBinocularsDetectorEnum'RigakuXspa1M ->
+                        DataSourcePath'Image'Img detector "/nfs/ruche/sixs-soleil/com-sixs/2025/Run1/Rigaku_99240224/Scan%d/Beam18keV4_scan%d_%06d.img" sn
+                 ]
 
+      sixs'Sbs = [case d of
+                    HklBinocularsDetectorEnum'ImxpadS140 ->
+                        DataSourcePath'Image'Hdf5
+                        detector
+                        [ DataSourcePath'Dataset (hdf5p (datasetpattr ("long_name", "i14-c-c00/dt/xpad.s140/image")))
+                        , DataSourcePath'Dataset (hdf5p (datasetpattr ("long_name", "i14-c-c00/dt/xpad.1/image")))
+                        ]
+                    HklBinocularsDetectorEnum'XpadFlatCorrected -> undefined
+                    HklBinocularsDetectorEnum'ImxpadS70 ->
+                        DataSourcePath'Image'Hdf5
+                        detector
+                        [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/dt/xpad.s70/image")) ]
+                    HklBinocularsDetectorEnum'DectrisEiger1M ->
+                        DataSourcePath'Image'Hdf5
+                        detector
+                        [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/dt/eiger.1/image")) ]
+                    HklBinocularsDetectorEnum'Ufxc -> undefined
+                    HklBinocularsDetectorEnum'Merlin -> undefined
+                    HklBinocularsDetectorEnum'MerlinMedipix3rxQuad -> undefined
+                    HklBinocularsDetectorEnum'MerlinMedipix3rxQuad512 -> undefined
+                    HklBinocularsDetectorEnum'Cirpad -> undefined
+                    HklBinocularsDetectorEnum'RigakuXspa1M ->
+                        DataSourcePath'Image'Img detector "/nfs/ruche/sixs-soleil/com-sixs/2025/Run1/Rigaku_99240224/Scan%d/Beam18keV4_scan%d_%06d.img" sn
+                 ]
+
+      image = case inputtype of
+                CristalK6C -> [ DataSourcePath'Image'Hdf5
+                               detector
+                               [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/data_05") ]
+                             ]
+                Custom -> undefined
+                DiffabsCirpad -> [ DataSourcePath'Image'Hdf5
+                                  detector
+                                  [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/dt/cirpad.1/image")) ]
+                                ]
+                MarsFlyscan -> [ DataSourcePath'Image'Hdf5
+                                detector
+                                [ DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_image"))
+                                , DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_quad_image"))
+                                ]
+                              ]
+                MarsSbs -> [ DataSourcePath'Image'Hdf5
+                            detector
+                            [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "d03-1-c00/dt/merlin-quad/image"))
+                            , DataSourcePath'Dataset (hdf5p $ datasetpattr ("interpretation", "image"))
+                            ]
+                          ]
+                SixsFlyMedH -> sixs'Fly
+                SixsFlyMedHGisaxs -> sixs'Fly
+                SixsFlyMedV -> sixs'Fly
+                SixsFlyMedVGisaxs -> sixs'Fly
+                SixsFlyUhv -> sixs'Fly
+                SixsFlyUhvGisaxs -> sixs'Fly
+                SixsSbsMedH -> sixs'Sbs
+                SixsSbsMedHGisaxs -> sixs'Sbs
+                SixsSbsMedV -> sixs'Sbs
+                SixsSbsMedVGisaxs -> sixs'Sbs
+                SixsSbsUhv -> sixs'Sbs
+                SixsSbsUhvGisaxs -> sixs'Sbs
 
 -- Mask Path
 
