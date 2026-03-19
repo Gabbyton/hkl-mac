@@ -360,261 +360,260 @@ overload'DataSourcePath'Double ma
       (\wp -> maybe wp DataSourcePath'Double'Const ma)
 
 mk'Geometry'Path :: InputType -> Maybe Double -> ConfigContent -> DSWrap_ DSGeometry DSPath
-mk'Geometry'Path inputtype mWavelength cfg =
-      let
-          -- wavelength
-          dataSourcePath'WaveLength'Diffabs :: DSWrap_ DSDouble DSPath
-          dataSourcePath'WaveLength'Diffabs
-              = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "DIFFABS/d13-1-c03__op__mono/wavelength" ) ] ]
+mk'Geometry'Path inputtype mWavelength cfg = geometry
+    where
+      -- wavelength
+      dataSourcePath'WaveLength'Diffabs :: DSWrap_ DSDouble DSPath
+      dataSourcePath'WaveLength'Diffabs
+          = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "DIFFABS/d13-1-c03__op__mono/wavelength" ) ] ]
 
-          dataSourcePath'WaveLength'Mars :: DSWrap_ DSDouble DSPath
-          dataSourcePath'WaveLength'Mars
-              = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-c03__op__mono1-config_#2/lambda" ) ]
-                , DataSourcePath'Double'Const 1.537591
-                ]
+      dataSourcePath'WaveLength'Mars :: DSWrap_ DSDouble DSPath
+      dataSourcePath'WaveLength'Mars
+          = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-c03__op__mono1-config_#2/lambda" ) ]
+            , DataSourcePath'Double'Const 1.537591
+            ]
 
-          dataSourcePath'WaveLength'Sixs ::  DSWrap_ DSDouble DSPath
-          dataSourcePath'WaveLength'Sixs
-              = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/Monochromator/wavelength")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/i14-c-c02-op-mono/lambda")
-                                             ]
-                ]
+      dataSourcePath'WaveLength'Sixs ::  DSWrap_ DSDouble DSPath
+      dataSourcePath'WaveLength'Sixs
+          = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/Monochromator/wavelength")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/i14-c-c02-op-mono/lambda")
+                                         ]
+            ]
 
-          -- geometry
-          sixs'eix
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "eix"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/eix")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/dt/tab-mt_tx.1/position"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/dt/tab-mt_tx.1/position"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/i14-c-cx1-dt-det_tx.1/position_pre")
-                                             ]
-                ]
-          sixs'eiz
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "eiz"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/eiz")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/dt/tab-mt_tz.1/position"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/dt/tab-mt_tz.1/position"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/i14-c-cx1-dt-det_tz.1/position_pre")
-                                             ]
-                ]
-          sixs'Uhv'Mu
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "mu"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "mu")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/mu"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_MU")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "mu_xps")
-                                             ]
-                ]
-          sixs'Uhv'Omega
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "omega"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "omega")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_OMEGA")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/omega"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "omega_xps")
-                                             ]
-                ]
-          sixs'Uhv'Delta
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "delta"
-                , DataSourcePath'Double'Hdf5WithShift  [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta")
-                                                       , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_DELTA")
-                                                       , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/delta"))
-                                                       , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta_xps")
-                                                       ] 1
-                ]
-          sixs'Uhv'Gamma
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "gamma"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "gamma")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_GAMMA")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/gamma"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "gamma_xps")
-                                             ]
-                ]
+      -- geometry
+      sixs'eix
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "eix"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/eix")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/dt/tab-mt_tx.1/position"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/dt/tab-mt_tx.1/position"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/i14-c-cx1-dt-det_tx.1/position_pre")
+                                         ]
+            ]
+      sixs'eiz
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "eiz"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/eiz")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/dt/tab-mt_tz.1/position"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/dt/tab-mt_tz.1/position"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/i14-c-cx1-dt-det_tz.1/position_pre")
+                                         ]
+            ]
+      sixs'Uhv'Mu
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "mu"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "mu")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/mu"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_MU")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "mu_xps")
+                                         ]
+            ]
+      sixs'Uhv'Omega
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "omega"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "omega")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_OMEGA")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/omega"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "omega_xps")
+                                         ]
+            ]
+      sixs'Uhv'Delta
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "delta"
+            , DataSourcePath'Double'Hdf5WithShift  [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta")
+                                                   , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_DELTA")
+                                                   , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/delta"))
+                                                   , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta_xps")
+                                                   ] 1
+            ]
+      sixs'Uhv'Gamma
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "gamma"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "gamma")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_GAMMA")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/gamma"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "gamma_xps")
+                                         ]
+            ]
 
-          dataSourcePath'Geometry'Sixs'Uhv :: DSWrap_ DSGeometry DSPath
-          dataSourcePath'Geometry'Sixs'Uhv
-              = [ DataSourcePath'Geometry
-                  (Geometry'Factory Uhv Nothing)
-                  (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
-                  [ DataSourcePath'List [sixs'Uhv'Mu, sixs'Uhv'Omega, sixs'Uhv'Delta, sixs'Uhv'Gamma] ]
-                ]
+      dataSourcePath'Geometry'Sixs'Uhv :: DSWrap_ DSGeometry DSPath
+      dataSourcePath'Geometry'Sixs'Uhv
+          = [ DataSourcePath'Geometry
+              (Geometry'Factory Uhv Nothing)
+              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              [ DataSourcePath'List [sixs'Uhv'Mu, sixs'Uhv'Omega, sixs'Uhv'Delta, sixs'Uhv'Gamma] ]
+            ]
 
-          dataSourcePath'Geometry'Sixs'UhvGisaxs :: DSWrap_ DSGeometry DSPath
-          dataSourcePath'Geometry'Sixs'UhvGisaxs
-              = [ DataSourcePath'Geometry
-                  sixsUhvGisaxs
-                  (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
-                  [ DataSourcePath'List [ sixs'Uhv'Mu, sixs'Uhv'Omega, sixs'eix, sixs'eiz ] ]
-                ]
+      dataSourcePath'Geometry'Sixs'UhvGisaxs :: DSWrap_ DSGeometry DSPath
+      dataSourcePath'Geometry'Sixs'UhvGisaxs
+          = [ DataSourcePath'Geometry
+              sixsUhvGisaxs
+              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              [ DataSourcePath'List [ sixs'Uhv'Mu, sixs'Uhv'Omega, sixs'eix, sixs'eiz ] ]
+            ]
 
-          sixs'Med'Beta
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "beta"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "beta")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/diff-med-tpp/pitch"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/i14-c-cx1-ex-diff-med-tpp/TPP/Orientation/pitch")
-                                             ]
-                ]
-          sixs'MedH'Mu
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "mu"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "mu")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-h-dif-group.1/mu"))
-                                             ]
-              ]
-          sixs'MedV'Mu
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "mu"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "mu")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-dif-group.1/mu"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-grp_no_etaa/mu"))
-                                             ]
-                ]
-          sixs'MedV'Omega
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "omega"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "omega")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-dif-group.1/omega"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-grp_no_etaa/omega"))
-                                             ]
-                ]
-          sixs'MedH'Gamma
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "gamma"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "gamma")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-h-dif-group.1/gamma"))
-                                             ]
-                ]
-          sixs'MedV'Gamma
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "gamma"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "gamma")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-dif-group.1/gamma"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-grp_no_etaa/gamma"))
-                                             ]
-                ]
-          sixs'MedH'Delta
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "delta"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-h-dif-group.1/delta"))
-                                             ]
-                ]
-          sixs'MedV'Delta
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "delta"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-dif-group.1/delta"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-grp_no_etaa/delta"))
-                                             ]
-                ]
-          sixs'MedV'Etaa
-              = [ DataSourcePath'Double'Ini cfg "geometry.values" "etaa"
-                , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "etaa")
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-dif-group.1/etaa"))
-                                             , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/eta-a-med-grp/etaa"))
-                                             ]
-                ]
+      sixs'Med'Beta
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "beta"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "beta")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/diff-med-tpp/pitch"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/i14-c-cx1-ex-diff-med-tpp/TPP/Orientation/pitch")
+                                         ]
+            ]
+      sixs'MedH'Mu
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "mu"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "mu")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-h-dif-group.1/mu"))
+                                         ]
+            ]
+      sixs'MedV'Mu
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "mu"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "mu")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-dif-group.1/mu"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-grp_no_etaa/mu"))
+                                         ]
+            ]
+      sixs'MedV'Omega
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "omega"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "omega")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-dif-group.1/omega"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-grp_no_etaa/omega"))
+                                         ]
+            ]
+      sixs'MedH'Gamma
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "gamma"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "gamma")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-h-dif-group.1/gamma"))
+                                         ]
+            ]
+      sixs'MedV'Gamma
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "gamma"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "gamma")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-dif-group.1/gamma"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-grp_no_etaa/gamma"))
+                                         ]
+            ]
+      sixs'MedH'Delta
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "delta"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-h-dif-group.1/delta"))
+                                         ]
+            ]
+      sixs'MedV'Delta
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "delta"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-dif-group.1/delta"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-grp_no_etaa/delta"))
+                                         ]
+            ]
+      sixs'MedV'Etaa
+          = [ DataSourcePath'Double'Ini cfg "geometry.values" "etaa"
+            , DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "etaa")
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/med-v-dif-group.1/etaa"))
+                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx1/ex/eta-a-med-grp/etaa"))
+                                         ]
+            ]
 
-          dataSourcePath'Geometry'Sixs'MedH ::  DSWrap_ DSGeometry DSPath
-          dataSourcePath'Geometry'Sixs'MedH
-              = [ DataSourcePath'Geometry
-                  (Geometry'Factory MedH Nothing)
-                  (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
-                  [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedH'Mu, sixs'MedH'Gamma, sixs'MedH'Delta ] ]
-                ]
+      dataSourcePath'Geometry'Sixs'MedH ::  DSWrap_ DSGeometry DSPath
+      dataSourcePath'Geometry'Sixs'MedH
+          = [ DataSourcePath'Geometry
+              (Geometry'Factory MedH Nothing)
+              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedH'Mu, sixs'MedH'Gamma, sixs'MedH'Delta ] ]
+            ]
 
-          dataSourcePath'Geometry'Sixs'MedHGisaxs ::  DSWrap_ DSGeometry DSPath
-          dataSourcePath'Geometry'Sixs'MedHGisaxs
-              = [ DataSourcePath'Geometry
-                  sixsMedHGisaxs
-                  (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
-                  [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedH'Mu, sixs'eix, sixs'eiz ] ]
-                ]
+      dataSourcePath'Geometry'Sixs'MedHGisaxs ::  DSWrap_ DSGeometry DSPath
+      dataSourcePath'Geometry'Sixs'MedHGisaxs
+          = [ DataSourcePath'Geometry
+              sixsMedHGisaxs
+              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedH'Mu, sixs'eix, sixs'eiz ] ]
+            ]
 
-          dataSourcePath'Geometry'Sixs'MedV :: DSWrap_ DSGeometry DSPath
-          dataSourcePath'Geometry'Sixs'MedV
-              = [ DataSourcePath'Geometry
-                  (Geometry'Factory MedV Nothing)
-                  (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
-                  [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedV'Mu, sixs'MedV'Omega, sixs'MedV'Gamma, sixs'MedV'Delta, sixs'MedV'Etaa ] ]
-                ]
+      dataSourcePath'Geometry'Sixs'MedV :: DSWrap_ DSGeometry DSPath
+      dataSourcePath'Geometry'Sixs'MedV
+          = [ DataSourcePath'Geometry
+              (Geometry'Factory MedV Nothing)
+              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedV'Mu, sixs'MedV'Omega, sixs'MedV'Gamma, sixs'MedV'Delta, sixs'MedV'Etaa ] ]
+            ]
 
-          dataSourcePath'Geometry'Sixs'MedVGisaxs :: DSWrap_ DSGeometry DSPath
-          dataSourcePath'Geometry'Sixs'MedVGisaxs
-              = [ DataSourcePath'Geometry
-                  sixsMedVGisaxs
-                  (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
-                  [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedV'Mu, sixs'MedV'Omega, sixs'eix, sixs'eiz ] ]
-                ]
+      dataSourcePath'Geometry'Sixs'MedVGisaxs :: DSWrap_ DSGeometry DSPath
+      dataSourcePath'Geometry'Sixs'MedVGisaxs
+          = [ DataSourcePath'Geometry
+              sixsMedVGisaxs
+              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedV'Mu, sixs'MedV'Omega, sixs'eix, sixs'eiz ] ]
+            ]
 
-    in case inputtype of
-      CristalK6C -> [ DataSourcePath'Geometry
-                     (Geometry'Factory K6c Nothing)
-                     (overload'DataSourcePath'Double mWavelength [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset  (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Monochromator/lambda")]])
-                     [ DataSourcePath'List
-                       [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-mu/position") ] ]
-                       , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-komega/position") ] ]
-                       , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-kappa/position") ] ]
-                       , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/actuator_1_1") ] ]
-                       , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-gamma/position") ] ]
-                       , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-delta/position") ] ]
-                       ]
-                     ]
-                   ]
-      Custom -> undefined
-      DiffabsCirpad -> [ DataSourcePath'Geometry
-                        cirpad
-                        (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Diffabs)
-                        [ DataSourcePath'List
-                          [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/ex/cirpad_delta/position")) ] ]
-                          , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/ex/dif.1-cirpad-gam/position")) ] ]
-                          ]
-                        ]
-                      ]
-      MarsFlyscan -> [ DataSourcePath'Geometry
-                      (Geometry'Factory Mars Nothing)
-                      (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Mars)
-                      [ DataSourcePath'List
-                        [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/omega") ] ]
-                        , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/chi") ] ]
-                        , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/phi") ] ]
-                        , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/tth") ] ]
-                        ]
-                      ]
-                    ]
-      MarsSbs -> [ DataSourcePath'Geometry
-                  (Geometry'Factory Mars Nothing)
-                  (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Mars)
-                  [ DataSourcePath'List
-                    [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/omega")
-                                                   , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-cx2__ex__dif-mt_rx.1_#2/raw_value")
-                                                   ]
-                      , DataSourcePath'Double'Const 0
-                      ]
-                    , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/chi")
-                                                   , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-cx2__ex__gonio-mt_rs_#2/raw_value")
-                                                   ]
-                      , DataSourcePath'Double'Const 0
-                      ]
-                    , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/phi")
-                                                   , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetpattr ("long_name", "d03-1-cx2/ex/gonio-mt_rz/position"))
-                                                   , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-cx2__ex__gonio-mt_rz_#2/raw_value")
-                                                   ]
-                      , DataSourcePath'Double'Const 0
-                      ]
-                    , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/tth")
-                                                   , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-cx2__ex__dif-mt_rx.2_#2/raw_value")
-                                                   ]
-                      , DataSourcePath'Double'Const 0
-                      ]
-                    ]
-                  ]
-                ]
-      SixsFlyMedH -> dataSourcePath'Geometry'Sixs'MedH
-      SixsFlyMedHGisaxs -> dataSourcePath'Geometry'Sixs'MedHGisaxs
-      SixsFlyMedV -> dataSourcePath'Geometry'Sixs'MedV
-      SixsFlyMedVGisaxs -> dataSourcePath'Geometry'Sixs'MedVGisaxs
-      SixsFlyUhv -> dataSourcePath'Geometry'Sixs'Uhv
-      SixsFlyUhvGisaxs -> dataSourcePath'Geometry'Sixs'UhvGisaxs
-      SixsSbsMedH -> dataSourcePath'Geometry'Sixs'MedH
-      SixsSbsMedHGisaxs -> dataSourcePath'Geometry'Sixs'MedHGisaxs
-      SixsSbsMedV -> dataSourcePath'Geometry'Sixs'MedV
-      SixsSbsMedVGisaxs -> dataSourcePath'Geometry'Sixs'MedVGisaxs
-      SixsSbsUhv -> dataSourcePath'Geometry'Sixs'Uhv
-      SixsSbsUhvGisaxs -> dataSourcePath'Geometry'Sixs'UhvGisaxs
-
+      geometry = case inputtype of
+                   CristalK6C -> [ DataSourcePath'Geometry
+                                  (Geometry'Factory K6c Nothing)
+                                  (overload'DataSourcePath'Double mWavelength [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset  (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Monochromator/lambda")]])
+                                  [ DataSourcePath'List
+                                    [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-mu/position") ] ]
+                                    , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-komega/position") ] ]
+                                    , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-kappa/position") ] ]
+                                    , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/actuator_1_1") ] ]
+                                    , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-gamma/position") ] ]
+                                    , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-delta/position") ] ]
+                                    ]
+                                  ]
+                                ]
+                   Custom -> undefined
+                   DiffabsCirpad -> [ DataSourcePath'Geometry
+                                     cirpad
+                                     (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Diffabs)
+                                     [ DataSourcePath'List
+                                       [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/ex/cirpad_delta/position")) ] ]
+                                       , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/ex/dif.1-cirpad-gam/position")) ] ]
+                                       ]
+                                     ]
+                                   ]
+                   MarsFlyscan -> [ DataSourcePath'Geometry
+                                   (Geometry'Factory Mars Nothing)
+                                   (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Mars)
+                                   [ DataSourcePath'List
+                                     [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/omega") ] ]
+                                     , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/chi") ] ]
+                                     , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/phi") ] ]
+                                     , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/tth") ] ]
+                                     ]
+                                   ]
+                                 ]
+                   MarsSbs -> [ DataSourcePath'Geometry
+                               (Geometry'Factory Mars Nothing)
+                               (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Mars)
+                               [ DataSourcePath'List
+                                 [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/omega")
+                                                                , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-cx2__ex__dif-mt_rx.1_#2/raw_value")
+                                                                ]
+                                   , DataSourcePath'Double'Const 0
+                                   ]
+                                 , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/chi")
+                                                                , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-cx2__ex__gonio-mt_rs_#2/raw_value")
+                                                                ]
+                                   , DataSourcePath'Double'Const 0
+                                   ]
+                                 , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/phi")
+                                                                , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetpattr ("long_name", "d03-1-cx2/ex/gonio-mt_rz/position"))
+                                                                , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-cx2__ex__gonio-mt_rz_#2/raw_value")
+                                                                ]
+                                   , DataSourcePath'Double'Const 0
+                                   ]
+                                 , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/tth")
+                                                                , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-cx2__ex__dif-mt_rx.2_#2/raw_value")
+                                                                ]
+                                   , DataSourcePath'Double'Const 0
+                                   ]
+                                 ]
+                               ]
+                             ]
+                   SixsFlyMedH -> dataSourcePath'Geometry'Sixs'MedH
+                   SixsFlyMedHGisaxs -> dataSourcePath'Geometry'Sixs'MedHGisaxs
+                   SixsFlyMedV -> dataSourcePath'Geometry'Sixs'MedV
+                   SixsFlyMedVGisaxs -> dataSourcePath'Geometry'Sixs'MedVGisaxs
+                   SixsFlyUhv -> dataSourcePath'Geometry'Sixs'Uhv
+                   SixsFlyUhvGisaxs -> dataSourcePath'Geometry'Sixs'UhvGisaxs
+                   SixsSbsMedH -> dataSourcePath'Geometry'Sixs'MedH
+                   SixsSbsMedHGisaxs -> dataSourcePath'Geometry'Sixs'MedHGisaxs
+                   SixsSbsMedV -> dataSourcePath'Geometry'Sixs'MedV
+                   SixsSbsMedVGisaxs -> dataSourcePath'Geometry'Sixs'MedVGisaxs
+                   SixsSbsUhv -> dataSourcePath'Geometry'Sixs'Uhv
+                   SixsSbsUhvGisaxs -> dataSourcePath'Geometry'Sixs'UhvGisaxs
 
 -- Image Path
 
