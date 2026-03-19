@@ -891,99 +891,27 @@ guess'DataSource'DataFrameQCustom :: Config Common
                                   -> ConfigContent
                                   -> DSWrap_ DSDataFrameQCustom DSPath
 guess'DataSource'DataFrameQCustom common msub cfg =
-    do
-      let inputtype = binocularsConfig'Common'InputType common
-      let mAttenuationCoefficient = binocularsConfig'Common'AttenuationCoefficient common
-      let detector =  binocularsConfig'Common'Detector common
-      let mImage = binocularsConfig'Common'Image common
-      let mAttenuationMax = binocularsConfig'Common'AttenuationMax common
-      let mAttenuationShift = binocularsConfig'Common'AttenuationShift common
-      let mWavelength = binocularsConfig'Common'Wavelength common
+      let
+          inputtype = binocularsConfig'Common'InputType common
+          mAttenuationCoefficient = binocularsConfig'Common'AttenuationCoefficient common
+          detector =  binocularsConfig'Common'Detector common
+          mImage = binocularsConfig'Common'Image common
+          mAttenuationMax = binocularsConfig'Common'AttenuationMax common
+          mAttenuationShift = binocularsConfig'Common'AttenuationShift common
+          mWavelength = binocularsConfig'Common'Wavelength common
 
-      -- scan number 0
-      let sn0 = getInitialScannumber $ binocularsConfig'Common'InputRange common
+          -- scan number 0
+          sn0 = getInitialScannumber $ binocularsConfig'Common'InputRange common
 
-      let dataSourcePath'DataFrameQCustom'Sixs'Fly :: DSWrap_ DSAttenuation DSPath -> DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSMask DSPath -> DSWrap_ DSTimestamp DSPath -> DSWrap_ DSTimescan0 DSPath -> DSWrap_ DSDataFrameQCustom DSPath
-          dataSourcePath'DataFrameQCustom'Sixs'Fly att g i m t t0
-              = [ DataSource'DataFrameQCustom
-                  att
-                  g
-                  i
-                  m
-                  t
-                  t0
-                  [ DataSourcePath'Scannumber ]
-                ]
-
-      let dataSourcePath'DataFrameQCustom'Sixs'Sbs :: DSWrap_ DSAttenuation DSPath -> DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSMask DSPath -> DSWrap_ DSTimestamp DSPath -> DSWrap_ DSTimescan0 DSPath -> DSWrap_ DSDataFrameQCustom DSPath
-          dataSourcePath'DataFrameQCustom'Sixs'Sbs att g i m t t0
-              = [ DataSource'DataFrameQCustom
-                  att
-                  g
-                  i
-                  m
-                  t
-                  t0
-                  [ DataSourcePath'Scannumber ]
-                ]
-
-      let attenuation'Path = mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuationShift
-      let geometry'Path = mk'Geometry'Path inputtype mWavelength cfg
-      let image'Path = mk'Image'Path inputtype mImage detector sn0
-      let mask'Path = mk'Mask'Path common
-      let timestamp'Path = mk'Timestamp'Path inputtype msub
-      let timescan0'Path = mk'Timescan0'Path inputtype msub
-
-      case inputtype of
-         CristalK6C -> [ DataSource'DataFrameQCustom
-                        attenuation'Path
-                        geometry'Path
-                        image'Path
-                        mask'Path
-                        timestamp'Path
-                        timescan0'Path
-                        [ DataSourcePath'Scannumber ]
-                      ]
-         Custom -> undefined
-         DiffabsCirpad -> [ DataSource'DataFrameQCustom
-                           attenuation'Path
-                           geometry'Path
-                           image'Path
-                           mask'Path
-                           timestamp'Path
-                           timescan0'Path
-                           [ DataSourcePath'Scannumber ]
-                         ]
-         MarsFlyscan -> [ DataSource'DataFrameQCustom
-                         attenuation'Path
-                         geometry'Path
-                         image'Path
-                         mask'Path
-                         timestamp'Path
-                         timescan0'Path
-                         [ DataSourcePath'Scannumber ]
-                       ]
-         MarsSbs -> [ DataSource'DataFrameQCustom
-                     attenuation'Path
-                     geometry'Path
-                     image'Path
-                     mask'Path
-                     timestamp'Path
-                     timescan0'Path
-                     [ DataSourcePath'Scannumber ]
-                   ]
-         SixsFlyMedH -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsFlyMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsFlyMedV -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsFlyMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsFlyUhv -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsFlyUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsSbsMedH -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsSbsMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsSbsMedV -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsSbsMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsSbsUhv -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
-         SixsSbsUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path mask'Path timestamp'Path timescan0'Path
+          in [ DataSource'DataFrameQCustom
+               ( mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuationShift )
+               ( mk'Geometry'Path inputtype mWavelength cfg )
+               ( mk'Image'Path inputtype mImage detector sn0 )
+               ( mk'Mask'Path common )
+               ( mk'Timestamp'Path inputtype msub )
+               ( mk'Timescan0'Path inputtype msub )
+               [ DataSourcePath'Scannumber ]
+             ]
 
 getDataPath :: Config 'QCustomProjection -> DSWrap_ DSDataFrameQCustom DSPath
 getDataPath c
