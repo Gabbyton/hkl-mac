@@ -354,70 +354,59 @@ mkDetector'Sixs'Sbs det@(Detector2D d _ _) sn
 
 -- Attenuation Path
 
-mkAttenuation :: Maybe Double -> DSWrap_ DSAttenuation DSPath -> DSWrap_ DSAttenuation DSPath
-mkAttenuation ma
-    = Prelude.map
-      ( \att -> case ma of
-                 Nothing -> case att of
-                             DataSourcePath'NoAttenuation -> DataSourcePath'NoAttenuation
-                             DataSourcePath'Attenuation{} -> DataSourcePath'NoAttenuation
-                             -- logWarnN "The current configuration extract the attenuation from the data files."
-                             -- logWarnN "You forgot to provide the attenuation coefficient in the config file."
-                             -- logWarnN "I continue without attenuation correction"
-                             -- logWarnN "Add attenuation_coefficient=<something> under the [input] section, to fix this"
-                             -- return DataSourcePath'NoAttenuation
-                             applyed@DataSourcePath'ApplyedAttenuationFactor{} -> applyed
-                 (Just coef) -> case att of
-                                 DataSourcePath'NoAttenuation         -> DataSourcePath'NoAttenuation
-                                 (DataSourcePath'Attenuation p o _ m) -> DataSourcePath'Attenuation p o coef m
-                                 (DataSourcePath'ApplyedAttenuationFactor _) -> undefined
-      )
-
 mk'Attenuation'Path :: InputType -> Maybe Double -> Maybe Float -> Maybe Int  -> DSWrap_ DSAttenuation DSPath
 mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuationShift =
-      let
-          -- attenuation
-          dataSourcePath'Attenuation'Sixs :: DSWrap_ DSAttenuation DSPath
-          dataSourcePath'Attenuation'Sixs
-              = [ DataSourcePath'Attenuation
-                  [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation")
-                                              , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation_old")
-                                              ]
+    let no = [ DataSourcePath'NoAttenuation ]
+        sixsFly  = [ DataSourcePath'Attenuation
+                     [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation")
+                                                 , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation_old")
+                                                 ]
+                     ]
+                     (fromMaybe 2 mAttenuationShift) 0 mAttenuationMax
+                   ]
+        sixsSBS = [ DataSourcePath'Attenuation
+                    [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic/att"))
+                                                , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att"))
+                                                , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att_old"))
+                                                , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att"))
+                                                , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att_old"))
+                                                ]
+                    ]
+                    (fromMaybe 0 mAttenuationShift) 0 mAttenuationMax
                   ]
-                  (fromMaybe 2 mAttenuationShift) 0 mAttenuationMax
-                ]
-
-          dataSourcePath'Attenuation'SixsSBS :: DSWrap_ DSAttenuation DSPath
-          dataSourcePath'Attenuation'SixsSBS
-              = [ DataSourcePath'Attenuation
-                  [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic/att"))
-                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att"))
-                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att_old"))
-                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att"))
-                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att_old"))
-                                              ]
-                  ]
-                  (fromMaybe 0 mAttenuationShift) 0 mAttenuationMax
-                ]
-
-    in case inputtype of
-         CristalK6C -> mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation]
-         Custom -> undefined
-         DiffabsCirpad -> mkAttenuation mAttenuationCoefficient  [ DataSourcePath'NoAttenuation]
-         MarsFlyscan -> mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation ]
-         MarsSbs -> mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation ]
-         SixsFlyMedH -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
-         SixsFlyMedHGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
-         SixsFlyMedV -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
-         SixsFlyMedVGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
-         SixsFlyUhv -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
-         SixsFlyUhvGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
-         SixsSbsMedH -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
-         SixsSbsMedHGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
-         SixsSbsMedV -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
-         SixsSbsMedVGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
-         SixsSbsUhv -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
-         SixsSbsUhvGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
+        attenuation = case inputtype of
+                        CristalK6C        -> no
+                        Custom            -> no
+                        DiffabsCirpad     -> no
+                        MarsFlyscan       -> no
+                        MarsSbs           -> no
+                        SixsFlyMedH       -> sixsFly
+                        SixsFlyMedHGisaxs -> sixsFly
+                        SixsFlyMedV       -> sixsFly
+                        SixsFlyMedVGisaxs -> sixsFly
+                        SixsFlyUhv        -> sixsFly
+                        SixsFlyUhvGisaxs  -> sixsFly
+                        SixsSbsMedH       -> sixsSBS
+                        SixsSbsMedHGisaxs -> sixsSBS
+                        SixsSbsMedV       -> sixsSBS
+                        SixsSbsMedVGisaxs -> sixsSBS
+                        SixsSbsUhv        -> sixsSBS
+                        SixsSbsUhvGisaxs  -> sixsSBS
+        f att = case mAttenuationCoefficient of
+                  Nothing -> case att of
+                              DataSourcePath'NoAttenuation -> DataSourcePath'NoAttenuation
+                              DataSourcePath'Attenuation{} -> DataSourcePath'NoAttenuation
+                              -- logWarnN "The current configuration extract the attenuation from the data files."
+                              -- logWarnN "You forgot to provide the attenuation coefficient in the config file."
+                              -- logWarnN "I continue without attenuation correction"
+                              -- logWarnN "Add attenuation_coefficient=<something> under the [input] section, to fix this"
+                              -- return DataSourcePath'NoAttenuation
+                              applyed@DataSourcePath'ApplyedAttenuationFactor{} -> applyed
+                  Just coef -> case att of
+                                DataSourcePath'NoAttenuation         -> DataSourcePath'NoAttenuation
+                                DataSourcePath'Attenuation p o _ m -> DataSourcePath'Attenuation p o coef m
+                                DataSourcePath'ApplyedAttenuationFactor _ -> undefined
+    in Prelude.map f attenuation
 
 
 -- Geometry Path
