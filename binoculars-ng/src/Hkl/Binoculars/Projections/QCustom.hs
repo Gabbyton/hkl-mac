@@ -752,81 +752,90 @@ mk'Mask'Path c
                     (binocularsConfig'Common'Detector c)
       ]
 
-
 -- Timestamp Path
-
-overload'DataSourcePath'Timestamp :: Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimestamp DSPath -> DSWrap_ DSTimestamp DSPath
-overload'DataSourcePath'Timestamp msub
-    = Prelude.map
-      ( \idx -> case msub of
-                 Nothing -> DataSourcePath'Timestamp'NoTimestamp
-                 (Just sub) -> case sub of
-                                HklBinocularsQCustomSubProjectionEnum'QxQyQz -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QTthTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QparQperTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QparQper -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QPhiQx -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QPhiQy -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QPhiQz -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QStereo -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'DeltalabGammalabSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'XYZ -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'YZTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QQparQper -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QparsQperTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QparQperSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QSampleaxisTth -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QSampleaxisTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QxQyTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QxQzTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'QyQzTimestamp -> idx
-                                HklBinocularsQCustomSubProjectionEnum'TthAzimuth -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QTimescan0 -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'QScannumber -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'TthScannumber -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'PhixQThetax -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'PhiyQThetay -> DataSourcePath'Timestamp'NoTimestamp
-                                HklBinocularsQCustomSubProjectionEnum'PhizQThetaz -> DataSourcePath'Timestamp'NoTimestamp
-      )
 
 mk'Timestamp'Path :: InputType -> Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimestamp DSPath
 mk'Timestamp'Path inputtype msub =
-    let
-        mkTimeStamp'Sbs :: DSWrap_ DSTimestamp DSPath
-        mkTimeStamp'Sbs = overload'DataSourcePath'Timestamp msub [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/sensors_timestamps") ] ]
-
-        mkTimeStamp'Fly :: DSWrap_ DSTimestamp DSPath
-        mkTimeStamp'Fly = overload'DataSourcePath'Timestamp msub [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
-
-    in case inputtype of
-      CristalK6C        -> mkTimeStamp'Sbs
-      Custom            -> undefined
-      DiffabsCirpad     -> mkTimeStamp'Sbs
-      MarsFlyscan       -> mkTimeStamp'Fly
-      MarsSbs           -> mkTimeStamp'Sbs
-      SixsFlyMedH       -> mkTimeStamp'Fly
-      SixsFlyMedHGisaxs -> mkTimeStamp'Fly
-      SixsFlyMedV       -> mkTimeStamp'Fly
-      SixsFlyMedVGisaxs -> mkTimeStamp'Fly
-      SixsFlyUhv        -> mkTimeStamp'Fly
-      SixsFlyUhvGisaxs  -> mkTimeStamp'Fly
-      SixsSbsMedH       -> mkTimeStamp'Sbs
-      SixsSbsMedHGisaxs -> mkTimeStamp'Sbs
-      SixsSbsMedV       -> mkTimeStamp'Sbs
-      SixsSbsMedVGisaxs -> mkTimeStamp'Sbs
-      SixsSbsUhv        -> mkTimeStamp'Sbs
-      SixsSbsUhvGisaxs  -> mkTimeStamp'Sbs
+    let mkTimeStamp'Sbs = [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/sensors_timestamps") ] ]
+        mkTimeStamp'Fly = [ DataSourcePath'Timestamp'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
+        timestamp = case inputtype of
+                      CristalK6C        -> mkTimeStamp'Sbs
+                      Custom            -> undefined
+                      DiffabsCirpad     -> mkTimeStamp'Sbs
+                      MarsFlyscan       -> mkTimeStamp'Fly
+                      MarsSbs           -> mkTimeStamp'Sbs
+                      SixsFlyMedH       -> mkTimeStamp'Fly
+                      SixsFlyMedHGisaxs -> mkTimeStamp'Fly
+                      SixsFlyMedV       -> mkTimeStamp'Fly
+                      SixsFlyMedVGisaxs -> mkTimeStamp'Fly
+                      SixsFlyUhv        -> mkTimeStamp'Fly
+                      SixsFlyUhvGisaxs  -> mkTimeStamp'Fly
+                      SixsSbsMedH       -> mkTimeStamp'Sbs
+                      SixsSbsMedHGisaxs -> mkTimeStamp'Sbs
+                      SixsSbsMedV       -> mkTimeStamp'Sbs
+                      SixsSbsMedVGisaxs -> mkTimeStamp'Sbs
+                      SixsSbsUhv        -> mkTimeStamp'Sbs
+                      SixsSbsUhvGisaxs  -> mkTimeStamp'Sbs
+        f idx = case msub of
+                  Nothing -> DataSourcePath'Timestamp'NoTimestamp
+                  Just sub -> case sub of
+                               HklBinocularsQCustomSubProjectionEnum'QxQyQz -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'QTthTimestamp -> idx
+                               HklBinocularsQCustomSubProjectionEnum'QTimestamp -> idx
+                               HklBinocularsQCustomSubProjectionEnum'QparQperTimestamp -> idx
+                               HklBinocularsQCustomSubProjectionEnum'QparQper -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'QPhiQx -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'QPhiQy -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'QPhiQz -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'QStereo -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'DeltalabGammalabSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'XYZ -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'YZTimestamp -> idx
+                               HklBinocularsQCustomSubProjectionEnum'QQparQper -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'QparsQperTimestamp -> idx
+                               HklBinocularsQCustomSubProjectionEnum'QparQperSampleaxis -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'QSampleaxisTth -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'QSampleaxisTimestamp -> idx
+                               HklBinocularsQCustomSubProjectionEnum'QxQyTimestamp -> idx
+                               HklBinocularsQCustomSubProjectionEnum'QxQzTimestamp -> idx
+                               HklBinocularsQCustomSubProjectionEnum'QyQzTimestamp -> idx
+                               HklBinocularsQCustomSubProjectionEnum'TthAzimuth -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'QTimescan0 -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'QScannumber -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'TthScannumber -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'PhixQThetax -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'PhiyQThetay -> DataSourcePath'Timestamp'NoTimestamp
+                               HklBinocularsQCustomSubProjectionEnum'PhizQThetaz -> DataSourcePath'Timestamp'NoTimestamp
+    in Prelude.map f timestamp
 
 
 -- Timescan0 Path
 
-overload'DataSourcePath'Timescan0 :: Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimescan0 DSPath -> DSWrap_ DSTimescan0 DSPath
-overload'DataSourcePath'Timescan0 msub
-    = Prelude.map
-      (\idx -> case msub of
-                Nothing -> DataSourcePath'Timescan0'NoTimescan0
-                (Just sub) -> case sub of
+mk'Timescan0'Path :: InputType -> Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimescan0 DSPath
+mk'Timescan0'Path inputtype msub =
+    let timescan0'Sbs = [ DataSourcePath'Timescan0'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/sensors_timestamps") ] ]
+        timescan0'Fly = [ DataSourcePath'Timescan0'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
+        timescan0 = case inputtype of
+                      CristalK6C        -> timescan0'Sbs
+                      Custom            -> undefined
+                      DiffabsCirpad     -> timescan0'Sbs
+                      MarsFlyscan       -> timescan0'Sbs
+                      MarsSbs           -> timescan0'Sbs
+                      SixsFlyMedH       -> timescan0'Fly
+                      SixsFlyMedHGisaxs -> timescan0'Fly
+                      SixsFlyMedV       -> timescan0'Fly
+                      SixsFlyMedVGisaxs -> timescan0'Fly
+                      SixsFlyUhv        -> timescan0'Fly
+                      SixsFlyUhvGisaxs  -> timescan0'Fly
+                      SixsSbsMedH       -> timescan0'Sbs
+                      SixsSbsMedHGisaxs -> timescan0'Sbs
+                      SixsSbsMedV       -> timescan0'Sbs
+                      SixsSbsMedVGisaxs -> timescan0'Sbs
+                      SixsSbsUhv        -> timescan0'Sbs
+                      SixsSbsUhvGisaxs  -> timescan0'Sbs
+        f idx = case msub of
+                  Nothing -> DataSourcePath'Timescan0'NoTimescan0
+                  Just sub -> case sub of
                                HklBinocularsQCustomSubProjectionEnum'QxQyQz -> DataSourcePath'Timescan0'NoTimescan0
                                HklBinocularsQCustomSubProjectionEnum'QTthTimestamp -> DataSourcePath'Timescan0'NoTimescan0
                                HklBinocularsQCustomSubProjectionEnum'QTimestamp -> DataSourcePath'Timescan0'NoTimescan0
@@ -854,36 +863,7 @@ overload'DataSourcePath'Timescan0 msub
                                HklBinocularsQCustomSubProjectionEnum'PhixQThetax -> DataSourcePath'Timescan0'NoTimescan0
                                HklBinocularsQCustomSubProjectionEnum'PhiyQThetay -> DataSourcePath'Timescan0'NoTimescan0
                                HklBinocularsQCustomSubProjectionEnum'PhizQThetaz -> DataSourcePath'Timescan0'NoTimescan0
-      )
-
-
-mk'Timescan0'Path :: InputType -> Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimescan0 DSPath
-mk'Timescan0'Path inputtype msub =
-    let
-        timescan0'Sbs :: DSWrap_ DSTimescan0 DSPath
-        timescan0'Sbs = overload'DataSourcePath'Timescan0 msub [ DataSourcePath'Timescan0'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/sensors_timestamps") ] ]
-
-        timescan0'Fly :: DSWrap_ DSTimescan0 DSPath
-        timescan0'Fly = overload'DataSourcePath'Timescan0 msub [ DataSourcePath'Timescan0'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
-
-      in case inputtype of
-           CristalK6C        -> timescan0'Sbs
-           Custom            -> undefined
-           DiffabsCirpad     -> timescan0'Sbs
-           MarsFlyscan       -> timescan0'Sbs
-           MarsSbs           -> timescan0'Sbs
-           SixsFlyMedH       -> timescan0'Fly
-           SixsFlyMedHGisaxs -> timescan0'Fly
-           SixsFlyMedV       -> timescan0'Fly
-           SixsFlyMedVGisaxs -> timescan0'Fly
-           SixsFlyUhv        -> timescan0'Fly
-           SixsFlyUhvGisaxs  -> timescan0'Fly
-           SixsSbsMedH       -> timescan0'Sbs
-           SixsSbsMedHGisaxs -> timescan0'Sbs
-           SixsSbsMedV       -> timescan0'Sbs
-           SixsSbsMedVGisaxs -> timescan0'Sbs
-           SixsSbsUhv        -> timescan0'Sbs
-           SixsSbsUhvGisaxs  -> timescan0'Sbs
+    in Prelude.map f timescan0
 
 
 guess'DataSource'DataFrameQCustom :: Config Common
@@ -891,27 +871,23 @@ guess'DataSource'DataFrameQCustom :: Config Common
                                   -> ConfigContent
                                   -> DSWrap_ DSDataFrameQCustom DSPath
 guess'DataSource'DataFrameQCustom common msub cfg =
-      let
-          inputtype = binocularsConfig'Common'InputType common
-          mAttenuationCoefficient = binocularsConfig'Common'AttenuationCoefficient common
-          detector =  binocularsConfig'Common'Detector common
-          mImage = binocularsConfig'Common'Image common
-          mAttenuationMax = binocularsConfig'Common'AttenuationMax common
-          mAttenuationShift = binocularsConfig'Common'AttenuationShift common
-          mWavelength = binocularsConfig'Common'Wavelength common
-
-          -- scan number 0
-          sn0 = getInitialScannumber $ binocularsConfig'Common'InputRange common
-
-          in [ DataSource'DataFrameQCustom
-               ( mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuationShift )
-               ( mk'Geometry'Path inputtype mWavelength cfg )
-               ( mk'Image'Path inputtype mImage detector sn0 )
-               ( mk'Mask'Path common )
-               ( mk'Timestamp'Path inputtype msub )
-               ( mk'Timescan0'Path inputtype msub )
-               [ DataSourcePath'Scannumber ]
-             ]
+    let inputtype = binocularsConfig'Common'InputType common
+        mAttenuationCoefficient = binocularsConfig'Common'AttenuationCoefficient common
+        detector =  binocularsConfig'Common'Detector common
+        mImage = binocularsConfig'Common'Image common
+        mAttenuationMax = binocularsConfig'Common'AttenuationMax common
+        mAttenuationShift = binocularsConfig'Common'AttenuationShift common
+        mWavelength = binocularsConfig'Common'Wavelength common
+        sn0 = getInitialScannumber $ binocularsConfig'Common'InputRange common
+    in [ DataSource'DataFrameQCustom
+         ( mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuationShift )
+         ( mk'Geometry'Path inputtype mWavelength cfg )
+         ( mk'Image'Path inputtype mImage detector sn0 )
+         ( mk'Mask'Path common )
+         ( mk'Timestamp'Path inputtype msub )
+         ( mk'Timescan0'Path inputtype msub )
+         [ DataSourcePath'Scannumber ]
+       ]
 
 getDataPath :: Config 'QCustomProjection -> DSWrap_ DSDataFrameQCustom DSPath
 getDataPath c
