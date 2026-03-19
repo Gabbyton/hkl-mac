@@ -403,7 +403,7 @@ instance HasIniConfig Common where
          binocularsConfig'Common'SkipFirstPoints <- parseMb cfg "input" "skip_first_points"
          binocularsConfig'Common'SkipLastPoints <- parseMb cfg "input" "skip_last_points"
          binocularsConfig'Common'PolarizationCorrection <- parseFDef cfg "input" "polarization_correction" (binocularsConfig'Common'PolarizationCorrection defaultConfig)
-         binocularsConfig'Common'Geometry <- eitherF error (parseIniFile cfg iniParser)
+         binocularsConfig'Common'Geometry <- eitherF error (parseIniFile cfg iniParser'Maybe'Geometry)
                                             (\mg -> pure $ case mg of
                                                             Nothing -> binocularsConfig'Common'Geometry defaultConfig
                                                             Just g -> Just g

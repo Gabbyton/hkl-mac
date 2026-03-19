@@ -69,6 +69,7 @@ module Hkl.Binoculars.Config
     , getInitialScannumber
     , getMask
     , getPreConfig
+    , iniParser'Maybe'Geometry
     , mergeIni
     , parse'
     , parseFDef
@@ -416,31 +417,30 @@ newtype DynamicMask =
   deriving (Eq, Show)
   deriving newtype HasFieldValue
 
--- Maybe Geometry
+-- Geometry
 
-instance HasIniParser (Maybe Geometry) where
-    iniParser
-        = do res <- sectionMb "geometry" $
-                   (,)
-                   <$> fieldOf "geometry_sample" (parseOnly words')
-                   <*> fieldMbOf "geometry_detector" (parseOnly words')
-             case res of
-               Nothing -> pure Nothing
-               Just (sample, mdetector) -> do
-                                         sample_axes <- mapM iniParser'Axis sample
-                                         detector_axes <- case mdetector of
-                                                           Nothing       -> pure []
-                                                           Just detector -> mapM iniParser'Axis detector
-                                         pure $ mk'Geometry sample_axes detector_axes
-        where
-          words' :: Parser [Text]
-          words' = Data.Text.words <$> takeText
+iniParser'Maybe'Geometry :: IniParser (Maybe Geometry)
+iniParser'Maybe'Geometry
+    = do res <- sectionMb "geometry" $
+               (,)
+               <$> fieldOf "geometry_sample" (parseOnly words')
+               <*> fieldMbOf "geometry_detector" (parseOnly words')
+         case res of
+           Nothing -> pure Nothing
+           Just (sample, mdetector) -> do
+                    sample_axes <- mapM iniParser'Axis sample
+                    detector_axes <- case mdetector of
+                                      Nothing       -> pure []
+                                      Just detector -> mapM iniParser'Axis detector
+                    pure $ mk'Geometry sample_axes detector_axes
+    where
+      words' :: Parser [Text]
+      words' = Data.Text.words <$> takeText
 
-          iniParser'Axis :: Text -> IniParser Axis
-          iniParser'Axis n
-              = do (t, u) <- Data.Ini.Config.section "geometry" $ fieldOf ("axis_" <> n) (parseOnly ((,) <$> fieldParser <*> fieldParser))
-                   pure $ Axis (unpack n) t u
-
+      iniParser'Axis :: Text -> IniParser Axis
+      iniParser'Axis n
+          = do (t, u) <- Data.Ini.Config.section "geometry" $ fieldOf ("axis_" <> n) (parseOnly ((,) <$> fieldParser <*> fieldParser))
+               pure $ Axis (unpack n) t u
 
 -- HklBinocularsQCustomSubProjectionEnum
 
