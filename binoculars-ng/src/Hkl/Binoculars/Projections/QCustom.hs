@@ -454,16 +454,6 @@ overload'DataSourcePath'Double ma
     = Prelude.map
       (\wp -> maybe wp DataSourcePath'Double'Const ma)
 
-overload'DataSourcePath'Image :: Detector Hkl DIM2 -> Maybe (DSWrap_ DSImage DSPath) -> DSWrap_ DSImage DSPath -> DSWrap_ DSImage DSPath
-overload'DataSourcePath'Image _ (Just i) _ = i
-overload'DataSourcePath'Image det Nothing imgs
-    = Prelude.map
-      (\case
-        DataSourcePath'Image'Dummy _ v -> DataSourcePath'Image'Dummy det v
-        DataSourcePath'Image'Hdf5 _ p -> DataSourcePath'Image'Hdf5 det p
-        DataSourcePath'Image'Img _ tmpl sn ->DataSourcePath'Image'Img det tmpl sn
-      ) imgs
-
 mk'Geometry'Path :: InputType -> Maybe Double -> ConfigContent -> DSWrap_ DSGeometry DSPath
 mk'Geometry'Path inputtype mWavelength cfg =
       let
@@ -721,6 +711,62 @@ mk'Geometry'Path inputtype mWavelength cfg =
       SixsSbsUhvGisaxs -> dataSourcePath'Geometry'Sixs'UhvGisaxs
 
 
+overload'DataSourcePath'Image :: Detector Hkl DIM2 -> Maybe (DSWrap_ DSImage DSPath) -> DSWrap_ DSImage DSPath -> DSWrap_ DSImage DSPath
+overload'DataSourcePath'Image _ (Just i) _ = i
+overload'DataSourcePath'Image det Nothing imgs
+    = Prelude.map
+      (\case
+        DataSourcePath'Image'Dummy _ v -> DataSourcePath'Image'Dummy det v
+        DataSourcePath'Image'Hdf5 _ p -> DataSourcePath'Image'Hdf5 det p
+        DataSourcePath'Image'Img _ tmpl sn -> DataSourcePath'Image'Img det tmpl sn
+      ) imgs
+
+
+mk'Image'Path :: InputType -> Maybe (DSWrap_ DSImage DSPath) -> Detector Hkl DIM2 -> Scannumber -> DSWrap_ DSImage DSPath
+mk'Image'Path inputtype mImage detector sn =
+    case inputtype of
+      CristalK6C -> [ DataSourcePath'Image'Hdf5
+                     detector
+                     [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/data_05") ]
+                   ]
+      Custom -> undefined
+      DiffabsCirpad -> (overload'DataSourcePath'Image detector mImage
+                       [ DataSourcePath'Image'Hdf5
+                         detector
+                         [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/dt/cirpad.1/image")) ]
+                       ]
+                      )
+      MarsFlyscan -> (overload'DataSourcePath'Image detector mImage
+                     [ DataSourcePath'Image'Hdf5
+                       detector
+                       [ DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_image"))
+                       , DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_quad_image"))
+                       ]
+                     ]
+                    )
+      MarsSbs -> (overload'DataSourcePath'Image detector mImage
+                 [ DataSourcePath'Image'Hdf5
+                   detector
+                   [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "d03-1-c00/dt/merlin-quad/image"))
+                   , DataSourcePath'Dataset (hdf5p $ datasetpattr ("interpretation", "image"))
+                   ]
+                 ]
+                )
+      SixsFlyMedH -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
+      SixsFlyMedHGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
+      SixsFlyMedV -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
+      SixsFlyMedVGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
+      SixsFlyUhv -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
+      SixsFlyUhvGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn)
+      SixsSbsMedH -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
+      SixsSbsMedHGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
+      SixsSbsMedV -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
+      SixsSbsMedVGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
+      SixsSbsUhv -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
+      SixsSbsUhvGisaxs -> overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn)
+
+
+
 guess'DataSource'DataFrameQCustom :: Config Common
                                   -> Maybe HklBinocularsQCustomSubProjectionEnum
                                   -> ConfigContent
@@ -780,26 +826,26 @@ guess'DataSource'DataFrameQCustom common msub cfg =
           mkTimescan0'Fly msub'
             = overload'DataSourcePath'Timescan0 msub' [ DataSourcePath'Timescan0'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
 
-      let dataSourcePath'DataFrameQCustom'Sixs'Fly :: DSWrap_ DSGeometry DSPath -> Scannumber -> DSWrap_ DSDataFrameQCustom DSPath
-          dataSourcePath'DataFrameQCustom'Sixs'Fly g sn
+      let dataSourcePath'DataFrameQCustom'Sixs'Fly :: DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSDataFrameQCustom DSPath
+          dataSourcePath'DataFrameQCustom'Sixs'Fly g i
             = [ let att = mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
                 in DataSource'DataFrameQCustom
                    att
                    g
-                   (overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Fly detector sn))
+                   i
                    [ mk'DataSourcePath'Mask common ]
                    (mkTimeStamp'Fly msub)
                    (mkTimescan0'Fly msub)
                    [ DataSourcePath'Scannumber ]
               ]
 
-      let dataSourcePath'DataFrameQCustom'Sixs'Sbs :: DSWrap_ DSGeometry DSPath -> Scannumber -> DSWrap_ DSDataFrameQCustom DSPath
-          dataSourcePath'DataFrameQCustom'Sixs'Sbs g sn
+      let dataSourcePath'DataFrameQCustom'Sixs'Sbs :: DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSDataFrameQCustom DSPath
+          dataSourcePath'DataFrameQCustom'Sixs'Sbs g i
             = [ let att = mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
                 in DataSource'DataFrameQCustom
                    att
                    g
-                   ( overload'DataSourcePath'Image detector mImage (mkDetector'Sixs'Sbs detector sn) )
+                   i
                    [ mk'DataSourcePath'Mask common ]
                    ( mkTimeStamp'Sbs msub )
                    ( mkTimescan0'Sbs msub )
@@ -807,15 +853,13 @@ guess'DataSource'DataFrameQCustom common msub cfg =
               ]
 
       let geometry'Path = mk'Geometry'Path inputtype mWavelength cfg
+      let image'Path = mk'Image'Path inputtype mImage detector sn0
 
       case inputtype of
          CristalK6C -> [ DataSource'DataFrameQCustom
                         (mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation])
                         geometry'Path
-                        [ DataSourcePath'Image'Hdf5
-                          detector
-                          [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/data_05") ]
-                        ]
+                        image'Path
                         [ mk'DataSourcePath'Mask common ]
                         (mkTimeStamp'Sbs msub)
                         (mkTimescan0'Sbs msub)
@@ -825,12 +869,7 @@ guess'DataSource'DataFrameQCustom common msub cfg =
          DiffabsCirpad -> [ DataSource'DataFrameQCustom
                            (mkAttenuation mAttenuationCoefficient  [ DataSourcePath'NoAttenuation])
                            geometry'Path
-                           (overload'DataSourcePath'Image detector mImage
-                            [ DataSourcePath'Image'Hdf5
-                              detector
-                              [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/dt/cirpad.1/image")) ]
-                            ]
-                           )
+                           image'Path
                            [ mk'DataSourcePath'Mask common ]
                            (mkTimeStamp'Sbs msub)
                            (mkTimescan0'Sbs msub)
@@ -841,14 +880,7 @@ guess'DataSource'DataFrameQCustom common msub cfg =
                          -- (mkAttenuation mAttenuationCoefficient (DataSourcePath'ApplyedAttenuationFactor
                          --                                         (DataSourcePath'Float'Hdf5 ([ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/applied_att"))))
                          geometry'Path
-                         (overload'DataSourcePath'Image detector mImage
-                          [ DataSourcePath'Image'Hdf5
-                            detector
-                            [ DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_image"))
-                            , DataSourcePath'Dataset (hdf5p $ grouppat 0 (datasetp "scan_data/merlin_quad_image"))
-                            ]
-                          ]
-                         )
+                         image'Path
                          [ mk'DataSourcePath'Mask common ]
                          (mkTimeStamp'Fly msub)
                          (mkTimescan0'Sbs msub)
@@ -857,31 +889,24 @@ guess'DataSource'DataFrameQCustom common msub cfg =
          MarsSbs -> [ DataSource'DataFrameQCustom
                      (mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation ])
                      geometry'Path
-                     (overload'DataSourcePath'Image detector mImage
-                      [ DataSourcePath'Image'Hdf5
-                        detector
-                        [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "d03-1-c00/dt/merlin-quad/image"))
-                        , DataSourcePath'Dataset (hdf5p $ datasetpattr ("interpretation", "image"))
-                        ]
-                      ]
-                     )
+                     image'Path
                      [ mk'DataSourcePath'Mask common ]
                      (mkTimeStamp'Sbs msub)
                      (mkTimescan0'Sbs msub)
                      [ DataSourcePath'Scannumber ]
                    ]
-         SixsFlyMedH -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path sn0
-         SixsFlyMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path sn0
-         SixsFlyMedV -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path sn0
-         SixsFlyMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path sn0
-         SixsFlyUhv -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path sn0
-         SixsFlyUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path sn0
-         SixsSbsMedH -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path sn0
-         SixsSbsMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path sn0
-         SixsSbsMedV -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path sn0
-         SixsSbsMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path sn0
-         SixsSbsUhv -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path sn0
-         SixsSbsUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path sn0
+         SixsFlyMedH -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
+         SixsFlyMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
+         SixsFlyMedV -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
+         SixsFlyMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
+         SixsFlyUhv -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
+         SixsFlyUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
+         SixsSbsMedH -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
+         SixsSbsMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
+         SixsSbsMedV -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
+         SixsSbsMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
+         SixsSbsUhv -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
+         SixsSbsUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
 
 getDataPath :: Config 'QCustomProjection -> DSWrap_ DSDataFrameQCustom DSPath
 getDataPath c
