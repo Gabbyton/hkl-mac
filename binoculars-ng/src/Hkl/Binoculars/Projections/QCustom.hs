@@ -292,25 +292,6 @@ instance HasIniConfig 'QCustomProjection where
 -- Input Path's --
 ------------------
 
-mkAttenuation :: Maybe Double -> DSWrap_ DSAttenuation DSPath -> DSWrap_ DSAttenuation DSPath
-mkAttenuation ma
-    = Prelude.map
-      ( \att -> case ma of
-                 Nothing -> case att of
-                             DataSourcePath'NoAttenuation     -> DataSourcePath'NoAttenuation
-                             DataSourcePath'Attenuation{} ->  DataSourcePath'NoAttenuation
-                             -- logWarnN "The current configuration extract the attenuation from the data files."
-                             -- logWarnN "You forgot to provide the attenuation coefficient in the config file."
-                             -- logWarnN "I continue without attenuation correction"
-                             -- logWarnN "Add attenuation_coefficient=<something> under the [input] section, to fix this"
-                             -- return DataSourcePath'NoAttenuation
-                             applyed@DataSourcePath'ApplyedAttenuationFactor{} -> applyed
-                 (Just coef) -> case att of
-                                 DataSourcePath'NoAttenuation           -> DataSourcePath'NoAttenuation
-                                 (DataSourcePath'Attenuation p o _ m) -> DataSourcePath'Attenuation p o coef m
-                                 (DataSourcePath'ApplyedAttenuationFactor _) -> undefined
-      )
-
 mk'DataSourcePath'Mask :: Config Common -> DSMask DSPath
 mk'DataSourcePath'Mask c
     = case binocularsConfig'Common'Maskmatrix c of
@@ -448,6 +429,77 @@ overload'DataSourcePath'Timescan0 msub
                                HklBinocularsQCustomSubProjectionEnum'PhiyQThetay -> DataSourcePath'Timescan0'NoTimescan0
                                HklBinocularsQCustomSubProjectionEnum'PhizQThetaz -> DataSourcePath'Timescan0'NoTimescan0
       )
+
+
+-- Attenuation Path
+
+mkAttenuation :: Maybe Double -> DSWrap_ DSAttenuation DSPath -> DSWrap_ DSAttenuation DSPath
+mkAttenuation ma
+    = Prelude.map
+      ( \att -> case ma of
+                 Nothing -> case att of
+                             DataSourcePath'NoAttenuation -> DataSourcePath'NoAttenuation
+                             DataSourcePath'Attenuation{} -> DataSourcePath'NoAttenuation
+                             -- logWarnN "The current configuration extract the attenuation from the data files."
+                             -- logWarnN "You forgot to provide the attenuation coefficient in the config file."
+                             -- logWarnN "I continue without attenuation correction"
+                             -- logWarnN "Add attenuation_coefficient=<something> under the [input] section, to fix this"
+                             -- return DataSourcePath'NoAttenuation
+                             applyed@DataSourcePath'ApplyedAttenuationFactor{} -> applyed
+                 (Just coef) -> case att of
+                                 DataSourcePath'NoAttenuation         -> DataSourcePath'NoAttenuation
+                                 (DataSourcePath'Attenuation p o _ m) -> DataSourcePath'Attenuation p o coef m
+                                 (DataSourcePath'ApplyedAttenuationFactor _) -> undefined
+      )
+
+mk'Attenuation'Path :: InputType -> Maybe Double -> Maybe Float -> Maybe Int  -> DSWrap_ DSAttenuation DSPath
+mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuationShift =
+      let
+          -- attenuation
+          dataSourcePath'Attenuation'Sixs :: DSWrap_ DSAttenuation DSPath
+          dataSourcePath'Attenuation'Sixs
+              = [ DataSourcePath'Attenuation
+                  [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation")
+                                              , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation_old")
+                                              ]
+                  ]
+                  (fromMaybe 2 mAttenuationShift) 0 mAttenuationMax
+                ]
+
+          dataSourcePath'Attenuation'SixsSBS :: DSWrap_ DSAttenuation DSPath
+          dataSourcePath'Attenuation'SixsSBS
+              = [ DataSourcePath'Attenuation
+                  [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic/att"))
+                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att"))
+                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att_old"))
+                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att"))
+                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att_old"))
+                                              ]
+                  ]
+                  (fromMaybe 0 mAttenuationShift) 0 mAttenuationMax
+                ]
+
+    in case inputtype of
+         CristalK6C -> mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation]
+         Custom -> undefined
+         DiffabsCirpad -> mkAttenuation mAttenuationCoefficient  [ DataSourcePath'NoAttenuation]
+         MarsFlyscan -> mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation ]
+         MarsSbs -> mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation ]
+         SixsFlyMedH -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
+         SixsFlyMedHGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
+         SixsFlyMedV -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
+         SixsFlyMedVGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
+         SixsFlyUhv -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
+         SixsFlyUhvGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
+         SixsSbsMedH -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
+         SixsSbsMedHGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
+         SixsSbsMedV -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
+         SixsSbsMedVGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
+         SixsSbsUhv -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
+         SixsSbsUhvGisaxs -> mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
+
+
+-- Image Path
 
 overload'DataSourcePath'Double :: Maybe Double -> DSWrap_ DSDouble DSPath -> DSWrap_ DSDouble DSPath
 overload'DataSourcePath'Double ma
@@ -784,30 +836,6 @@ guess'DataSource'DataFrameQCustom common msub cfg =
       -- scan number 0
       let sn0 = getInitialScannumber $ binocularsConfig'Common'InputRange common
 
-      -- attenuation
-      let dataSourcePath'Attenuation'Sixs :: DSWrap_ DSAttenuation DSPath
-          dataSourcePath'Attenuation'Sixs
-              = [ DataSourcePath'Attenuation
-                  [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation")
-                                              , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "attenuation_old")
-                                              ]
-                  ]
-                  (fromMaybe 2 mAttenuationShift) 0 mAttenuationMax
-                ]
-
-      let dataSourcePath'Attenuation'SixsSBS :: DSWrap_ DSAttenuation DSPath
-          dataSourcePath'Attenuation'SixsSBS
-              = [ DataSourcePath'Attenuation
-                  [ DataSourcePath'Float'Hdf5 [ DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic/att"))
-                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att"))
-                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s140/att_old"))
-                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att"))
-                                              , DataSourcePath'Dataset (hdf5p $ datasetpattr ("long_name", "i14-c-c00/ex/roic-s70/att_old"))
-                                              ]
-                  ]
-                  (fromMaybe 0 mAttenuationShift) 0 mAttenuationMax
-                ]
-
       -- timestamp
       let mkTimeStamp'Sbs :: Maybe HklBinocularsQCustomSubProjectionEnum -> DSWrap_ DSTimestamp DSPath
           mkTimeStamp'Sbs msub'
@@ -826,38 +854,37 @@ guess'DataSource'DataFrameQCustom common msub cfg =
           mkTimescan0'Fly msub'
             = overload'DataSourcePath'Timescan0 msub' [ DataSourcePath'Timescan0'Hdf5 [ DataSourcePath'Dataset(hdf5p $ grouppat 0 $ datasetp "scan_data/epoch") ] ]
 
-      let dataSourcePath'DataFrameQCustom'Sixs'Fly :: DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSDataFrameQCustom DSPath
-          dataSourcePath'DataFrameQCustom'Sixs'Fly g i
-            = [ let att = mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'Sixs
-                in DataSource'DataFrameQCustom
-                   att
-                   g
-                   i
-                   [ mk'DataSourcePath'Mask common ]
-                   (mkTimeStamp'Fly msub)
-                   (mkTimescan0'Fly msub)
-                   [ DataSourcePath'Scannumber ]
-              ]
+      let dataSourcePath'DataFrameQCustom'Sixs'Fly :: DSWrap_ DSAttenuation DSPath -> DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSDataFrameQCustom DSPath
+          dataSourcePath'DataFrameQCustom'Sixs'Fly att g i
+              = [ DataSource'DataFrameQCustom
+                  att
+                  g
+                  i
+                  [ mk'DataSourcePath'Mask common ]
+                  (mkTimeStamp'Fly msub)
+                  (mkTimescan0'Fly msub)
+                  [ DataSourcePath'Scannumber ]
+                ]
 
-      let dataSourcePath'DataFrameQCustom'Sixs'Sbs :: DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSDataFrameQCustom DSPath
-          dataSourcePath'DataFrameQCustom'Sixs'Sbs g i
-            = [ let att = mkAttenuation mAttenuationCoefficient dataSourcePath'Attenuation'SixsSBS
-                in DataSource'DataFrameQCustom
-                   att
-                   g
-                   i
-                   [ mk'DataSourcePath'Mask common ]
-                   ( mkTimeStamp'Sbs msub )
-                   ( mkTimescan0'Sbs msub )
-                   [ DataSourcePath'Scannumber ]
-              ]
+      let dataSourcePath'DataFrameQCustom'Sixs'Sbs :: DSWrap_ DSAttenuation DSPath -> DSWrap_ DSGeometry DSPath -> DSWrap_ DSImage DSPath -> DSWrap_ DSDataFrameQCustom DSPath
+          dataSourcePath'DataFrameQCustom'Sixs'Sbs att g i
+              = [ DataSource'DataFrameQCustom
+                  att
+                  g
+                  i
+                  [ mk'DataSourcePath'Mask common ]
+                  ( mkTimeStamp'Sbs msub )
+                  ( mkTimescan0'Sbs msub )
+                  [ DataSourcePath'Scannumber ]
+                ]
 
+      let attenuation'Path = mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuationShift
       let geometry'Path = mk'Geometry'Path inputtype mWavelength cfg
       let image'Path = mk'Image'Path inputtype mImage detector sn0
 
       case inputtype of
          CristalK6C -> [ DataSource'DataFrameQCustom
-                        (mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation])
+                        attenuation'Path
                         geometry'Path
                         image'Path
                         [ mk'DataSourcePath'Mask common ]
@@ -867,7 +894,7 @@ guess'DataSource'DataFrameQCustom common msub cfg =
                       ]
          Custom -> undefined
          DiffabsCirpad -> [ DataSource'DataFrameQCustom
-                           (mkAttenuation mAttenuationCoefficient  [ DataSourcePath'NoAttenuation])
+                           attenuation'Path
                            geometry'Path
                            image'Path
                            [ mk'DataSourcePath'Mask common ]
@@ -876,9 +903,7 @@ guess'DataSource'DataFrameQCustom common msub cfg =
                            [ DataSourcePath'Scannumber ]
                          ]
          MarsFlyscan -> [ DataSource'DataFrameQCustom
-                         (mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation ])
-                         -- (mkAttenuation mAttenuationCoefficient (DataSourcePath'ApplyedAttenuationFactor
-                         --                                         (DataSourcePath'Float'Hdf5 ([ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/applied_att"))))
+                         attenuation'Path
                          geometry'Path
                          image'Path
                          [ mk'DataSourcePath'Mask common ]
@@ -887,7 +912,7 @@ guess'DataSource'DataFrameQCustom common msub cfg =
                          [ DataSourcePath'Scannumber ]
                        ]
          MarsSbs -> [ DataSource'DataFrameQCustom
-                     (mkAttenuation mAttenuationCoefficient [ DataSourcePath'NoAttenuation ])
+                     attenuation'Path
                      geometry'Path
                      image'Path
                      [ mk'DataSourcePath'Mask common ]
@@ -895,18 +920,18 @@ guess'DataSource'DataFrameQCustom common msub cfg =
                      (mkTimescan0'Sbs msub)
                      [ DataSourcePath'Scannumber ]
                    ]
-         SixsFlyMedH -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
-         SixsFlyMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
-         SixsFlyMedV -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
-         SixsFlyMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
-         SixsFlyUhv -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
-         SixsFlyUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly geometry'Path image'Path
-         SixsSbsMedH -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
-         SixsSbsMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
-         SixsSbsMedV -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
-         SixsSbsMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
-         SixsSbsUhv -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
-         SixsSbsUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs geometry'Path image'Path
+         SixsFlyMedH -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path
+         SixsFlyMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path
+         SixsFlyMedV -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path
+         SixsFlyMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path
+         SixsFlyUhv -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path
+         SixsFlyUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Fly attenuation'Path geometry'Path image'Path
+         SixsSbsMedH -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path
+         SixsSbsMedHGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path
+         SixsSbsMedV -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path
+         SixsSbsMedVGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path
+         SixsSbsUhv -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path
+         SixsSbsUhvGisaxs -> dataSourcePath'DataFrameQCustom'Sixs'Sbs attenuation'Path geometry'Path image'Path
 
 getDataPath :: Config 'QCustomProjection -> DSWrap_ DSDataFrameQCustom DSPath
 getDataPath c
