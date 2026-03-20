@@ -354,31 +354,43 @@ mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuati
 
 -- Geometry Path
 
-overload'DataSourcePath'Double :: Maybe Double -> DSWrap_ DSDouble DSPath -> DSWrap_ DSDouble DSPath
-overload'DataSourcePath'Double ma
-    = Prelude.map
-      (\wp -> maybe wp DataSourcePath'Double'Const ma)
+mk'Wavelength'Path :: InputType -> Maybe Double -> DSWrap_ DSDouble DSPath
+mk'Wavelength'Path inputtype mw = Prelude.map f wavelength
+    where
+      f w = maybe w DataSourcePath'Double'Const mw
+
+      wavelength = let cristal = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Monochromator/lambda") ] ]
+                       diffabs = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "DIFFABS/d13-1-c03__op__mono/wavelength") ] ]
+                       mars = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-c03__op__mono1-config_#2/lambda" ) ]
+                              , DataSourcePath'Double'Const 1.537591
+                              ]
+                       sixs = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/Monochromator/wavelength")
+                                                           , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/i14-c-c02-op-mono/lambda")
+                                                           ]
+                              ]
+                   in case inputtype of
+                        CristalK6C        -> cristal
+                        Custom            -> undefined
+                        DiffabsCirpad     -> diffabs
+                        MarsFlyscan       -> mars
+                        MarsSbs           -> mars
+                        SixsFlyMedH       -> sixs
+                        SixsFlyMedHGisaxs -> sixs
+                        SixsFlyMedV       -> sixs
+                        SixsFlyMedVGisaxs -> sixs
+                        SixsFlyUhv        -> sixs
+                        SixsFlyUhvGisaxs  -> sixs
+                        SixsSbsMedH       -> sixs
+                        SixsSbsMedHGisaxs -> sixs
+                        SixsSbsMedV       -> sixs
+                        SixsSbsMedVGisaxs -> sixs
+                        SixsSbsUhv        -> sixs
+                        SixsSbsUhvGisaxs  -> sixs
 
 mk'Geometry'Path :: InputType -> Maybe Double -> ConfigContent -> DSWrap_ DSGeometry DSPath
 mk'Geometry'Path inputtype mWavelength cfg = geometry
     where
-      -- wavelength
-      dataSourcePath'WaveLength'Diffabs :: DSWrap_ DSDouble DSPath
-      dataSourcePath'WaveLength'Diffabs
-          = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "DIFFABS/d13-1-c03__op__mono/wavelength" ) ] ]
-
-      dataSourcePath'WaveLength'Mars :: DSWrap_ DSDouble DSPath
-      dataSourcePath'WaveLength'Mars
-          = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-c03__op__mono1-config_#2/lambda" ) ]
-            , DataSourcePath'Double'Const 1.537591
-            ]
-
-      dataSourcePath'WaveLength'Sixs ::  DSWrap_ DSDouble DSPath
-      dataSourcePath'WaveLength'Sixs
-          = [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/Monochromator/wavelength")
-                                         , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "SIXS/i14-c-c02-op-mono/lambda")
-                                         ]
-            ]
+      wavelength = mk'Wavelength'Path inputtype mWavelength
 
       -- geometry
       sixs'eix
@@ -434,7 +446,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'Uhv
           = [ DataSourcePath'Geometry
               (Geometry'Factory Uhv Nothing)
-              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              wavelength
               [ DataSourcePath'List [sixs'Uhv'Mu, sixs'Uhv'Omega, sixs'Uhv'Delta, sixs'Uhv'Gamma] ]
             ]
 
@@ -442,7 +454,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'UhvGisaxs
           = [ DataSourcePath'Geometry
               sixsUhvGisaxs
-              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              wavelength
               [ DataSourcePath'List [ sixs'Uhv'Mu, sixs'Uhv'Omega, sixs'eix, sixs'eiz ] ]
             ]
 
@@ -511,7 +523,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'MedH
           = [ DataSourcePath'Geometry
               (Geometry'Factory MedH Nothing)
-              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              wavelength
               [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedH'Mu, sixs'MedH'Gamma, sixs'MedH'Delta ] ]
             ]
 
@@ -519,7 +531,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'MedHGisaxs
           = [ DataSourcePath'Geometry
               sixsMedHGisaxs
-              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              wavelength
               [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedH'Mu, sixs'eix, sixs'eiz ] ]
             ]
 
@@ -527,7 +539,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'MedV
           = [ DataSourcePath'Geometry
               (Geometry'Factory MedV Nothing)
-              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              wavelength
               [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedV'Mu, sixs'MedV'Omega, sixs'MedV'Gamma, sixs'MedV'Delta, sixs'MedV'Etaa ] ]
             ]
 
@@ -535,14 +547,14 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'MedVGisaxs
           = [ DataSourcePath'Geometry
               sixsMedVGisaxs
-              (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Sixs)
+              wavelength
               [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedV'Mu, sixs'MedV'Omega, sixs'eix, sixs'eiz ] ]
             ]
 
       geometry = case inputtype of
                    CristalK6C -> [ DataSourcePath'Geometry
                                   (Geometry'Factory K6c Nothing)
-                                  (overload'DataSourcePath'Double mWavelength [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset  (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Monochromator/lambda")]])
+                                  wavelength
                                   [ DataSourcePath'List
                                     [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-mu/position") ] ]
                                     , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-komega/position") ] ]
@@ -556,7 +568,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
                    Custom -> undefined
                    DiffabsCirpad -> [ DataSourcePath'Geometry
                                      cirpad
-                                     (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Diffabs)
+                                     wavelength
                                      [ DataSourcePath'List
                                        [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/ex/cirpad_delta/position")) ] ]
                                        , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/ex/dif.1-cirpad-gam/position")) ] ]
@@ -565,7 +577,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
                                    ]
                    MarsFlyscan -> [ DataSourcePath'Geometry
                                    (Geometry'Factory Mars Nothing)
-                                   (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Mars)
+                                   wavelength
                                    [ DataSourcePath'List
                                      [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/omega") ] ]
                                      , [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/chi") ] ]
@@ -576,7 +588,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
                                  ]
                    MarsSbs -> [ DataSourcePath'Geometry
                                (Geometry'Factory Mars Nothing)
-                               (overload'DataSourcePath'Double mWavelength dataSourcePath'WaveLength'Mars)
+                               wavelength
                                [ DataSourcePath'List
                                  [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/omega")
                                                                 , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "MARS/d03-1-cx2__ex__dif-mt_rx.1_#2/raw_value")
