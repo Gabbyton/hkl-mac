@@ -67,6 +67,8 @@ module Hkl.Binoculars.Config
     , getInitialScannumber
     , getMask
     , getPreConfig
+    , iniParser'GeometryValues
+    , iniParser'GeometryShifts
     , iniParser'Maybe'Geometry
     , mergeIni
     , parse'
@@ -108,6 +110,7 @@ import           Data.Ini.Config.Bidir             (FieldValue (..), bool,
                                                     text)
 import           Data.List                         (elemIndex, find, isInfixOf)
 import           Data.List.NonEmpty                (NonEmpty (..), head, map)
+import           Data.Map.Strict                   (Map, empty)
 import           Data.Maybe                        (catMaybes, fromMaybe)
 import           Data.Text                         (Text, breakOn, cons, drop,
                                                     empty, findIndex,
@@ -439,6 +442,14 @@ iniParser'Maybe'Geometry
       iniParser'Axis n
           = do (t, u) <- Data.Ini.Config.section "geometry" $ fieldOf ("axis_" <> n) (parseOnly ((,) <$> fieldParser <*> fieldParser))
                pure $ Axis (unpack n) t u
+
+iniParser'GeometryValues :: IniParser (Map Text Double)
+iniParser'GeometryValues
+    = pure Data.Map.Strict.empty
+
+iniParser'GeometryShifts :: IniParser (Map Text Int)
+iniParser'GeometryShifts
+    = pure Data.Map.Strict.empty
 
 -- HklBinocularsQCustomSubProjectionEnum
 

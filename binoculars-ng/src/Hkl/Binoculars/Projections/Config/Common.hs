@@ -34,7 +34,8 @@ import           Data.Ini                          (Ini (..))
 import           Data.Ini.Config                   (parseIniFile)
 import           Data.Ini.Config.Bidir             (FieldValue (..))
 import           Data.List.NonEmpty                (NonEmpty (..))
-import           Data.Text                         (pack)
+import           Data.Map.Strict                   (Map, empty)
+import           Data.Text                         (Text, pack)
 import           GHC.Generics                      (Generic)
 import           Numeric.Interval                  (singleton)
 import           Numeric.Units.Dimensional.Prelude (degree, meter, (*~))
@@ -78,6 +79,8 @@ instance HasIniConfig Common where
           , binocularsConfig'Common'PolarizationCorrection :: PolarisationCorrection
           , binocularsConfig'Common'Geometry               :: Geometry
           , binocularsConfig'Common'DynamicMask            :: Maybe DynamicMask
+          , binocularsConfig'Common'GeometryValues         :: Map Text Double
+          , binocularsConfig'Common'GeometryShift          :: Map Text Int
           , binocularsConfig'Common'_Content               :: ConfigContent  -- TO DELETE
           } deriving (Show, Generic)
 
@@ -109,6 +112,8 @@ instance HasIniConfig Common where
           , binocularsConfig'Common'PolarizationCorrection = PolarisationCorrection False
           , binocularsConfig'Common'Geometry = Geometry'Factory Uhv Nothing
           , binocularsConfig'Common'DynamicMask = Nothing
+          , binocularsConfig'Common'GeometryValues = empty
+          , binocularsConfig'Common'GeometryShift = empty
           , binocularsConfig'Common'_Content = ConfigContent "" -- TODELETE
           }
 
@@ -409,6 +414,8 @@ instance HasIniConfig Common where
                                                             Just g -> g
                                             )
          binocularsConfig'Common'DynamicMask <- parseMb cfg "input" "dynamic_mask"
+         binocularsConfig'Common'GeometryValues <- parseIniFile cfg iniParser'GeometryValues
+         binocularsConfig'Common'GeometryShift <- parseIniFile cfg iniParser'GeometryShifts
          let binocularsConfig'Common'_Content = content  -- TO DELETE
 
          pure BinocularsConfig'Common{..}
