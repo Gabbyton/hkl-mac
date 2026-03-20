@@ -387,27 +387,6 @@ mk'Wavelength'Path inputtype mw = Prelude.map f wavelength
                         SixsSbsUhv        -> sixs
                         SixsSbsUhvGisaxs  -> sixs
 
-mk'Geometry' :: InputType -> Geometry
-mk'Geometry' inputtype
-    = case inputtype of
-        CristalK6C        -> Geometry'Factory K6c Nothing
-        Custom            -> undefined
-        DiffabsCirpad     -> cirpad
-        MarsFlyscan       -> Geometry'Factory Mars Nothing
-        MarsSbs           -> Geometry'Factory Mars Nothing
-        SixsFlyMedH       -> Geometry'Factory MedH Nothing
-        SixsFlyMedHGisaxs -> sixsMedHGisaxs
-        SixsFlyMedV       -> Geometry'Factory MedV Nothing
-        SixsFlyMedVGisaxs -> sixsMedVGisaxs
-        SixsFlyUhv        -> Geometry'Factory Uhv Nothing
-        SixsFlyUhvGisaxs  -> sixsUhvGisaxs
-        SixsSbsMedH       -> Geometry'Factory MedH Nothing
-        SixsSbsMedHGisaxs -> sixsMedHGisaxs
-        SixsSbsMedV       -> Geometry'Factory MedV Nothing
-        SixsSbsMedVGisaxs -> sixsMedVGisaxs
-        SixsSbsUhv        -> Geometry'Factory Uhv Nothing
-        SixsSbsUhvGisaxs  -> sixsUhvGisaxs
-
 mk'Axes'Path :: InputType -> ConfigContent -> DSWrap_ DSDoubles DSPath
 mk'Axes'Path inputtype cfg = axes
     where
@@ -589,10 +568,9 @@ mk'Axes'Path inputtype cfg = axes
                SixsSbsUhv -> sixs'uhv
                SixsSbsUhvGisaxs -> sixs'uhv'gisaxs
 
-mk'Geometry'Path :: InputType -> Maybe Double -> ConfigContent -> DSWrap_ DSGeometry DSPath
-mk'Geometry'Path inputtype mWavelength cfg = [ DataSourcePath'Geometry geom wavelength axes ]
+mk'Geometry'Path :: InputType -> Maybe Double -> Geometry -> ConfigContent -> DSWrap_ DSGeometry DSPath
+mk'Geometry'Path inputtype mWavelength geom cfg = [ DataSourcePath'Geometry geom wavelength axes ]
     where
-      geom = mk'Geometry' inputtype
       wavelength = mk'Wavelength'Path inputtype mWavelength
       axes = mk'Axes'Path inputtype cfg
 
@@ -830,11 +808,12 @@ guess'DataSource'DataFrameQCustom common msub cfg =
         mImage = binocularsConfig'Common'Image common
         mAttenuationMax = binocularsConfig'Common'AttenuationMax common
         mAttenuationShift = binocularsConfig'Common'AttenuationShift common
+        geometry = binocularsConfig'Common'Geometry common
         mWavelength = binocularsConfig'Common'Wavelength common
         sn0 = getInitialScannumber $ binocularsConfig'Common'InputRange common
     in [ DataSource'DataFrameQCustom
          ( mk'Attenuation'Path inputtype mAttenuationCoefficient mAttenuationMax mAttenuationShift )
-         ( mk'Geometry'Path inputtype mWavelength cfg )
+         ( mk'Geometry'Path inputtype mWavelength geometry cfg )
          ( mk'Image'Path inputtype mImage detector sn0 )
          ( mk'Mask'Path common )
          ( mk'Timestamp'Path inputtype msub )

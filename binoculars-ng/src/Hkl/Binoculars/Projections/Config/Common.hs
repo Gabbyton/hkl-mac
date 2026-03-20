@@ -410,7 +410,24 @@ instance HasIniConfig Common where
          binocularsConfig'Common'PolarizationCorrection <- parseFDef cfg "input" "polarization_correction" (binocularsConfig'Common'PolarizationCorrection defaultConfig)
          binocularsConfig'Common'Geometry <- eitherF error (parseIniFile cfg iniParser'Maybe'Geometry)
                                             (\mg -> pure $ case mg of
-                                                            Nothing -> binocularsConfig'Common'Geometry defaultConfig
+                                                            Nothing -> case binocularsConfig'Common'InputType of
+                                                                        CristalK6C        -> Geometry'Factory K6c Nothing
+                                                                        Custom            -> undefined
+                                                                        DiffabsCirpad     -> cirpad
+                                                                        MarsFlyscan       -> Geometry'Factory Mars Nothing
+                                                                        MarsSbs           -> Geometry'Factory Mars Nothing
+                                                                        SixsFlyMedH       -> Geometry'Factory MedH Nothing
+                                                                        SixsFlyMedHGisaxs -> sixsMedHGisaxs
+                                                                        SixsFlyMedV       -> Geometry'Factory MedV Nothing
+                                                                        SixsFlyMedVGisaxs -> sixsMedVGisaxs
+                                                                        SixsFlyUhv        -> Geometry'Factory Uhv Nothing
+                                                                        SixsFlyUhvGisaxs  -> sixsUhvGisaxs
+                                                                        SixsSbsMedH       -> Geometry'Factory MedH Nothing
+                                                                        SixsSbsMedHGisaxs -> sixsMedHGisaxs
+                                                                        SixsSbsMedV       -> Geometry'Factory MedV Nothing
+                                                                        SixsSbsMedVGisaxs -> sixsMedVGisaxs
+                                                                        SixsSbsUhv        -> Geometry'Factory Uhv Nothing
+                                                                        SixsSbsUhvGisaxs  -> sixsUhvGisaxs
                                                             Just g -> g
                                             )
          binocularsConfig'Common'DynamicMask <- parseMb cfg "input" "dynamic_mask"
