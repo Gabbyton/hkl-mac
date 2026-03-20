@@ -387,9 +387,31 @@ mk'Wavelength'Path inputtype mw = Prelude.map f wavelength
                         SixsSbsUhv        -> sixs
                         SixsSbsUhvGisaxs  -> sixs
 
+mk'Geometry' :: InputType -> Geometry
+mk'Geometry' inputtype
+    = case inputtype of
+        CristalK6C        -> Geometry'Factory K6c Nothing
+        Custom            -> undefined
+        DiffabsCirpad     -> cirpad
+        MarsFlyscan       -> Geometry'Factory Mars Nothing
+        MarsSbs           -> Geometry'Factory Mars Nothing
+        SixsFlyMedH       -> Geometry'Factory MedH Nothing
+        SixsFlyMedHGisaxs -> sixsMedHGisaxs
+        SixsFlyMedV       -> Geometry'Factory MedV Nothing
+        SixsFlyMedVGisaxs -> sixsMedVGisaxs
+        SixsFlyUhv        -> Geometry'Factory Uhv Nothing
+        SixsFlyUhvGisaxs  -> sixsUhvGisaxs
+        SixsSbsMedH       -> Geometry'Factory MedH Nothing
+        SixsSbsMedHGisaxs -> sixsMedHGisaxs
+        SixsSbsMedV       -> Geometry'Factory MedV Nothing
+        SixsSbsMedVGisaxs -> sixsMedVGisaxs
+        SixsSbsUhv        -> Geometry'Factory Uhv Nothing
+        SixsSbsUhvGisaxs  -> sixsUhvGisaxs
+
 mk'Geometry'Path :: InputType -> Maybe Double -> ConfigContent -> DSWrap_ DSGeometry DSPath
 mk'Geometry'Path inputtype mWavelength cfg = geometry
     where
+      geom = mk'Geometry' inputtype
       wavelength = mk'Wavelength'Path inputtype mWavelength
 
       -- geometry
@@ -445,7 +467,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'Uhv :: DSWrap_ DSGeometry DSPath
       dataSourcePath'Geometry'Sixs'Uhv
           = [ DataSourcePath'Geometry
-              (Geometry'Factory Uhv Nothing)
+              geom
               wavelength
               [ DataSourcePath'List [sixs'Uhv'Mu, sixs'Uhv'Omega, sixs'Uhv'Delta, sixs'Uhv'Gamma] ]
             ]
@@ -453,7 +475,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'UhvGisaxs :: DSWrap_ DSGeometry DSPath
       dataSourcePath'Geometry'Sixs'UhvGisaxs
           = [ DataSourcePath'Geometry
-              sixsUhvGisaxs
+              geom
               wavelength
               [ DataSourcePath'List [ sixs'Uhv'Mu, sixs'Uhv'Omega, sixs'eix, sixs'eiz ] ]
             ]
@@ -522,7 +544,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'MedH ::  DSWrap_ DSGeometry DSPath
       dataSourcePath'Geometry'Sixs'MedH
           = [ DataSourcePath'Geometry
-              (Geometry'Factory MedH Nothing)
+              geom
               wavelength
               [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedH'Mu, sixs'MedH'Gamma, sixs'MedH'Delta ] ]
             ]
@@ -530,7 +552,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'MedHGisaxs ::  DSWrap_ DSGeometry DSPath
       dataSourcePath'Geometry'Sixs'MedHGisaxs
           = [ DataSourcePath'Geometry
-              sixsMedHGisaxs
+              geom
               wavelength
               [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedH'Mu, sixs'eix, sixs'eiz ] ]
             ]
@@ -538,7 +560,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'MedV :: DSWrap_ DSGeometry DSPath
       dataSourcePath'Geometry'Sixs'MedV
           = [ DataSourcePath'Geometry
-              (Geometry'Factory MedV Nothing)
+              geom
               wavelength
               [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedV'Mu, sixs'MedV'Omega, sixs'MedV'Gamma, sixs'MedV'Delta, sixs'MedV'Etaa ] ]
             ]
@@ -546,14 +568,14 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
       dataSourcePath'Geometry'Sixs'MedVGisaxs :: DSWrap_ DSGeometry DSPath
       dataSourcePath'Geometry'Sixs'MedVGisaxs
           = [ DataSourcePath'Geometry
-              sixsMedVGisaxs
+              geom
               wavelength
               [ DataSourcePath'List [ sixs'Med'Beta, sixs'MedV'Mu, sixs'MedV'Omega, sixs'eix, sixs'eiz ] ]
             ]
 
       geometry = case inputtype of
                    CristalK6C -> [ DataSourcePath'Geometry
-                                  (Geometry'Factory K6c Nothing)
+                                  geom
                                   wavelength
                                   [ DataSourcePath'List
                                     [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "CRISTAL/Diffractometer/i06-c-c07-ex-dif-mu/position") ] ]
@@ -567,7 +589,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
                                 ]
                    Custom -> undefined
                    DiffabsCirpad -> [ DataSourcePath'Geometry
-                                     cirpad
+                                     geom
                                      wavelength
                                      [ DataSourcePath'List
                                        [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "d13-1-cx1/ex/cirpad_delta/position")) ] ]
@@ -576,7 +598,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
                                      ]
                                    ]
                    MarsFlyscan -> [ DataSourcePath'Geometry
-                                   (Geometry'Factory Mars Nothing)
+                                   geom
                                    wavelength
                                    [ DataSourcePath'List
                                      [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/omega") ] ]
@@ -587,7 +609,7 @@ mk'Geometry'Path inputtype mWavelength cfg = geometry
                                    ]
                                  ]
                    MarsSbs -> [ DataSourcePath'Geometry
-                               (Geometry'Factory Mars Nothing)
+                               geom
                                wavelength
                                [ DataSourcePath'List
                                  [ [ DataSourcePath'Double'Hdf5 [ DataSourcePath'Dataset (hdf5p $ grouppat 0 $ datasetp "scan_data/omega")
