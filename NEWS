@@ -1,6 +1,6 @@
 # -*- org -*-
 
-* 5.1.8 <unreleased>
+* 5.1.8 <2026-04-02 jeu.>
 ** Binoculars (C-library)
    - Added support for uint8 images.
 ** Binoculars-ng (Haskell program)

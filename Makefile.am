@@ -43,7 +43,7 @@ release:
 	$(MAKE) -j
 	$(MAKE) distcheck
 	git commit -a -m "released $(./configure -V | head -n 1 | awk '{print $$3}')"
-	git tag v`./configure -V | head -n 1 | awk '{print $$3}'`
+	git tag -f v`./configure -V | head -n 1 | awk '{print $$3}'`
 	sed -i -e "s,m4_undefine(\[v_rev\]),dnl m4_undefine(\[v_rev\]),g" configure.ac
 	git commit -a -m "post-release"
 
