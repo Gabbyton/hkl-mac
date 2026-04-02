@@ -429,7 +429,7 @@ mk'Axes'Path inputtype cfg = axes
                                                    , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "UHV_DELTA")
                                                    , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetpattr ("long_name", "i14-c-cx2/ex/uhv-dif-group/delta"))
                                                    , DataSourcePath'Dataset (hdf5p $ grouppat 0 $ groupp "scan_data" $ datasetp "delta_xps")
-                                                   ] 1
+                                                   ] 0
             ]
       sixs'Uhv'Gamma
           = [ DataSourcePath'Double'Ini cfg "geometry.values" "gamma"
