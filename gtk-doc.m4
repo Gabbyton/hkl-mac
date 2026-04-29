@@ -1,0 +1,1 @@
+/opt/homebrew/Cellar/gtk-doc/1.36.1_1/share/aclocal/gtk-doc.m4

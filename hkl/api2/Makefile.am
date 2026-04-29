@@ -6,7 +6,9 @@ AM_CPPFLAGS = -Wextra -D_DEFAULT_SOURCE \
 	$(GSL_CFLAGS)
 
 # need access to the private part
-AM_LDFLAGS = -Wl,--whole-archive,$(top_builddir)/hkl/.libs/libhkl.a,--no-whole-archive
+# change the AM_LDFLAGS to use -force_load instead of --whole-archive
+# AM_LDFLAGS = -Wl,--whole-archive,$(top_builddir)/hkl/.libs/libhkl.a,--no-whole-archive
+AM_LDFLAGS = -Wl,-force_load,../../hkl/.libs/libhkl.a
 
 LDADD = \
 	$(GLIB_LIBS) \

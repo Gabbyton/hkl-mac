@@ -249,7 +249,7 @@ dnl ******************
 OPTION_DEFAULT_OFF([datatype99], [use the system datatype99])
 AC_CHECK_HEADERS([datatype99.h], [], [enable_datatype99=no])
 
-DATATYPE99_CFLAGS="-ftrack-macro-expansion=0"
+DATATYPE99_CFLAGS=""
 AM_CONDITIONAL([DATATYPE99], [test x$enable_datatype99 != xno])
 AM_COND_IF([DATATYPE99],
         [],

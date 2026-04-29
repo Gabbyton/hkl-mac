@@ -365,7 +365,9 @@ static int solve_function(HklEngine *self,
 	size_t i;
 	int p[function->size];
 	double x0[function->size];
-	int degenerated[function->size] = {};
+	// int degenerated[function->size] = {};
+	int degenerated[function->size];
+	memset(degenerated, 0, sizeof(degenerated));
 	size_t op_len[function->size];
 	int res;
 	gsl_vector *_x; /* use to compute sectors in perm_r (avoid copy) */

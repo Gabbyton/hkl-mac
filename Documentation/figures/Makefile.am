@@ -18,7 +18,9 @@ AM_CPPFLAGS = -Wextra -D_DEFAULT_SOURCE \
 	$(GSL_CFLAGS)
 
 # wee need access to the private part until the trajectory is done.
-AM_LDFLAGS = -Wl,--whole-archive,$(top_builddir)/hkl/.libs/libhkl.a,--no-whole-archive
+# change the AM_LDFLAGS to use -force_load instead of --whole-archive
+# AM_LDFLAGS = -Wl,--whole-archive,$(top_builddir)/hkl/.libs/libhkl.a,--no-whole-archive
+AM_LDFLAGS = -Wl,-force_load,../../hkl/.libs/libhkl.a
 
 LDADD = \
 	$(top_builddir)/hkl/libhkl.la \

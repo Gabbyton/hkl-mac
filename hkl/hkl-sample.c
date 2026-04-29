@@ -22,6 +22,8 @@
 
 /* for strdup */
 #define _XOPEN_SOURCE 500
+#define _POSIX_C_SOURCE 200809L
+
 #include <gsl/gsl_errno.h>              // for gsl_set_error_handler, etc
 #include <gsl/gsl_multimin.h>           // for gsl_multimin_function, etc
 #include <gsl/gsl_nan.h>                // for GSL_NAN

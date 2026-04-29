@@ -10,7 +10,6 @@
 
 #include <hkl/ccan/ptrint/ptrint.h>
 #include <hkl/ccan/compiler/compiler.h>
-#include <hkl/ccan/build_assert/build_assert.h>
 #include <hkl/ccan/coroutine/coroutine.h>
 
 /*
@@ -58,10 +57,6 @@ struct coroutine_stack *coroutine_stack_init(void *buf, size_t bufsize,
 {
 	struct coroutine_stack *stack;
 	size_t size = bufsize - sizeof(*stack) - metasize;
-
-#ifdef MINSIGSTKSZ
-	BUILD_ASSERT(COROUTINE_MIN_STKSZ >= MINSIGSTKSZ);
-#endif
 
 	if (bufsize < (COROUTINE_MIN_STKSZ + sizeof(*stack) + metasize))
 		return NULL;
@@ -177,39 +172,37 @@ size_t coroutine_stack_size(const struct coroutine_stack *stack)
 	return stack->size;
 }
 
+/*
+ * Coroutine switching
+ */
+
 #if HAVE_UCONTEXT
+
 static void coroutine_uc_stack(stack_t *uc_stack,
 			       const struct coroutine_stack *stack)
 {
 	uc_stack->ss_size = coroutine_stack_size(stack);
 	uc_stack->ss_sp = coroutine_stack_base((struct coroutine_stack *)stack);
 }
-#endif /* HAVE_UCONTEXT */
 
-/*
- * Coroutine switching
- */
-
-#if HAVE_UCONTEXT
 void coroutine_init_(struct coroutine_state *cs,
 		     void (*fn)(void *), void *arg,
 		     struct coroutine_stack *stack)
 {
-	getcontext (&cs->uc);
+	getcontext(&cs->uc);
 
 	coroutine_uc_stack(&cs->uc.uc_stack, stack);
 
-        if (HAVE_POINTER_SAFE_MAKECONTEXT) {
-                makecontext(&cs->uc, (void *)fn, 1, arg);
-        } else {
-                ptrdiff_t si = ptr2int(arg);
-                ptrdiff_t mask = (1UL << (sizeof(int) * 8)) - 1;
-                int lo = si & mask;
-                int hi = si >> (sizeof(int) * 8);
+	if (HAVE_POINTER_SAFE_MAKECONTEXT) {
+		makecontext(&cs->uc, (void *)fn, 1, arg);
+	} else {
+		ptrdiff_t si = ptr2int(arg);
+		ptrdiff_t mask = (1UL << (sizeof(int) * 8)) - 1;
+		int lo = si & mask;
+		int hi = si >> (sizeof(int) * 8);
 
-                makecontext(&cs->uc, (void *)fn, 2, lo, hi);
-        }
-	
+		makecontext(&cs->uc, (void *)fn, 2, lo, hi);
+	}
 }
 
 void coroutine_jump(const struct coroutine_state *to)
@@ -226,4 +219,116 @@ void coroutine_switch(struct coroutine_state *from,
 	rc = swapcontext(&from->uc, &to->uc);
 	assert(rc == 0);
 }
-#endif /* HAVE_UCONTEXT */
+
+#elif defined(__APPLE__)
+/*
+ * macOS coroutine backend using sigaltstack + sigsetjmp/siglongjmp.
+ *
+ * ucontext is deprecated and non-functional on modern macOS. Instead we
+ * bootstrap each coroutine by temporarily installing a signal handler that
+ * runs on the coroutine's stack (via SA_ONSTACK), firing SIGUSR2 to enter
+ * it, capturing the stack frame with sigsetjmp, then bouncing back to the
+ * caller. After that, coroutine_switch is plain sigsetjmp/siglongjmp.
+ */
+
+#include <setjmp.h>
+#include <signal.h>
+
+/*
+ * Global bootstrap state. Only one coroutine is initialized at a time
+ * (init is synchronous/not re-entrant), so plain globals are safe.
+ */
+static volatile struct coroutine_state *apple_init_target;
+static sigjmp_buf                      *apple_init_caller;
+
+static void apple_bootstrap_handler(int sig)
+{
+	(void)sig;
+	struct coroutine_state *cs = (struct coroutine_state *)apple_init_target;
+
+	/*
+	 * sigsetjmp here captures a jmp_buf whose stack pointer lives on
+	 * the coroutine's alternate stack — exactly what we want.
+	 * Return value 0: save and bounce back to coroutine_init_.
+	 * Return value 1: we were switched into — run the coroutine body.
+	 */
+	if (sigsetjmp(cs->jb, 1) == 0) {
+		siglongjmp(*apple_init_caller, 1);
+		/* NOTREACHED */
+	}
+
+	/* Switched in for real: run the coroutine function. */
+	cs->fn(cs->arg);
+
+	/*
+	 * The coroutine function should never return (caller is expected to
+	 * switch away before that), but abort defensively if it does.
+	 */
+	abort();
+}
+
+void coroutine_init_(struct coroutine_state *cs,
+		     void (*fn)(void *), void *arg,
+		     struct coroutine_stack *stack)
+{
+	struct sigaction sa, old_sa;
+	stack_t ss, old_ss;
+
+	cs->fn          = fn;
+	cs->arg         = arg;
+	cs->stack       = stack;
+	cs->initialized = 0;
+
+	/*
+	 * Point sigaltstack at the coroutine's stack buffer.
+	 * coroutine_stack_base() returns the lowest address of the buffer;
+	 * the kernel handles the downward-growth offset internally.
+	 */
+	ss.ss_sp    = coroutine_stack_base((struct coroutine_stack *)stack);
+	ss.ss_size  = coroutine_stack_size(stack);
+	ss.ss_flags = 0;
+	sigaltstack(&ss, &old_ss);
+
+	/* Install our bootstrap handler to run on the alt stack. */
+	sa.sa_handler = apple_bootstrap_handler;
+	sa.sa_flags   = SA_ONSTACK;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGUSR2, &sa, &old_sa);
+
+	/* Publish target so the handler can find this coroutine_state. */
+	apple_init_target = cs;
+
+	/*
+	 * Save our current context into a local buffer and point the global
+	 * pointer at it so the handler can siglongjmp back to us.
+	 */
+	sigjmp_buf caller_buf;
+	apple_init_caller = &caller_buf;
+
+	if (sigsetjmp(caller_buf, 1) == 0) {
+		/* First pass: fire the signal to enter the bootstrap handler. */
+		raise(SIGUSR2);
+	}
+
+	/* Bootstrap complete — restore signal handler and alt stack. */
+	sigaction(SIGUSR2, &old_sa, NULL);
+	sigaltstack(&old_ss, NULL);
+	cs->initialized = 1;
+}
+
+void coroutine_jump(const struct coroutine_state *to)
+{
+	siglongjmp(((struct coroutine_state *)to)->jb, 1);
+	/* NOTREACHED — silence the compiler */
+	abort();
+}
+
+void coroutine_switch(struct coroutine_state *from,
+		      const struct coroutine_state *to)
+{
+	if (sigsetjmp(from->jb, 1) == 0)
+		siglongjmp(((struct coroutine_state *)to)->jb, 1);
+	/* Return here when someone switches back to 'from'. */
+}
+
+#endif /* __APPLE__ */

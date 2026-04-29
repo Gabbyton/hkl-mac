@@ -8,3 +8,22 @@ To build you need
 	gtk-doc >= 1.9 (doc -- required)		http://www.gtk.org/gtk-doc/
 	povray	       (doc -- optional)		http://www.povray.org/
 	asymptote      (doc -- optional)		http://asymptote.sourceforge.net/
+	hdf5
+	glib
+	gsl
+	gtk-doc
+	autoconf
+	automake
+	libtool
+	gobject-introspection
+	pkg-config
+	autoconf-archive
+	gobject-introspection
+	cglm
+
+Command to run:
+
+./autogen.sh
+./configure --disable-gui --disable-binoculars --enable-introspection=no --disable-gsltest --disable-glibtest --disable-hkl-doc
+make
+make install

@@ -50,7 +50,7 @@ struct coroutine_state;
  * overhead).  On systems with MINSTKSZ, guaranteed to be at least as
  * large as MINSTKSZ.
  */
-#define COROUTINE_MIN_STKSZ		2048
+#define COROUTINE_MIN_STKSZ		32768
 
 /**
  * COROUTINE_STACK_MAGIC_BUF - Magic number for coroutine stacks in a user
@@ -183,15 +183,25 @@ size_t coroutine_stack_size(const struct coroutine_stack *stack);
 
 #if HAVE_UCONTEXT
 #include <ucontext.h>
-#define COROUTINE_AVAILABLE		1
+#define COROUTINE_AVAILABLE 1
+#elif defined(__APPLE__)
+#include <setjmp.h>
+#include <signal.h>
+#define COROUTINE_AVAILABLE 1
 #else
-#define COROUTINE_AVAILABLE		0
+#define COROUTINE_AVAILABLE 0
 #endif
 
 struct coroutine_state {
 #if HAVE_UCONTEXT
 	ucontext_t uc;
-#endif /* HAVE_UCONTEXT */
+#elif defined(__APPLE__)
+	sigjmp_buf jb;
+	int initialized;
+	void (*fn)(void *);
+	void *arg;
+	struct coroutine_stack *stack;
+#endif
 };
 
 #if COROUTINE_AVAILABLE
@@ -235,18 +245,21 @@ void NORETURN coroutine_jump(const struct coroutine_state *to);
 void coroutine_switch(struct coroutine_state *from,
 		      const struct coroutine_state *to);
 
-#else
+#else /* !COROUTINE_AVAILABLE */
 
-static inline void coroutine_init(struct coroutine_state *cs,
-				  void (*fn)(void *), void *arg,
-				  struct coroutine_stack *stack)
+static inline void coroutine_init_(struct coroutine_state *cs,
+				   void (*fn)(void *), void *arg,
+				   struct coroutine_stack *stack)
 {
 	assert(0);
 }
 
+#define coroutine_init(cs, fn, arg, stack) coroutine_init_((cs), (void (*)(void *))(fn), (arg), (stack))
+
 static inline void NORETURN coroutine_jump(const struct coroutine_state *to)
 {
 	assert(0);
+	__builtin_unreachable();
 }
 
 static inline void coroutine_switch(struct coroutine_state *from,
