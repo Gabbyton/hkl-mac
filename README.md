@@ -28,7 +28,7 @@ cd hkl-mac
 3. The following packages are required for **MINIMAL** installation.
 
 ```{bash}
-brew install gsl gtk-doc hdf 5 glib gsl autoconf automake libtool gobject-introspection pkg-config autoconf-archive cglm
+brew install gsl gtk-doc hdf5 glib gsl autoconf automake libtool gobject-introspection pkg-config autoconf-archive cglm
 ```
 
 4. Run the following commands:
@@ -64,6 +64,24 @@ if running on a python environment, an additional package is required for the `g
 pip install PyGObject
 ```
 
-# Key Changes
+# Licenses
 
-Some changes had to be made to guarantee compatibility with a Mac system. These changes are listed below:
+This work was directly copied and modified from the original HKL library codebase developed at the SOLEIL Synchrotron at the ESRF. Please defer to all copyright notices on all files.
+
+Limited Modifications Copyright (C) 2026 Gabriel Obsequio Ponon
+
+## Original Copyright Notice:
+
+```{text}
+Copyright (C) 2010-2019, 2025
+Synchrotron SOLEIL 
+L'Orme des Merisiers Saint-Aubin
+BP 48 91192 GIF-sur-YVETTE CEDEX
+```
+
+## Original Authors:
+
+Authors: Picca Frédéric-Emmanuel, Email: <picca@synchrotron-soleil.fr>
+Oussama Sboui, Email: <sboui@synchrotron-soleil.fr>
+
+Original: [[Repo]](git://repo.or.cz/hkl.git) | [[Homepage]](https://people.debian.org/~picca/hkl/hkl.html#orgb4f97f6)
