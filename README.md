@@ -1,29 +1,69 @@
-To build you need
+# Building hkl on a Mac
 
--PREREQUIRED
-	gsl >= 1.12    (lib -- required)		http://www.gnu.org/software/gsl/
-	gtkmm >= 2.18  (gui -- optional)		http://www.gtkmm.org
-	libg3d	       (gui -- optional)		http://automagically.de/g3dviewer/
-	libyaml	       (gui -- optional)		http://pyyaml.org/wiki/LibYAML
-	gtk-doc >= 1.9 (doc -- required)		http://www.gtk.org/gtk-doc/
-	povray	       (doc -- optional)		http://www.povray.org/
-	asymptote      (doc -- optional)		http://asymptote.sourceforge.net/
-	hdf5
-	glib
-	gsl
-	gtk-doc
-	autoconf
-	automake
-	libtool
-	gobject-introspection
-	pkg-config
-	autoconf-archive
-	gobject-introspection
-	cglm
+This repo contains an updated fork of the HKL Library developed at the ESRF to allow building on a Mac-based System.
 
-Command to run:
+This is a **Minimal installation** that only includes the **CORE** hkl library. All other features are not accounted for.
 
+This installation was completed to allow Mac users to utilize all hkl-based solvers in the hklpy2 package.
+
+## Confirmed Case
+
+This has only been tested on my personal system, a Macbook Air M1 8GB with MacOS Sonoma 14.5. This uses an Apple Silicon chip.
+
+## Installation Instructions
+
+1. Download this repository and open it if you haven't so already:
+
+```{bash}
+git clone https://github.com/Gabbyton/hkl-mac
+cd hkl-mac
+```
+
+2. Download homebrew if you haven't already. This package manager makes all the steps much easier.
+
+```{bash}
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+3. The following packages are required for **MINIMAL** installation.
+
+```{bash}
+brew install gsl gtk-doc hdf 5 glib gsl autoconf automake libtool gobject-introspection pkg-config autoconf-archive cglm
+```
+
+4. Run the following commands:
+
+```{bash}
 ./autogen.sh
-./configure --disable-gui --disable-binoculars --enable-introspection=no --disable-gsltest --disable-glibtest --disable-hkl-doc
+./configure --disable-gui --disable-binoculars --enable-introspection=yes --disable-gsltest --disable-glibtest --disable-hkl-doc
 make
 make install
+```
+
+**NOTE:** To reset the build run:
+```{bash}
+make clear
+```
+
+5. After `make install`, the relevant files will be installed in `/usr/local/lib` and `/usr/local/lib/girepository-1.0`.
+
+# Running Examples
+
+An updated example can be found in `tests/binding/python.py`. To run the example properly, your Mac needs to know where to find the dylib files. To do so, run the following or add the lines to your `~/.zshrc`:
+
+```{bash}
+export GI_TYPELIB_PATH=/usr/local/lib/girepository-1.0
+export DYLD_LIBRARY_PATH=/usr/local/lib
+```
+
+If running on your base environment, just go ahead and run your script as usual.
+
+if running on a python environment, an additional package is required for the `gi` package:
+
+```{bash}
+pip install PyGObject
+```
+
+# Key Changes
+
+Some changes had to be made to guarantee compatibility with a Mac system. These changes are listed below:
