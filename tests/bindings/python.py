@@ -23,7 +23,6 @@ Authors: Picca Frédéric-Emmanuel <picca@synchrotron-soleil.fr>
 
 import math
 import unittest
-from gi.repository import GLib
 import gi
 
 gi.require_version("Hkl", "5.0")
