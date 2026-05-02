@@ -7,15 +7,10 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        include:
-        - runner: macos-latest
-          arch: arm64
-        - runner: macos-13
-          arch: x86_64
-    runs-on: ${{ matrix.runner }}
-    name: macOS Build & Test ({{ matrix.arch }})
+    name: macOS Build & Test
+    runs-on: macos-latest
+    outputs:
+      artifact-name: ${{ steps.meta.outputs.artifact-name }}
 
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +39,20 @@ jobs:
       
       - name: Build
         run: make
+      
+      - name: Install on System
+        run: make install
+      
+      - name: Setup Python with uv
+        run: |
+          curl -Ls https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Sync dependencies
+        run: uv sync
+      
+      - name: Run python bindings test script
+        run: uv run python3 -m unittest tests.bindings.python -v
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -75,8 +84,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          pattern: libhkl-*
-          merge-multiple: false
+          name: libhkl-release
           path: dist/
 
       - name: Create or update GitHub Release
