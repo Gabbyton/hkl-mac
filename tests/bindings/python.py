@@ -24,6 +24,15 @@ Authors: Picca Frédéric-Emmanuel <picca@synchrotron-soleil.fr>
 import math
 import unittest
 import gi
+import os
+
+# set directories if checks pass
+os.environ.setdefault(
+    "GI_TYPELIB_PATH", "/usr/local/lib/girepository-1.0"
+)
+os.environ.setdefault(
+    "DYLD_LIBRARY_PATH", "/usr/local/lib"
+)
 
 gi.require_version("Hkl", "5.0")
 from gi.repository import Hkl
