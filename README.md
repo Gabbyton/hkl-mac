@@ -34,7 +34,7 @@ brew install pygobject3 gobject-introspection glib gtk3
 | Files | Destination Folder |
 | --- | --- |
 | libhkl.a<br>libhkl.5.dylib<br>libhkl.dylib<br>libhkl.la | /usr/local/lib |
-| Hkl-5.0.typelib | /usr/local/lib/ | /usr/local/lib/girepository-1.0 |
+| Hkl-5.0.typelib | /usr/local/lib/girepository-1.0 |
 
 4. On your Python work environment, install the `pygobject` package.
 ```{bash}
