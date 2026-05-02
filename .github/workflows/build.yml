@@ -41,7 +41,7 @@ jobs:
         run: make
       
       - name: Install on System
-        run: make install
+        run: sudo make install
       
       - name: Setup Python with uv
         run: |
