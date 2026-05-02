@@ -7,10 +7,15 @@ on:
 
 jobs:
   build:
-    name: macOS Build & Test
-    runs-on: macos-latest
-    outputs:
-      artifact-name: ${{ steps.meta.outputs.artifact-name }}
+    strategy:
+      matrix:
+        include:
+        - runner: macos-latest
+          arch: arm64
+        - runner: macos-13
+          arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    name: macOS Build & Test ({{ matrix.arch }})
 
     steps:
       - uses: actions/checkout@v4
@@ -70,7 +75,8 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: libhkl-release
+          pattern: libhkl-*
+          merge-multiple: false
           path: dist/
 
       - name: Create or update GitHub Release
