@@ -1,0 +1,86 @@
+name: Build, Test & Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    name: macOS Build & Test
+    runs-on: macos-latest
+    outputs:
+      artifact-name: ${{ steps.meta.outputs.artifact-name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set artifact metadata
+        id: meta
+        run: |
+          VERSION="1.0.0"
+          SHA="${{ github.sha }}"
+          echo "artifact-name=libhkl-macos-${VERSION}-${SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Homebrew
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/Homebrew
+          key: ${{ runner.os }}-brew-${{ hashFiles('.github/workflows/build.yml') }}
+
+      - name: Install dependencies
+        run: brew install gsl gtk-doc hdf5 glib gsl autoconf automake libtool gobject-introspection pkg-config autoconf-archive cglm
+
+      - name: Autogen
+        run: chmod +x autogen.sh && ./autogen.sh
+
+      - name: Configure
+        run: ./configure --disable-gui --disable-binoculars --enable-introspection=yes --disable-hkl-doc
+      
+      - name: Build
+        run: make
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libhkl-release
+          path: |
+            hkl/.libs/libhkl.5.dylib
+            hkl/.libs/libhkl.a
+            hkl/.libs/libhkl.dylib
+            hkl/.libs/libhkl.la
+            hkl/Hkl-5.0.typelib
+
+  deploy:
+    name: Deploy to Release Environment
+    needs: build               # only runs if build+test passed
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'   # skip on PRs
+
+    environment:
+      name: release
+      url: https://github.com/${{ github.repository }}/releases/tag/latest
+
+    permissions:
+      contents: write          # needed to create/update releases
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: libhkl-release
+          path: dist/
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Latest Build"
+          body: |
+            Automated build from commit ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+          files: dist/**
+          prerelease: false
+          make_latest: true
