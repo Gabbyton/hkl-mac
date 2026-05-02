@@ -12,6 +12,41 @@ This has only been tested on my personal system, a Macbook Air M1 8GB with MacOS
 
 ## Installation Instructions
 
+### Latest Release
+
+A complete set of library files are regularly built with an automated repository workflow targetting the latest MacOS system version (typically ARM on the latest macOS version). To install from these files, follow these steps:
+
+1. Download homebrew if you haven't already. This package manager makes all the steps much easier.
+
+```{bash}
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+2. Install the following prerequisite packages on your system:
+
+```{bash}
+brew install pygobject3 gobject-introspection glib gtk3
+```
+
+2. Go the `Releases > Latest Build` page and download the files.
+3. Export the files to the appropriate folders. Create the folders if necessary. **IMPORTANT:** This will require sudo privileges!
+
+| Files | Destination Folder |
+| --- | --- |
+| libhkl.a<br>libhkl.5.dylib<br>libhkl.dylib<br>libhkl.la | /usr/local/lib |
+| Hkl-5.0.typelib | /usr/local/lib/ | /usr/local/lib/girepository-1.0 |
+
+4. On your Python work environment, install the `pygobject` package.
+```{bash}
+pip install pygobject
+# or with uv
+uv add pygobject
+```
+
+5. The `hkl` package should then be installed.
+
+### Local Build and Deployment
+
 1. Download this repository and open it if you haven't so already:
 
 ```{bash}
