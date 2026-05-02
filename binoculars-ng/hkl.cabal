@@ -1,0 +1,230 @@
+name:                hkl
+
+-- The package version.  See the Haskell package versioning policy (PVP)
+-- for standards guiding when and how versions should be incremented.
+-- http://www.haskell.org/haskellwiki/Package_versioning_policy
+-- PVP summary:      +-+------- breaking API changes
+--                   | | +----- non-breaking API additions
+--                   | | | +--- code changes with no API change
+version:             0.1.0.2
+license:             GPL-3
+license-file:        LICENSE
+author:              Picca Frédéric-Emmanuel
+maintainer:          picca@debian.org
+copyright:           Synchrotron SOLEIL
+build-type:          Simple
+cabal-version:       >= 1.10
+Data-Files:          data/ghkl3.ui
+                   , data/gprof2dot.py
+                   , data/pseudo3.ui
+                   , data/3d3.ui
+
+Flag useHklDev
+  Description: Use the current devel hkl library in the source tree
+  Default: True
+
+Flag useThreaded
+  Description: Use threading (some arch does not support this)
+  Default: True
+
+library
+  build-depends: aeson
+  build-depends: async
+  build-depends: attoparsec
+  build-depends: base >= 4.6
+  build-depends: bindings-DSL
+  build-depends: bytestring >= 0.10.0.2
+  build-depends: config-ini
+  build-depends: containers
+  build-depends: dimensional >= 0.10
+  build-depends: directory >= 1.3.0
+  build-depends: either
+  build-depends: errors
+  build-depends: exceptions
+  build-depends: extra
+  build-depends: filepath >= 1.3.0
+  build-depends: intervals
+  build-depends: generic-random
+  build-depends: hashable
+  build-depends: hdf5
+  build-depends: hmatrix >= 0.17
+  build-depends: hmatrix-gsl >= 0.17
+  build-depends: ini
+  build-depends: monad-logger
+  build-depends: monad-loops >= 0.4.2
+  build-depends: mtl
+  build-depends: path
+  build-depends: path-io
+  build-depends: pipes >= 4.1.2
+  build-depends: pipes-safe >= 2.2.0
+  build-depends: QuickCheck
+  build-depends: quickcheck-text
+  build-depends: terminal-progress-bar
+  build-depends: text
+  build-depends: transformers >= 0.3
+  build-depends: unordered-containers
+  build-depends: vector >= 0.10.0.1
+
+  c-sources: ./binoculars/hkl-binoculars.c
+  c-sources: ./binoculars/hkl-binoculars-detectors-2d.c
+  c-sources: ./binoculars/hkl-binoculars-geometry.c
+  c-sources: ./binoculars/hkl-binoculars-io-cnpy.c
+  c-sources: ./binoculars/hkl-binoculars-io-hdf5.c
+  c-sources: ./binoculars/hkl-binoculars-io-img.c
+  c-sources: ./../hkl/hkl-axis.c
+  c-sources: ./../hkl/hkl-geometry.c
+  c-sources: ./../hkl/hkl-interval.c
+  c-sources: ./../hkl/hkl-lattice.c
+  c-sources: ./../hkl/hkl-macros.c
+  c-sources: ./../hkl/hkl-matrix.c
+  c-sources: ./../hkl/hkl-parameter.c
+  c-sources: ./../hkl/hkl-quaternion.c
+  c-sources: ./../hkl/hkl-sample.c
+  c-sources: ./../hkl/hkl-source.c
+  c-sources: ./../hkl/hkl-unit.c
+  c-sources: ./../hkl/hkl-vector.c
+
+  default-language: Haskell2010
+
+  exposed-modules: Hkl
+  exposed-modules: Hkl.Binoculars
+  exposed-modules: Hkl.Binoculars.Command
+  exposed-modules: Hkl.Binoculars.Common
+  exposed-modules: Hkl.Binoculars.Config
+  exposed-modules: Hkl.Binoculars.Pipes
+  exposed-modules: Hkl.Binoculars.Projections
+  exposed-modules: Hkl.Binoculars.Projections.Angles
+  exposed-modules: Hkl.Binoculars.Projections.Config
+  exposed-modules: Hkl.Binoculars.Projections.Config.Common
+  exposed-modules: Hkl.Binoculars.Projections.Config.Sample
+  exposed-modules: Hkl.Binoculars.Projections.Hkl
+  exposed-modules: Hkl.Binoculars.Projections.QCustom
+  exposed-modules: Hkl.Binoculars.Projections.Test
+  exposed-modules: Hkl.C
+  exposed-modules: Hkl.C.Binoculars
+  exposed-modules: Hkl.C.Hkl
+  exposed-modules: Hkl.DArray
+  exposed-modules: Hkl.DataSource
+  exposed-modules: Hkl.Detector
+  exposed-modules: Hkl.Engine
+  exposed-modules: Hkl.Exception
+  exposed-modules: Hkl.Geometry
+  exposed-modules: Hkl.H5
+  exposed-modules: Hkl.HKD
+  exposed-modules: Hkl.Image
+  exposed-modules: Hkl.Lattice
+  exposed-modules: Hkl.MyMatrix
+  exposed-modules: Hkl.Orphan
+  exposed-modules: Hkl.Parameter
+  exposed-modules: Hkl.Pipes
+  exposed-modules: Hkl.Repa
+  exposed-modules: Hkl.Sample
+  exposed-modules: Hkl.Types
+  exposed-modules: Hkl.Utils
+
+  ghc-options: -g
+  ghc-options: -Wall
+  ghc-options: -Wincomplete-uni-patterns
+  ghc-options: -Wincomplete-record-updates
+
+  hs-source-dirs: ./src
+
+  -- includes: binoculars/hkl-binoculars-config-private.h
+  -- includes: binoculars/hkl-binoculars-cnpy-private.h
+  -- includes: binoculars/hkl-binoculars.h
+  -- includes: binoculars/hkl-binoculars-private.h
+
+  other-modules: Paths_hkl
+
+  if flag(useHklDev)
+    extra-libraries: hkl
+    -- extra-libraries: hkl-binoculars
+
+    pkgconfig-depends: glib-2.0
+  else
+    pkgconfig-depends: hkl
+    -- extra-libraries: hkl-binoculars
+
+executable binoculars-ng
+  build-depends: base >= 4.6
+  build-depends: attoparsec
+  build-depends: containers
+  build-depends: dimensional >= 0.10
+  build-depends: exceptions
+  build-depends: filepath >= 1.3.0
+  build-depends: hkl
+  build-depends: monad-logger
+  build-depends: monad-loops >= 0.4.2
+  build-depends: mtl
+  build-depends: optparse-applicative
+  build-depends: pipes >= 4.1.2
+  build-depends: text
+  build-depends: transformers >= 0.3
+  build-depends: vector >= 0.10.0.1
+
+  default-language: Haskell2010
+
+  ghc-options: -g
+  ghc-options: -rtsopts
+  if flag(useThreaded)
+    ghc-options: -threaded
+    ghc-options: "-with-rtsopts=-N"
+  ghc-options: -Wall
+
+  if flag(useHklDev)
+    extra-libraries: hkl
+    extra-libraries: hkl-binoculars
+
+    pkgconfig-depends: glib-2.0
+  else
+    pkgconfig-depends: hkl
+    extra-libraries: hkl-binoculars
+
+  main-is: ./app/Main.hs
+
+
+test-suite hkl-test
+  build-depends: aeson
+  build-depends: attoparsec
+  build-depends: base >= 4.6
+  build-depends: config-ini
+  build-depends: containers
+  build-depends: unordered-containers
+  build-depends: dimensional
+  build-depends: hkl
+  build-depends: hspec
+  build-depends: hspec-attoparsec
+  build-depends: ini
+  build-depends: inspection-testing
+  build-depends: intervals
+  build-depends: monad-logger
+  build-depends: path
+  build-depends: temporary
+  build-depends: text
+
+  default-language: Haskell2010
+
+  ghc-options: -g
+  ghc-options: -Wall
+  ghc-options: -rtsopts
+  if flag(useThreaded)
+    ghc-options: -threaded
+    ghc-options: "-with-rtsopts=-N"
+
+  hs-source-dirs: ./test
+
+  main-is: Spec.hs
+
+  other-modules: BinocularsSpec
+  other-modules: Paths_hkl
+
+  type: exitcode-stdio-1.0
+
+  if flag(useHklDev)
+    extra-libraries: hkl
+    extra-libraries: hkl-binoculars
+
+    pkgconfig-depends: glib-2.0
+  else
+    pkgconfig-depends: hkl
+    extra-libraries: hkl-binoculars

@@ -4541,7 +4541,7 @@ of the sample reflection list, this method does nothing.</doc>
               glib:name="HKL_UNIT_USER">
       </member>
     </enumeration>
-    <constant name="VERSION" value="5.1.8.3829" c:type="HKL_VERSION">
+    <constant name="VERSION" value="5.1.8.3833" c:type="HKL_VERSION">
       <source-position filename="hkl.h" line="56"/>
       <type name="utf8" c:type="gchar*"/>
     </constant>

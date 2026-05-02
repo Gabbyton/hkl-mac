@@ -1,4 +1,4 @@
-#+TITLE: Welcome to hkl's 5.1.8.3829 documentation!
+#+TITLE: Welcome to hkl's 5.1.8.3833 documentation!
 #+AUTHOR: Picca Frédéric-Emmanuel
 #+EMAIL: picca at synchrotron dash soleil dot fr
 #+AUTHOR: Wermeille Didier
@@ -661,7 +661,7 @@
 
 -  Other OS:
 
-   You just need to send an [[mailto:submit@bugs.debian.org?subject=%20My%20problem%20with%20hkl...&body=Package:%20hkl%0AVersion:%205.1.8.3829%0A%0AI%20found%20this%20problem%20in%20hkl][email]]
+   You just need to send an [[mailto:submit@bugs.debian.org?subject=%20My%20problem%20with%20hkl...&body=Package:%20hkl%0AVersion:%205.1.8.3833%0A%0AI%20found%20this%20problem%20in%20hkl][email]]
 
 *** Providing patches
 

@@ -53,7 +53,7 @@
 /**
  * HKL_VERSION: (type utf8)
  */
-#define HKL_VERSION "5.1.8.3829"
+#define HKL_VERSION "5.1.8.3833"
 
 /* tau = 2pi or 1 */
 #define HKL_TAU (2. * M_PI)

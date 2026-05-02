@@ -35,7 +35,7 @@ brew install gsl gtk-doc hdf5 glib gsl autoconf automake libtool gobject-introsp
 
 ```{bash}
 ./autogen.sh
-./configure --disable-gui --disable-binoculars --enable-introspection=yes --disable-gsltest --disable-glibtest --disable-hkl-doc
+./configure --disable-gui --disable-binoculars --enable-introspection=yes --disable-hkl-doc
 make
 make install
 ```
